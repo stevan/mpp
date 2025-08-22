@@ -1,15 +1,23 @@
 // -----------------------------------------------------------------------------
-//
+// Core Types
 // -----------------------------------------------------------------------------
 
-export type Address    = number;
-export type FrameIndex = number;
+export type OpIndex      = number;
+export type FrameIndex   = number;
+export type ProgramIndex = number;
 
-export type Frame = { ip : Address, pc : number, stack : any[] }
+export type Frame = {
+    ip      : OpIndex,
+    pc      : number,
+    stack   : any[],
+    program : ProgramIndex,
+}
 
-export type Opcode = (frame : Frame, op : Op) => Address;
+export type Opcode = (frame : Frame, op : Op) => OpIndex;
 
-export const HALT = -1;
+// -----------------------------------------------------------------------------
+// Programs
+// -----------------------------------------------------------------------------
 
 const INST = 0;
 const ADDR = 1;
@@ -17,14 +25,18 @@ const DATA = 2;
 
 export type Op = [
     Instruction, // self
-    Address,     // next
+    OpIndex,     // next
     any[]
 ];
 
+export const HALT = -1; // Halt instruction
+
 export type Program = Op[]
 
+// -----------------------------------------------------------------------------
+
 export type POp   = [ FrameIndex, Op ];      // parallel op
-export type PAddr = [ FrameIndex, Address ]; // parallel Addr
+export type PAddr = [ FrameIndex, OpIndex ]; // parallel Addr
 
 export type Queue = POp[];
 export type Warp  = (q : Queue) => PAddr[];
@@ -47,10 +59,10 @@ OpcodeNames[Instruction.PRINT] = 'print';
 OpcodeNames[Instruction.CONST] = 'const';
 
 export const Opcodes : Opcode[] = []
-Opcodes[Instruction.ENTER] = (frame : Frame, op : Op) : Address => { return op[ADDR]; };
-Opcodes[Instruction.LEAVE] = (frame : Frame, op : Op) : Address => { return op[ADDR]; };
-Opcodes[Instruction.PRINT] = (frame : Frame, op : Op) : Address => { console.log('<OUT>', frame.stack.pop()); return op[ADDR]; };
-Opcodes[Instruction.CONST] = (frame : Frame, op : Op) : Address => { frame.stack.push(op[DATA][0]);           return op[ADDR]; };
+Opcodes[Instruction.ENTER] = (frame : Frame, op : Op) : OpIndex => { return op[ADDR]; };
+Opcodes[Instruction.LEAVE] = (frame : Frame, op : Op) : OpIndex => { return op[ADDR]; };
+Opcodes[Instruction.PRINT] = (frame : Frame, op : Op) : OpIndex => { console.log('<OUT>', frame.stack.pop()); return op[ADDR]; };
+Opcodes[Instruction.CONST] = (frame : Frame, op : Op) : OpIndex => { frame.stack.push(op[DATA][0]);           return op[ADDR]; };
 
 // -----------------------------------------------------------------------------
 // The Opcode Warps
@@ -78,8 +90,27 @@ Queues[Instruction.CONST] = [];
 
 export const FramePool : Frame[] = [];
 
+function allocateFrame (programIndex : ProgramIndex) : FrameIndex {
+    let frame = { ip : 0, pc : 0, stack : [], program : programIndex };
+    let index = FramePool.length;
+    FramePool[index] = frame as Frame;
+    return index as FrameIndex;
+}
+
 function getFrame (index : FrameIndex) : Frame {
     return FramePool[index] as Frame;
+}
+
+export const ProgramPool : Program[] = [];
+
+function allocateProgram (program : Program) : ProgramIndex {
+    let index = ProgramPool.length;
+    ProgramPool[index] = program;
+    return index as ProgramIndex;
+}
+
+function getProgram (index : ProgramIndex) : Program {
+    return ProgramPool[index] as Program;
 }
 
 // -----------------------------------------------------------------------------
@@ -88,7 +119,7 @@ function processResults (program : Program, results : PAddr[]) : void {
     results.forEach((a : PAddr) : void => {
         let index = a[0] as FrameIndex;
         let frame = getFrame( index );
-        let addr  = a[1] as Address;
+        let addr  = a[1] as OpIndex;
         if (addr == HALT) return;
 
         let next  = program[addr] as Op;
@@ -99,15 +130,13 @@ function processResults (program : Program, results : PAddr[]) : void {
     })
 }
 
-function loadProgram(program : Program, n : number = 1) : Queue {
-    let entries : POp[] = [];
-    while (entries.length < n) {
-        let frame = { ip : 0, pc : 0, stack : [] } as Frame;
-        let frameIndex = FramePool.length;
-        FramePool.push(frame);
-        entries.push([ frameIndex, program[0] as Op ]);
+function loadProgram(program : Program, copies : number = 1) : void {
+    let queue : Queue = Queues[Instruction.ENTER] as Queue;
+    while (queue.length < copies) {
+        let programIndex = allocateProgram(program);
+        let frameIndex   = allocateFrame(programIndex);
+        queue.push([ frameIndex, program[0] as Op ]);
     }
-    return entries;
 }
 
 export function interpret (program : Program, n : number = 1) : void {
@@ -123,9 +152,7 @@ export function interpret (program : Program, n : number = 1) : void {
     let P_queue : Queue = Queues[Instruction.PRINT] as Queue;
     let C_queue : Queue = Queues[Instruction.CONST] as Queue;
 
-    let programs = loadProgram(program, n);
-
-    (Queues[Instruction.ENTER] as Queue).push( ...programs );
+    loadProgram(program, n);
 
     console.group('START ->');
     let tick = 0;
