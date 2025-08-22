@@ -18,6 +18,8 @@ import * as Assembler   from './Assembler'
 import * as FramePool   from './FramePool'
 import * as ProgramPool from './ProgramPool'
 
+let formatNum = (n : number, x : number) : string => n.toString().padStart(x, '0');
+
 // -----------------------------------------------------------------------------
 // The Opcode Warps
 // -----------------------------------------------------------------------------
@@ -38,8 +40,10 @@ function compileWarp (opcode : Opcode) : Warp {
         return q.map((frameIndex : FrameIndex) => {
             let frame   = FramePool.getFrame(frameIndex);
             let program = ProgramPool.getProgram(frame.pid);
+            let op      = program[frame.ip] as Op;
 
-            let op   = program[frame.ip] as Op;
+            console.log(`${formatNum(frame.pid, 3)} | ${formatNum(frame.pc, 8)} | ${OpcodeNames[op.inst]?.padEnd(8, ' ')} | ${frame.stack.join(', ')}`);
+
             frame.ip = opcode(frame, op) as OpIndex;
             frame.pc++;
 
@@ -102,7 +106,7 @@ function queuesAreEmpty () : boolean {
 export function interpret (source : Assembler.Source, copies : number = 1) : void {
     compileProgram(source, copies);
 
-    console.group('START ->');
+    console.log('START ->');
     let tick = 0;
     while (true) {
         tick++;
@@ -117,7 +121,6 @@ export function interpret (source : Assembler.Source, copies : number = 1) : voi
         console.groupEnd();
 
         if (queuesAreEmpty()) {
-            console.groupEnd();
             console.log('HALT!');
             break;
         }
@@ -129,7 +132,9 @@ export function interpret (source : Assembler.Source, copies : number = 1) : voi
 
 function debugQueues () : void {
     for (let i = 0; i < OpcodeNames.length; i++) {
-        console.log(`: ${OpcodeNames[i]?.toUpperCase().padStart(5, ' ')}->Q [ ${Queues[i]?.join(' | ')} ]`);
+        let name  = OpcodeNames[i] as string;
+        let queue = Queues[i]      as Queue;
+        console.log(`${queue.length > 0 ? '+' : '-'} ${name.toUpperCase().padEnd(8, ' ')} | ${queue.join(', ')} `);
     }
 }
 
