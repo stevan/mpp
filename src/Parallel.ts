@@ -70,18 +70,18 @@ function processResults (results : FrameIndex[]) : void {
     })
 }
 
-function compileProgram(program : Program, copies : number = 1) : void {
-    let linked : Program = Assembler.linkProgram(program);
-    let queue  : Queue   = Queues[Instruction.ENTER] as Queue;
+function compileProgram(source : Assembler.Source, copies : number = 1) : void {
+    let program : Program = Assembler.linkProgram(source);
+    let queue   : Queue   = Queues[Instruction.ENTER] as Queue;
 
     while (queue.length < copies) {
-        let programIndex = ProgramPool.allocateProgram(linked);
+        let programIndex = ProgramPool.allocateProgram(program);
         let frameIndex   = FramePool.allocateFrame(programIndex);
         queue.push(frameIndex);
     }
 }
 
-export function interpret (program : Program, n : number = 1) : void {
+export function interpret (source : Assembler.Source, copies : number = 1) : void {
 
     // just cause typescript complains too much
     let E_Warp : Warp = Warps[Instruction.ENTER] as Warp;
@@ -94,7 +94,7 @@ export function interpret (program : Program, n : number = 1) : void {
     let P_queue : Queue = Queues[Instruction.PRINT] as Queue;
     let C_queue : Queue = Queues[Instruction.CONST] as Queue;
 
-    compileProgram(program, n);
+    compileProgram(source, copies);
 
     console.group('START ->');
     let tick = 0;

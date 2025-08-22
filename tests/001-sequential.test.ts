@@ -1,14 +1,13 @@
 
-import { allocateOp } from '../src/OpPool'
-import { Program } from '../src/Program'
+import { Source } from '../src/Assembler'
 import { Instruction } from '../src/InstructionSet'
 import { interpret } from '../src/Sequential'
 
-let HelloWorld : Program = [
-    allocateOp(Instruction.ENTER),
-    allocateOp(Instruction.CONST, [ "Hello World" ]),
-    allocateOp(Instruction.PRINT),
-    allocateOp(Instruction.LEAVE),
+let HelloWorld : Source = [
+    [ Instruction.ENTER, [] ],
+    [ Instruction.CONST, [ "Hello World" ] ],
+    [ Instruction.PRINT, [] ],
+    [ Instruction.LEAVE, [] ],
 ];
 
 interpret(HelloWorld);

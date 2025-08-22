@@ -1,7 +1,15 @@
 
+import { Instruction } from './InstructionSet'
 import { Op, Program } from './Program'
 
-export function linkProgram (program : Program) : Program {
+import * as OpPool from '../src/OpPool'
+
+export type Code   = [ Instruction, any[] ]
+export type Source = Code[];
+
+export function linkProgram (source : Source) : Program {
+    let program = source.map((c) => OpPool.allocateOp(...c));
+
     let i = 1;
     while (i < program.length) {
         let prev = program[i - 1] as Op;
