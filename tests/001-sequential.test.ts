@@ -1,7 +1,7 @@
 
-import {
-    Program, Instruction, HALT, interpret,
-} from '../src/Sequential'
+import { Program, HALT } from '../src/Program'
+import { Instruction } from '../src/InstructionSet'
+import { interpret } from '../src/Sequential'
 
 let HelloWorld : Program = [
     [ Instruction.ENTER,    1, [] ],

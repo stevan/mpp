@@ -1,131 +1,70 @@
-// -----------------------------------------------------------------------------
-// Core Types
-// -----------------------------------------------------------------------------
 
-export type OpIndex      = number;
-export type FrameIndex   = number;
-export type ProgramIndex = number;
+import {
+    OpIndex,
+    FrameIndex,
+    Opcode,
+} from './Core'
 
-export type Frame = {
-    ip      : OpIndex,
-    pc      : number,
-    stack   : any[],
-    program : ProgramIndex,
-}
+import {
+    INST, ADDR, DATA, Op,
+    HALT, Program
+} from './Program'
 
-export type Opcode = (frame : Frame, op : Op) => OpIndex;
+import {
+    Instruction,
+    OpcodeNames,
+    Opcodes,
+} from './InstructionSet'
 
-// -----------------------------------------------------------------------------
-// Programs
-// -----------------------------------------------------------------------------
+import * as FramePool   from './FramePool'
+import * as ProgramPool from './ProgramPool'
 
-const INST = 0;
-const ADDR = 1;
-const DATA = 2;
-
-export type Op = [
-    Instruction, // self
-    OpIndex,     // next
-    any[]
-];
-
-export const HALT = -1; // Halt instruction
-
-export type Program = Op[]
-
-// -----------------------------------------------------------------------------
-
-export type POp   = [ FrameIndex, Op ];      // parallel op
-export type PAddr = [ FrameIndex, OpIndex ]; // parallel Addr
-
-export type Queue = POp[];
-export type Warp  = (q : Queue) => PAddr[];
-
-// -----------------------------------------------------------------------------
-// setting up the Instruction set
-// -----------------------------------------------------------------------------
-
-export enum Instruction {
-    ENTER,
-    LEAVE,
-    PRINT,
-    CONST,
-}
-
-export const OpcodeNames : string[] = []
-OpcodeNames[Instruction.ENTER] = 'enter';
-OpcodeNames[Instruction.LEAVE] = 'leave';
-OpcodeNames[Instruction.PRINT] = 'print';
-OpcodeNames[Instruction.CONST] = 'const';
-
-export const Opcodes : Opcode[] = []
-Opcodes[Instruction.ENTER] = (frame : Frame, op : Op) : OpIndex => { return op[ADDR]; };
-Opcodes[Instruction.LEAVE] = (frame : Frame, op : Op) : OpIndex => { return op[ADDR]; };
-Opcodes[Instruction.PRINT] = (frame : Frame, op : Op) : OpIndex => { console.log('<OUT>', frame.stack.pop()); return op[ADDR]; };
-Opcodes[Instruction.CONST] = (frame : Frame, op : Op) : OpIndex => { frame.stack.push(op[DATA][0]);           return op[ADDR]; };
 
 // -----------------------------------------------------------------------------
 // The Opcode Warps
 // -----------------------------------------------------------------------------
 
-export const Warps : Warp[] = [];
-Warps[Instruction.ENTER] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.ENTER] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
-Warps[Instruction.LEAVE] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.LEAVE] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
-Warps[Instruction.PRINT] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.PRINT] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
-Warps[Instruction.CONST] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.CONST] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
+export type Queue = FrameIndex[];
+export type Warp  = (q : Queue) => FrameIndex[];
 
-// -----------------------------------------------------------------------------
-// The Work Queues
-// -----------------------------------------------------------------------------
-
+/// the Work Queues
 export const Queues : Queue[] = []
 Queues[Instruction.ENTER] = [];
 Queues[Instruction.LEAVE] = [];
 Queues[Instruction.PRINT] = [];
 Queues[Instruction.CONST] = [];
 
-// -----------------------------------------------------------------------------
-// The Heap
-// -----------------------------------------------------------------------------
+// the Opcode Warps
+export const Warps : Warp[] = [];
+Warps[Instruction.ENTER] = compileWarp(Opcodes[Instruction.ENTER] as Opcode)
+Warps[Instruction.LEAVE] = compileWarp(Opcodes[Instruction.LEAVE] as Opcode)
+Warps[Instruction.PRINT] = compileWarp(Opcodes[Instruction.PRINT] as Opcode)
+Warps[Instruction.CONST] = compileWarp(Opcodes[Instruction.CONST] as Opcode)
 
-export const FramePool : Frame[] = [];
+function compileWarp (opcode : Opcode) : Warp {
+    return (q : Queue) : FrameIndex[] => {
+        return q.map((frameIndex : FrameIndex) => {
+            let frame   = FramePool.getFrame(frameIndex);
+            let program = ProgramPool.getProgram(frame.program);
 
-function allocateFrame (programIndex : ProgramIndex) : FrameIndex {
-    let frame = { ip : 0, pc : 0, stack : [], program : programIndex };
-    let index = FramePool.length;
-    FramePool[index] = frame as Frame;
-    return index as FrameIndex;
-}
+            let op   = program[frame.ip] as Op;
+            frame.ip = opcode(frame, op) as OpIndex;
+            frame.pc++;
 
-function getFrame (index : FrameIndex) : Frame {
-    return FramePool[index] as Frame;
-}
-
-export const ProgramPool : Program[] = [];
-
-function allocateProgram (program : Program) : ProgramIndex {
-    let index = ProgramPool.length;
-    ProgramPool[index] = program;
-    return index as ProgramIndex;
-}
-
-function getProgram (index : ProgramIndex) : Program {
-    return ProgramPool[index] as Program;
+            return frameIndex;
+        })
+    };
 }
 
 // -----------------------------------------------------------------------------
 
-function processResults (program : Program, results : PAddr[]) : void {
-    results.forEach((a : PAddr) : void => {
-        let index = a[0] as FrameIndex;
-        let frame = getFrame( index );
-        let addr  = a[1] as OpIndex;
+function processResults (program : Program, results : FrameIndex[]) : void {
+    results.forEach((frameIndex : FrameIndex) : void => {
+        let frame = FramePool.getFrame( frameIndex );
+        let addr  = frame.ip as OpIndex;
         if (addr == HALT) return;
-
         let next  = program[addr] as Op;
-        frame.ip = addr;
-        frame.pc++;
-        (Queues[next[INST]] as Queue).push([ index, next ]);
+        (Queues[next[INST]] as Queue).push(frameIndex);
         return;
     })
 }
@@ -133,9 +72,9 @@ function processResults (program : Program, results : PAddr[]) : void {
 function loadProgram(program : Program, copies : number = 1) : void {
     let queue : Queue = Queues[Instruction.ENTER] as Queue;
     while (queue.length < copies) {
-        let programIndex = allocateProgram(program);
-        let frameIndex   = allocateFrame(programIndex);
-        queue.push([ frameIndex, program[0] as Op ]);
+        let programIndex = ProgramPool.allocateProgram(program);
+        let frameIndex   = FramePool.allocateFrame(programIndex);
+        queue.push(frameIndex);
     }
 }
 
@@ -171,10 +110,10 @@ export function interpret (program : Program, n : number = 1) : void {
         // fetch   - splice the queue
         // decode  - not needed, inherent to the warp
         // execute - the warp handles it
-        let E_results : PAddr[] = E_Warp(E_queue.splice(0));
-        let L_results : PAddr[] = L_Warp(L_queue.splice(0));
-        let P_results : PAddr[] = P_Warp(P_queue.splice(0));
-        let C_results : PAddr[] = C_Warp(C_queue.splice(0));
+        let E_results : FrameIndex[] = E_Warp(E_queue.splice(0));
+        let L_results : FrameIndex[] = L_Warp(L_queue.splice(0));
+        let P_results : FrameIndex[] = P_Warp(P_queue.splice(0));
+        let C_results : FrameIndex[] = C_Warp(C_queue.splice(0));
         console.groupEnd();
 
         console.group(`tick(${tick}) = RESULTS`);

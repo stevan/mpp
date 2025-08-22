@@ -1,97 +1,31 @@
-// -----------------------------------------------------------------------------
-// Core Types
-// -----------------------------------------------------------------------------
 
-export type OpIndex      = number;
-export type FrameIndex   = number;
-export type ProgramIndex = number;
+import {
+    OpIndex,
+    FrameIndex,
+    Opcode,
+} from './Core'
 
-export type Frame = {
-    ip      : OpIndex,
-    pc      : number,
-    stack   : any[],
-    program : ProgramIndex,
-}
+import {
+    INST, ADDR, DATA, Op,
+    HALT, Program
+} from './Program'
 
-export type Opcode = (frame : Frame, op : Op) => OpIndex;
+import {
+    Instruction,
+    OpcodeNames,
+    Opcodes,
+} from './InstructionSet'
 
-// -----------------------------------------------------------------------------
-// Programs
-// -----------------------------------------------------------------------------
-
-const INST = 0;
-const ADDR = 1;
-const DATA = 2;
-
-export type Op = [
-    Instruction, // self
-    OpIndex,     // next
-    any[]
-];
-
-export const HALT = -1; // Halt instruction
-
-export type Program = Op[]
-
-// -----------------------------------------------------------------------------
-// Instruction set
-// -----------------------------------------------------------------------------
-
-export enum Instruction {
-    ENTER,
-    LEAVE,
-    PRINT,
-    CONST,
-}
-
-export const OpcodeNames : string[] = []
-OpcodeNames[Instruction.ENTER] = 'enter';
-OpcodeNames[Instruction.LEAVE] = 'leave';
-OpcodeNames[Instruction.PRINT] = 'print';
-OpcodeNames[Instruction.CONST] = 'const';
-
-export const Opcodes : Opcode[] = []
-Opcodes[Instruction.ENTER] = (frame : Frame, op : Op) : OpIndex => { console.log('->enter', frame); return op[ADDR]; };
-Opcodes[Instruction.LEAVE] = (frame : Frame, op : Op) : OpIndex => { console.log('->leave', frame); return op[ADDR]; };
-Opcodes[Instruction.PRINT] = (frame : Frame, op : Op) : OpIndex => { console.log('->print', frame); console.log('<OUT>', frame.stack.pop()); return op[ADDR]; };
-Opcodes[Instruction.CONST] = (frame : Frame, op : Op) : OpIndex => { console.log('->const', frame); frame.stack.push(op[DATA][0]); return op[ADDR]; };
-
-// -----------------------------------------------------------------------------
-// The Heap
-// -----------------------------------------------------------------------------
-
-export const FramePool : Frame[] = [];
-
-function allocateFrame (programIndex : ProgramIndex) : FrameIndex {
-    let frame = { ip : 0, pc : 0, stack : [], program : programIndex };
-    let index = FramePool.length;
-    FramePool[index] = frame as Frame;
-    return index as FrameIndex;
-}
-
-function getFrame (index : FrameIndex) : Frame {
-    return FramePool[index] as Frame;
-}
-
-export const ProgramPool : Program[] = [];
-
-function allocateProgram (program : Program) : ProgramIndex {
-    let index = ProgramPool.length;
-    ProgramPool[index] = program;
-    return index as ProgramIndex;
-}
-
-function getProgram (index : ProgramIndex) : Program {
-    return ProgramPool[index] as Program;
-}
+import * as FramePool   from './FramePool'
+import * as ProgramPool from './ProgramPool'
 
 // -----------------------------------------------------------------------------
 // Sequential Compiler
 // -----------------------------------------------------------------------------
 
-function execute (frameIndex : FrameIndex) : Frame {
-    let frame   = getFrame(frameIndex);
-    let program = getProgram(frame.program);
+function execute (frameIndex : FrameIndex) : FrameIndex {
+    let frame   = FramePool.getFrame(frameIndex);
+    let program = ProgramPool.getProgram(frame.program);
 
     console.group('START ->');
     while (true) {
@@ -107,13 +41,13 @@ function execute (frameIndex : FrameIndex) : Frame {
         }
     }
 
-    return frame;
+    return frameIndex;
 }
 
 export function interpret (program : Program) : void {
-    let programIndex = allocateProgram(program);
-    let frameIndex   = allocateFrame(programIndex);
-    let frame        = execute(frameIndex);
+    let programIndex = ProgramPool.allocateProgram(program);
+    let frameIndex   = FramePool.allocateFrame(programIndex);
+    let frame        = FramePool.getFrame(execute(frameIndex));
     console.log('FRAME', frame);
 }
 
