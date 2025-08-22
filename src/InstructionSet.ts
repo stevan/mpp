@@ -33,19 +33,15 @@ export const HALT = -1; // Halt instruction
 export const OpcodeNames : string[] = []
 OpcodeNames[Instruction.ENTER] = 'enter';
 OpcodeNames[Instruction.LEAVE] = 'leave';
-
 OpcodeNames[Instruction.JWZ] = '(J)ump(W)hen(Z)ero';
-
 OpcodeNames[Instruction.PRINT] = 'print';
-
 OpcodeNames[Instruction.CONST] = 'const';
-
 OpcodeNames[Instruction.DUP] = 'dup';
-
 OpcodeNames[Instruction.EQ] = 'eq';
-
 OpcodeNames[Instruction.ADD] = 'add';
 OpcodeNames[Instruction.SUB] = 'sub';
+
+
 
 export const Opcodes : Opcode[] = []
 Opcodes[Instruction.ENTER] = (frame : Frame, op : Op) : OpIndex => {

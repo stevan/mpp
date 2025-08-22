@@ -84,6 +84,12 @@ function returnResults (results : FrameIndex[]) : void {
     })
 }
 
+function debugQueues () : void {
+    for (let i = 0; i < OpcodeNames.length; i++) {
+        console.log(`${OpcodeNames[i]}->Q`, Queues[i]);
+    }
+}
+
 export function interpret (source : Assembler.Source, copies : number = 1) : void {
 
     // just cause typescript complains too much
@@ -106,10 +112,11 @@ export function interpret (source : Assembler.Source, copies : number = 1) : voi
         console.log(`-- ${tick} -------------------------------------------------`);
 
         console.group(`tick(${tick}) @ BEFORE`);
-        console.log('ENTER->Q', E_queue);
-        console.log('LEAVE->Q', L_queue);
-        console.log('PRINT->Q', P_queue);
-        console.log('CONST->Q', C_queue);
+        debugQueues();
+        //console.log('ENTER->Q', E_queue);
+        //console.log('LEAVE->Q', L_queue);
+        //console.log('PRINT->Q', P_queue);
+        //console.log('CONST->Q', C_queue);
         console.groupEnd();
 
         console.group(`tick(${tick}) @ RUN`);
