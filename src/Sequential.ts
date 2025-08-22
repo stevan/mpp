@@ -5,12 +5,10 @@ import {
     Opcode,
 } from './Core'
 
-import {
-    INST, ADDR, DATA, Op,
-    HALT, Program
-} from './Program'
+import { Op, Program } from './Program'
 
 import {
+    HALT,
     Instruction,
     OpcodeNames,
     Opcodes,
@@ -30,7 +28,7 @@ function execute (frameIndex : FrameIndex) : FrameIndex {
     console.group('START ->');
     while (true) {
         let op     = program[frame.ip] as Op;      // fetch
-        let opcode = Opcodes[op[INST]] as Opcode;  // decode
+        let opcode = Opcodes[op.inst] as Opcode;  // decode
         frame.ip   = opcode(frame, op) as OpIndex; // execute
         frame.pc++;
         // see if we should halt

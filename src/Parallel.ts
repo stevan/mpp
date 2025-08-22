@@ -6,11 +6,11 @@ import {
 } from './Core'
 
 import {
-    INST, ADDR, DATA, Op,
-    HALT, Program
+    Op, Program
 } from './Program'
 
 import {
+    HALT,
     Instruction,
     OpcodeNames,
     Opcodes,
@@ -18,7 +18,6 @@ import {
 
 import * as FramePool   from './FramePool'
 import * as ProgramPool from './ProgramPool'
-
 
 // -----------------------------------------------------------------------------
 // The Opcode Warps
@@ -64,7 +63,7 @@ function processResults (program : Program, results : FrameIndex[]) : void {
         let addr  = frame.ip as OpIndex;
         if (addr == HALT) return;
         let next  = program[addr] as Op;
-        (Queues[next[INST]] as Queue).push(frameIndex);
+        (Queues[next.inst] as Queue).push(frameIndex);
         return;
     })
 }
