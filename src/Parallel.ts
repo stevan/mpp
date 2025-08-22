@@ -10,7 +10,6 @@ import { Op, Program } from './Program'
 import {
     HALT,
     Instruction,
-    OpcodeNames,
     Opcodes,
 } from './InstructionSet'
 
@@ -56,7 +55,18 @@ function compileWarp (opcode : Opcode) : Warp {
 
 // -----------------------------------------------------------------------------
 
-function processResults (results : FrameIndex[]) : void {
+function compileProgram(source : Assembler.Source, copies : number = 1) : void {
+    let program : Program = Assembler.assemble(source);
+    let queue   : Queue   = Queues[Instruction.ENTER] as Queue;
+
+    while (queue.length < copies) {
+        let programIndex = ProgramPool.allocateProgram(program);
+        let frameIndex   = FramePool.allocateFrame(programIndex);
+        queue.push(frameIndex);
+    }
+}
+
+function returnResults (results : FrameIndex[]) : void {
     results.forEach((frameIndex : FrameIndex) : void => {
         let frame   = FramePool.getFrame( frameIndex );
         let program = ProgramPool.getProgram(frame.program);
@@ -68,17 +78,6 @@ function processResults (results : FrameIndex[]) : void {
         (Queues[next.inst] as Queue).push(frameIndex);
         return;
     })
-}
-
-function compileProgram(source : Assembler.Source, copies : number = 1) : void {
-    let program : Program = Assembler.assemble(source);
-    let queue   : Queue   = Queues[Instruction.ENTER] as Queue;
-
-    while (queue.length < copies) {
-        let programIndex = ProgramPool.allocateProgram(program);
-        let frameIndex   = FramePool.allocateFrame(programIndex);
-        queue.push(frameIndex);
-    }
 }
 
 export function interpret (source : Assembler.Source, copies : number = 1) : void {
@@ -126,10 +125,10 @@ export function interpret (source : Assembler.Source, copies : number = 1) : voi
         console.log('CONST->R', C_results);
         console.groupEnd();
 
-        processResults(E_results);
-        processResults(L_results);
-        processResults(P_results);
-        processResults(C_results);
+        returnResults(E_results);
+        returnResults(L_results);
+        returnResults(P_results);
+        returnResults(C_results);
 
         if (E_queue.length == 0 &&
             L_queue.length == 0 &&
