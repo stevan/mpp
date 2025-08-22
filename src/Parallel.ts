@@ -18,7 +18,7 @@ import * as Assembler   from './Assembler'
 import * as FramePool   from './FramePool'
 import * as ProgramPool from './ProgramPool'
 
-let formatNum = (n : number, x : number) : string => n.toString().padStart(x, '0');
+import * as DEBUG from './Debugger'
 
 // -----------------------------------------------------------------------------
 // The Opcode Warps
@@ -42,7 +42,7 @@ function compileWarp (opcode : Opcode) : Warp {
             let program = ProgramPool.getProgram(frame.pid);
             let op      = program[frame.ip] as Op;
 
-            console.log(`${formatNum(frame.pid, 3)} | ${formatNum(frame.pc, 8)} | ${OpcodeNames[op.inst]?.padEnd(8, ' ')} | ${frame.stack.join(', ')}`);
+            DEBUG.logCall(frame, op);
 
             frame.ip = opcode(frame, op) as OpIndex;
             frame.pc++;
@@ -68,9 +68,13 @@ function compileProgram(source : Assembler.Source, copies : number = 1) : void {
 // -----------------------------------------------------------------------------
 
 function returnResults (results : FrameIndex[]) : void {
+    DEBUG.resultLogHeader();
+
     results.forEach((frameIndex : FrameIndex) : void => {
         let frame   = FramePool.getFrame( frameIndex );
         let program = ProgramPool.getProgram(frame.pid);
+
+        DEBUG.dumpFrame(frame);
 
         let addr = frame.ip as OpIndex;
         if (addr == HALT) return;
@@ -86,6 +90,8 @@ function returnResults (results : FrameIndex[]) : void {
 
 
 function executeWarps () : void {
+    DEBUG.callLogHeader()
+
     let results = [];
     for (let i = 0; i < Warps.length; i++) {
         let warp  = Warps[i] as Warp;
@@ -106,40 +112,21 @@ function queuesAreEmpty () : boolean {
 export function interpret (source : Assembler.Source, copies : number = 1) : void {
     compileProgram(source, copies);
 
-    console.log('START ->');
     let tick = 0;
+    DEBUG.warpLogHeader('STARTING ->');
     while (true) {
-        tick++;
-        console.log(`-- tick(${tick}) -------------------------------------------------`);
-
-        console.group(`QUEUES:`);
-        debugQueues();
-        console.groupEnd();
-
-        console.group(`RUN:`);
+        DEBUG.tickLine(tick++);
+        DEBUG.dumpQueues(Queues);
         executeWarps();
-        console.groupEnd();
-
         if (queuesAreEmpty()) {
-            console.log('HALT!');
+            DEBUG.warpLogFooter('EXITING!');
             break;
         }
     }
 
 }
 
-// -----------------------------------------------------------------------------
 
-function debugQueues () : void {
-    for (let i = 0; i < OpcodeNames.length; i++) {
-        let name  = OpcodeNames[i] as string;
-        let queue = Queues[i]      as Queue;
-        console.log(`${queue.length > 0 ? '+' : '-'} ${name.toUpperCase().padEnd(8, ' ')} | ${queue.join(', ')} `);
-    }
-}
-
-
-// -----------------------------------------------------------------------------
 
 
 
