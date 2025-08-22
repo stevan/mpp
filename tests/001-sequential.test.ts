@@ -1,5 +1,6 @@
 
-import { Program, linkProgram, allocateOp } from '../src/Program'
+import { allocateOp } from '../src/OpPool'
+import { Program } from '../src/Program'
 import { Instruction } from '../src/InstructionSet'
 import { interpret } from '../src/Sequential'
 

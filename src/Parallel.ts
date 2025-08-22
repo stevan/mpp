@@ -5,9 +5,7 @@ import {
     Opcode,
 } from './Core'
 
-import {
-    Op, Program, linkProgram
-} from './Program'
+import { Op, Program } from './Program'
 
 import {
     HALT,
@@ -16,6 +14,7 @@ import {
     Opcodes,
 } from './InstructionSet'
 
+import * as Assembler   from './Assembler'
 import * as FramePool   from './FramePool'
 import * as ProgramPool from './ProgramPool'
 
@@ -71,8 +70,8 @@ function processResults (results : FrameIndex[]) : void {
     })
 }
 
-function loadProgram(program : Program, copies : number = 1) : void {
-    let linked : Program = linkProgram(program);
+function compileProgram(program : Program, copies : number = 1) : void {
+    let linked : Program = Assembler.linkProgram(program);
     let queue  : Queue   = Queues[Instruction.ENTER] as Queue;
 
     while (queue.length < copies) {
@@ -95,7 +94,7 @@ export function interpret (program : Program, n : number = 1) : void {
     let P_queue : Queue = Queues[Instruction.PRINT] as Queue;
     let C_queue : Queue = Queues[Instruction.CONST] as Queue;
 
-    loadProgram(program, n);
+    compileProgram(program, n);
 
     console.group('START ->');
     let tick = 0;

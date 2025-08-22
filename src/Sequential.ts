@@ -5,8 +5,7 @@ import {
     Opcode,
 } from './Core'
 
-import { Op, Program, linkProgram } from './Program'
-
+import { Op, Program } from './Program'
 
 import {
     HALT,
@@ -15,6 +14,7 @@ import {
     Opcodes,
 } from './InstructionSet'
 
+import * as Assembler   from './Assembler'
 import * as FramePool   from './FramePool'
 import * as ProgramPool from './ProgramPool'
 
@@ -44,7 +44,7 @@ function execute (frameIndex : FrameIndex) : FrameIndex {
 }
 
 export function interpret (program : Program) : void {
-    let linked       = linkProgram(program);
+    let linked       = Assembler.linkProgram(program);
     let programIndex = ProgramPool.allocateProgram(linked);
     let frameIndex   = FramePool.allocateFrame(programIndex);
     let frame        = FramePool.getFrame(execute(frameIndex));
