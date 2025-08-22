@@ -1,6 +1,6 @@
 
 import { Source } from '../src/Assembler'
-import { Instruction } from '../src/InstructionSet'
+import { Instruction } from '../src/Core'
 import { interpret } from '../src/Parallel'
 
 let HelloWorld : Source = [

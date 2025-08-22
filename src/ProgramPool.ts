@@ -1,11 +1,7 @@
 
 import {
-    ProgramIndex,
+    ProgramIndex, Program
 } from './Core'
-
-import {
-    Program
-} from './Program'
 
 export const ProgramPool : Program[] = [];
 

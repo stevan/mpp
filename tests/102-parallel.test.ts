@@ -1,6 +1,6 @@
 
 import { Source } from '../src/Assembler'
-import { Instruction } from '../src/InstructionSet'
+import { Instruction } from '../src/Core'
 import { interpret } from '../src/Parallel'
 
 // 10 BEGIN DUP 1 - DUP 0 == UNTIL
@@ -21,4 +21,4 @@ let Countdown : Source = [
     [ Instruction.LEAVE, [] ],
 ];
 
-interpret(Countdown, 1);
+interpret(Countdown, 10);

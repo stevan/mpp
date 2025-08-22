@@ -1,7 +1,5 @@
 
-import { Instruction } from './InstructionSet'
-import { Op, Program } from './Program'
-
+import { Op, Program, Instruction } from './Core'
 import { OpAllocator } from '../src/OpPool'
 
 export type Code   = [ Instruction, any[] ]

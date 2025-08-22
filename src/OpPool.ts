@@ -1,6 +1,5 @@
 
-import { Op } from './Program'
-import { Instruction, HALT } from './InstructionSet'
+import { Op, Instruction, HALT } from './Core'
 
 export class OpAllocator {
     public pool : Op[] = [];
