@@ -44,7 +44,7 @@ function execute (frameIndex : FrameIndex) : FrameIndex {
 }
 
 export function interpret (source : Assembler.Source) : void {
-    let program      = Assembler.linkProgram(source);
+    let program      = Assembler.assemble(source);
     let programIndex = ProgramPool.allocateProgram(program);
     let frameIndex   = FramePool.allocateFrame(programIndex);
     let frame        = FramePool.getFrame(execute(frameIndex));

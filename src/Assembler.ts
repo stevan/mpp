@@ -7,7 +7,7 @@ import * as OpPool from '../src/OpPool'
 export type Code   = [ Instruction, any[] ]
 export type Source = Code[];
 
-export function linkProgram (source : Source) : Program {
+export function assemble (source : Source) : Program {
     let program = source.map((c) => OpPool.allocateOp(...c));
 
     let i = 1;

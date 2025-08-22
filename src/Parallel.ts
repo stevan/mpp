@@ -71,7 +71,7 @@ function processResults (results : FrameIndex[]) : void {
 }
 
 function compileProgram(source : Assembler.Source, copies : number = 1) : void {
-    let program : Program = Assembler.linkProgram(source);
+    let program : Program = Assembler.assemble(source);
     let queue   : Queue   = Queues[Instruction.ENTER] as Queue;
 
     while (queue.length < copies) {
