@@ -5,13 +5,6 @@
 export type Address    = number;
 export type FrameIndex = number;
 
-export enum Instruction {
-    ENTER,
-    LEAVE,
-    PRINT,
-    CONST,
-}
-
 export type Frame = { ip : Address, pc : number, stack : any[] }
 
 export type Opcode = (frame : Frame, op : Op) => Address;
@@ -30,9 +23,22 @@ export type Op = [
 
 export type Program = Op[]
 
+export type POp   = [ FrameIndex, Op ];      // parallel op
+export type PAddr = [ FrameIndex, Address ]; // parallel Addr
+
+export type Queue = POp[];
+export type Warp  = (q : Queue) => PAddr[];
+
 // -----------------------------------------------------------------------------
-// setting up the interpreter
+// setting up the Instruction set
 // -----------------------------------------------------------------------------
+
+export enum Instruction {
+    ENTER,
+    LEAVE,
+    PRINT,
+    CONST,
+}
 
 export const OpcodeNames : string[] = []
 OpcodeNames[Instruction.ENTER] = 'enter';
@@ -41,17 +47,24 @@ OpcodeNames[Instruction.PRINT] = 'print';
 OpcodeNames[Instruction.CONST] = 'const';
 
 export const Opcodes : Opcode[] = []
-Opcodes[Instruction.ENTER] = (frame : Frame, op : Op) : Address => { console.log('->enter', frame); return op[ADDR]; };
-Opcodes[Instruction.LEAVE] = (frame : Frame, op : Op) : Address => { console.log('->leave', frame); return op[ADDR]; };
-Opcodes[Instruction.PRINT] = (frame : Frame, op : Op) : Address => { console.log('->print', frame); console.log('<OUT>', frame.stack.pop()); return op[ADDR]; };
-Opcodes[Instruction.CONST] = (frame : Frame, op : Op) : Address => { console.log('->const', frame); frame.stack.push(op[DATA][0]); return op[ADDR]; };
+Opcodes[Instruction.ENTER] = (frame : Frame, op : Op) : Address => { return op[ADDR]; };
+Opcodes[Instruction.LEAVE] = (frame : Frame, op : Op) : Address => { return op[ADDR]; };
+Opcodes[Instruction.PRINT] = (frame : Frame, op : Op) : Address => { console.log('<OUT>', frame.stack.pop()); return op[ADDR]; };
+Opcodes[Instruction.CONST] = (frame : Frame, op : Op) : Address => { frame.stack.push(op[DATA][0]);           return op[ADDR]; };
 
+// -----------------------------------------------------------------------------
+// The Opcode Warps
+// -----------------------------------------------------------------------------
 
-export type POp   = [ FrameIndex, Op ];      // parallel op
-export type PAddr = [ FrameIndex, Address ]; // parallel Addr
+export const Warps : Warp[] = [];
+Warps[Instruction.ENTER] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.ENTER] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
+Warps[Instruction.LEAVE] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.LEAVE] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
+Warps[Instruction.PRINT] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.PRINT] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
+Warps[Instruction.CONST] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.CONST] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
 
-export type Queue = POp[];
-export type Warp  = (q : Queue) => PAddr[];
+// -----------------------------------------------------------------------------
+// The Work Queues
+// -----------------------------------------------------------------------------
 
 export const Queues : Queue[] = []
 Queues[Instruction.ENTER] = [];
@@ -59,11 +72,9 @@ Queues[Instruction.LEAVE] = [];
 Queues[Instruction.PRINT] = [];
 Queues[Instruction.CONST] = [];
 
-export const Warps : Warp[] = [];
-Warps[Instruction.ENTER] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.ENTER] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
-Warps[Instruction.LEAVE] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.LEAVE] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
-Warps[Instruction.PRINT] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.PRINT] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
-Warps[Instruction.CONST] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.CONST] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
+// -----------------------------------------------------------------------------
+// The Heap
+// -----------------------------------------------------------------------------
 
 export const FramePool : Frame[] = [];
 
@@ -88,6 +99,17 @@ function processResults (program : Program, results : PAddr[]) : void {
     })
 }
 
+function loadProgram(program : Program, n : number = 1) : Queue {
+    let entries : POp[] = [];
+    while (entries.length < n) {
+        let frame = { ip : 0, pc : 0, stack : [] } as Frame;
+        let frameIndex = FramePool.length;
+        FramePool.push(frame);
+        entries.push([ frameIndex, program[0] as Op ]);
+    }
+    return entries;
+}
+
 export function interpret (program : Program, n : number = 1) : void {
 
     // just cause typescript complains too much
@@ -101,15 +123,9 @@ export function interpret (program : Program, n : number = 1) : void {
     let P_queue : Queue = Queues[Instruction.PRINT] as Queue;
     let C_queue : Queue = Queues[Instruction.CONST] as Queue;
 
-    let entries : POp[] = [];
-    while (entries.length < n) {
-        let frame = { ip : 0, pc : 0, stack : [] } as Frame;
-        let frameIndex = FramePool.length;
-        FramePool.push(frame);
-        entries.push([ frameIndex, program[0] as Op ]);
-    }
+    let programs = loadProgram(program, n);
 
-    (Queues[Instruction.ENTER] as Queue).push( ...entries );
+    (Queues[Instruction.ENTER] as Queue).push( ...programs );
 
     console.group('START ->');
     let tick = 0;
