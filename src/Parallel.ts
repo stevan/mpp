@@ -30,13 +30,23 @@ Queues[Instruction.ENTER] = [];
 Queues[Instruction.LEAVE] = [];
 Queues[Instruction.PRINT] = [];
 Queues[Instruction.CONST] = [];
+Queues[Instruction.JWZ]   = [];
+Queues[Instruction.DUP]   = [];
+Queues[Instruction.EQ]    = [];
+Queues[Instruction.ADD]   = [];
+Queues[Instruction.SUB]   = [];
 
 // the Opcode Warps
 export const Warps : Warp[] = [];
-Warps[Instruction.ENTER] = compileWarp(Opcodes[Instruction.ENTER] as Opcode)
-Warps[Instruction.LEAVE] = compileWarp(Opcodes[Instruction.LEAVE] as Opcode)
-Warps[Instruction.PRINT] = compileWarp(Opcodes[Instruction.PRINT] as Opcode)
-Warps[Instruction.CONST] = compileWarp(Opcodes[Instruction.CONST] as Opcode)
+Warps[Instruction.ENTER] = compileWarp(Opcodes[Instruction.ENTER] as Opcode);
+Warps[Instruction.LEAVE] = compileWarp(Opcodes[Instruction.LEAVE] as Opcode);
+Warps[Instruction.PRINT] = compileWarp(Opcodes[Instruction.PRINT] as Opcode);
+Warps[Instruction.CONST] = compileWarp(Opcodes[Instruction.CONST] as Opcode);
+Warps[Instruction.JWZ  ] = compileWarp(Opcodes[Instruction.JWZ  ] as Opcode);
+Warps[Instruction.DUP  ] = compileWarp(Opcodes[Instruction.DUP  ] as Opcode);
+Warps[Instruction.EQ   ] = compileWarp(Opcodes[Instruction.EQ   ] as Opcode);
+Warps[Instruction.ADD  ] = compileWarp(Opcodes[Instruction.ADD  ] as Opcode);
+Warps[Instruction.SUB  ] = compileWarp(Opcodes[Instruction.SUB  ] as Opcode);
 
 function compileWarp (opcode : Opcode) : Warp {
     return (q : Queue) : FrameIndex[] => {
@@ -74,8 +84,18 @@ function returnResults (results : FrameIndex[]) : void {
         let addr = frame.ip as OpIndex;
         if (addr == HALT) return;
 
-        let next = program[addr] as Op;
-        (Queues[next.inst] as Queue).push(frameIndex);
+        let next  = program[addr] as Op;
+        let queue = Queues[next.inst] as Queue;
+        if (queue == undefined) {
+            console.log("FRAME",      frame);
+            console.log("FRAME(idx)", frameIndex);
+            console.log("PROGRAM",    program);
+            console.log("ADDR",       addr);
+            console.log("NEXT",       next);
+        }
+
+        queue.push(frameIndex);
+
         return;
     })
 }
