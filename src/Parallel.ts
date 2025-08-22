@@ -11,6 +11,7 @@ import {
     HALT,
     Instruction,
     Opcodes,
+    OpcodeNames,
 } from './InstructionSet'
 
 import * as Assembler   from './Assembler'
@@ -70,13 +71,6 @@ function returnResults (results : FrameIndex[]) : void {
 
         let next  = program[addr] as Op;
         let queue = Queues[next.inst] as Queue;
-        if (queue == undefined) {
-            console.log("FRAME",      frame);
-            console.log("FRAME(idx)", frameIndex);
-            console.log("PROGRAM",    program);
-            console.log("ADDR",       addr);
-            console.log("NEXT",       next);
-        }
 
         queue.push(frameIndex);
 
@@ -84,25 +78,30 @@ function returnResults (results : FrameIndex[]) : void {
     })
 }
 
+
+function executeWarps () : void {
+    let results = [];
+    for (let i = 0; i < Warps.length; i++) {
+        let warp  = Warps[i] as Warp;
+        let queue = Queues[i] as Queue;
+
+        results.push(...warp(queue.splice(0)));
+    }
+
+    returnResults(results);
+}
+
+function queuesAreEmpty () : boolean {
+    return Queues.filter((q) => q.length != 0).length == 0
+}
+
 function debugQueues () : void {
     for (let i = 0; i < OpcodeNames.length; i++) {
-        console.log(`${OpcodeNames[i]}->Q`, Queues[i]);
+        console.log(`: ${OpcodeNames[i]?.toUpperCase().padStart(5, ' ')}->Q`, Queues[i]);
     }
 }
 
 export function interpret (source : Assembler.Source, copies : number = 1) : void {
-
-    // just cause typescript complains too much
-    let E_Warp : Warp = Warps[Instruction.ENTER] as Warp;
-    let L_Warp : Warp = Warps[Instruction.LEAVE] as Warp;
-    let P_Warp : Warp = Warps[Instruction.PRINT] as Warp;
-    let C_Warp : Warp = Warps[Instruction.CONST] as Warp;
-
-    let E_queue : Queue = Queues[Instruction.ENTER] as Queue;
-    let L_queue : Queue = Queues[Instruction.LEAVE] as Queue;
-    let P_queue : Queue = Queues[Instruction.PRINT] as Queue;
-    let C_queue : Queue = Queues[Instruction.CONST] as Queue;
-
     compileProgram(source, copies);
 
     console.group('START ->');
@@ -111,40 +110,15 @@ export function interpret (source : Assembler.Source, copies : number = 1) : voi
         tick++;
         console.log(`-- ${tick} -------------------------------------------------`);
 
-        console.group(`tick(${tick}) @ BEFORE`);
+        console.group(`tick(${tick}) @ QUEUES`);
         debugQueues();
-        //console.log('ENTER->Q', E_queue);
-        //console.log('LEAVE->Q', L_queue);
-        //console.log('PRINT->Q', P_queue);
-        //console.log('CONST->Q', C_queue);
         console.groupEnd();
 
         console.group(`tick(${tick}) @ RUN`);
-        // fetch   - splice the queue
-        // decode  - not needed, inherent to the warp
-        // execute - the warp handles it
-        let E_results : FrameIndex[] = E_Warp(E_queue.splice(0));
-        let L_results : FrameIndex[] = L_Warp(L_queue.splice(0));
-        let P_results : FrameIndex[] = P_Warp(P_queue.splice(0));
-        let C_results : FrameIndex[] = C_Warp(C_queue.splice(0));
+        executeWarps();
         console.groupEnd();
 
-        console.group(`tick(${tick}) = RESULTS`);
-        console.log('ENTER->R', E_results);
-        console.log('LEAVE->R', L_results);
-        console.log('PRINT->R', P_results);
-        console.log('CONST->R', C_results);
-        console.groupEnd();
-
-        returnResults(E_results);
-        returnResults(L_results);
-        returnResults(P_results);
-        returnResults(C_results);
-
-        if (E_queue.length == 0 &&
-            L_queue.length == 0 &&
-            P_queue.length == 0 &&
-            C_queue.length == 0 ) {
+        if (queuesAreEmpty()) {
             console.groupEnd();
             console.log('HALT!');
             break;
