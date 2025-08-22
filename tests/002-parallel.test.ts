@@ -10,5 +10,5 @@ let HelloWorld : Program = [
     [ Instruction.LEAVE, HALT, [] ],
 ];
 
-interpret(HelloWorld, 10);
+interpret(HelloWorld, 4);
 

@@ -2,7 +2,8 @@
 //
 // -----------------------------------------------------------------------------
 
-export type Address = number;
+export type Address    = number;
+export type FrameIndex = number;
 
 export enum Instruction {
     ENTER,
@@ -11,7 +12,7 @@ export enum Instruction {
     CONST,
 }
 
-export type Frame = { ip : number, pc : number, stack : any[] }
+export type Frame = { ip : Address, pc : number, stack : any[] }
 
 export type Opcode = (frame : Frame, op : Op) => Address;
 
@@ -45,25 +46,9 @@ Opcodes[Instruction.LEAVE] = (frame : Frame, op : Op) : Address => { console.log
 Opcodes[Instruction.PRINT] = (frame : Frame, op : Op) : Address => { console.log('->print', frame); console.log('<OUT>', frame.stack.pop()); return op[ADDR]; };
 Opcodes[Instruction.CONST] = (frame : Frame, op : Op) : Address => { console.log('->const', frame); frame.stack.push(op[DATA][0]); return op[ADDR]; };
 
-/*
 
-NOTES:
-
-- we have more than 4 warps available
-    - we can allocate additional warps for heavily used opcodes
-        - they can act as overflow
-
-- this ends up becoming a scheduling problem
-    - if we want to keep the warps saturated
-        - which is probably impossible
-    - but in a multi-user/time-share system ???
-        - can we borrow old stuff here?
-
-*/
-
-// FIXME - these kinda suck
-export type POp   = [ Frame, Op ];      // parallel op
-export type PAddr = [ Frame, Address ]; // parallel Addr
+export type POp   = [ FrameIndex, Op ];      // parallel op
+export type PAddr = [ FrameIndex, Address ]; // parallel Addr
 
 export type Queue = POp[];
 export type Warp  = (q : Queue) => PAddr[];
@@ -75,23 +60,30 @@ Queues[Instruction.PRINT] = [];
 Queues[Instruction.CONST] = [];
 
 export const Warps : Warp[] = [];
-Warps[Instruction.ENTER] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as Frame, (Opcodes[Instruction.ENTER] as Opcode)(pop[0] as Frame, pop[1] as Op) ] }) };
-Warps[Instruction.LEAVE] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as Frame, (Opcodes[Instruction.LEAVE] as Opcode)(pop[0] as Frame, pop[1] as Op) ] }) };
-Warps[Instruction.PRINT] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as Frame, (Opcodes[Instruction.PRINT] as Opcode)(pop[0] as Frame, pop[1] as Op) ] }) };
-Warps[Instruction.CONST] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as Frame, (Opcodes[Instruction.CONST] as Opcode)(pop[0] as Frame, pop[1] as Op) ] }) };
+Warps[Instruction.ENTER] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.ENTER] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
+Warps[Instruction.LEAVE] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.LEAVE] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
+Warps[Instruction.PRINT] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.PRINT] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
+Warps[Instruction.CONST] = (q : Queue) : PAddr[] => { return q.map((pop : POp) => { return [ pop[0] as FrameIndex, (Opcodes[Instruction.CONST] as Opcode)(getFrame(pop[0] as FrameIndex), pop[1] as Op) ] }) };
+
+export const FramePool : Frame[] = [];
+
+function getFrame (index : FrameIndex) : Frame {
+    return FramePool[index] as Frame;
+}
 
 // -----------------------------------------------------------------------------
 
 function processResults (program : Program, results : PAddr[]) : void {
     results.forEach((a : PAddr) : void => {
-        let frame = a[0] as Frame;
+        let index = a[0] as FrameIndex;
+        let frame = getFrame( index );
         let addr  = a[1] as Address;
         if (addr == HALT) return;
 
         let next  = program[addr] as Op;
         frame.ip = addr;
         frame.pc++;
-        (Queues[next[INST]] as Queue).push([ frame, next ]);
+        (Queues[next[INST]] as Queue).push([ index, next ]);
         return;
     })
 }
@@ -111,7 +103,10 @@ export function interpret (program : Program, n : number = 1) : void {
 
     let entries : POp[] = [];
     while (entries.length < n) {
-        entries.push([ { ip : 0, pc : 0, stack : [] } as Frame, program[0] as Op ] as POp);
+        let frame = { ip : 0, pc : 0, stack : [] } as Frame;
+        let frameIndex = FramePool.length;
+        FramePool.push(frame);
+        entries.push([ frameIndex, program[0] as Op ]);
     }
 
     (Queues[Instruction.ENTER] as Queue).push( ...entries );
