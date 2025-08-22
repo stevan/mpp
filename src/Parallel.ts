@@ -6,7 +6,7 @@ import {
 } from './Core'
 
 import {
-    Op, Program
+    Op, Program, linkProgram
 } from './Program'
 
 import {
@@ -57,21 +57,26 @@ function compileWarp (opcode : Opcode) : Warp {
 
 // -----------------------------------------------------------------------------
 
-function processResults (program : Program, results : FrameIndex[]) : void {
+function processResults (results : FrameIndex[]) : void {
     results.forEach((frameIndex : FrameIndex) : void => {
-        let frame = FramePool.getFrame( frameIndex );
-        let addr  = frame.ip as OpIndex;
+        let frame   = FramePool.getFrame( frameIndex );
+        let program = ProgramPool.getProgram(frame.program);
+
+        let addr = frame.ip as OpIndex;
         if (addr == HALT) return;
-        let next  = program[addr] as Op;
+
+        let next = program[addr] as Op;
         (Queues[next.inst] as Queue).push(frameIndex);
         return;
     })
 }
 
 function loadProgram(program : Program, copies : number = 1) : void {
-    let queue : Queue = Queues[Instruction.ENTER] as Queue;
+    let linked : Program = linkProgram(program);
+    let queue  : Queue   = Queues[Instruction.ENTER] as Queue;
+
     while (queue.length < copies) {
-        let programIndex = ProgramPool.allocateProgram(program);
+        let programIndex = ProgramPool.allocateProgram(linked);
         let frameIndex   = FramePool.allocateFrame(programIndex);
         queue.push(frameIndex);
     }
@@ -122,10 +127,10 @@ export function interpret (program : Program, n : number = 1) : void {
         console.log('CONST->R', C_results);
         console.groupEnd();
 
-        processResults(program, E_results);
-        processResults(program, L_results);
-        processResults(program, P_results);
-        processResults(program, C_results);
+        processResults(E_results);
+        processResults(L_results);
+        processResults(P_results);
+        processResults(C_results);
 
         if (E_queue.length == 0 &&
             L_queue.length == 0 &&
