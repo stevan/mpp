@@ -96,7 +96,7 @@ function processResults (program : Program, results : PAddr[]) : void {
     })
 }
 
-export function interpret (program : Program) : void {
+export function interpret (program : Program, n : number = 1) : void {
 
     // just cause typescript complains too much
     let E_Warp : Warp = Warps[Instruction.ENTER] as Warp;
@@ -109,12 +109,12 @@ export function interpret (program : Program) : void {
     let P_queue : Queue = Queues[Instruction.PRINT] as Queue;
     let C_queue : Queue = Queues[Instruction.CONST] as Queue;
 
-    (Queues[Instruction.ENTER] as Queue).push(
-        [ { ip : 0, pc : 0, stack : [] } as Frame, program[0] as Op ] as POp,
-        [ { ip : 0, pc : 0, stack : [] } as Frame, program[0] as Op ] as POp,
-        [ { ip : 0, pc : 0, stack : [] } as Frame, program[0] as Op ] as POp,
-        [ { ip : 0, pc : 0, stack : [] } as Frame, program[0] as Op ] as POp,
-    );
+    let entries : POp[] = [];
+    while (entries.length < n) {
+        entries.push([ { ip : 0, pc : 0, stack : [] } as Frame, program[0] as Op ] as POp);
+    }
+
+    (Queues[Instruction.ENTER] as Queue).push( ...entries );
 
     console.group('START ->');
     let tick = 0;
