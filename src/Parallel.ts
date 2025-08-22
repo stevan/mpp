@@ -24,29 +24,13 @@ import * as ProgramPool from './ProgramPool'
 export type Queue = FrameIndex[];
 export type Warp  = (q : Queue) => FrameIndex[];
 
-/// the Work Queues
-export const Queues : Queue[] = []
-Queues[Instruction.ENTER] = [];
-Queues[Instruction.LEAVE] = [];
-Queues[Instruction.PRINT] = [];
-Queues[Instruction.CONST] = [];
-Queues[Instruction.JWZ]   = [];
-Queues[Instruction.DUP]   = [];
-Queues[Instruction.EQ]    = [];
-Queues[Instruction.ADD]   = [];
-Queues[Instruction.SUB]   = [];
-
-// the Opcode Warps
+export const Queues : Queue[] = [];
 export const Warps : Warp[] = [];
-Warps[Instruction.ENTER] = compileWarp(Opcodes[Instruction.ENTER] as Opcode);
-Warps[Instruction.LEAVE] = compileWarp(Opcodes[Instruction.LEAVE] as Opcode);
-Warps[Instruction.PRINT] = compileWarp(Opcodes[Instruction.PRINT] as Opcode);
-Warps[Instruction.CONST] = compileWarp(Opcodes[Instruction.CONST] as Opcode);
-Warps[Instruction.JWZ  ] = compileWarp(Opcodes[Instruction.JWZ  ] as Opcode);
-Warps[Instruction.DUP  ] = compileWarp(Opcodes[Instruction.DUP  ] as Opcode);
-Warps[Instruction.EQ   ] = compileWarp(Opcodes[Instruction.EQ   ] as Opcode);
-Warps[Instruction.ADD  ] = compileWarp(Opcodes[Instruction.ADD  ] as Opcode);
-Warps[Instruction.SUB  ] = compileWarp(Opcodes[Instruction.SUB  ] as Opcode);
+
+for (let i = 0; i < Opcodes.length; i++) {
+    Queues[i] = [];
+    Warps[i]  = compileWarp( Opcodes[i] as Opcode );
+}
 
 function compileWarp (opcode : Opcode) : Warp {
     return (q : Queue) : FrameIndex[] => {
