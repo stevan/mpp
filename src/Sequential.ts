@@ -28,6 +28,7 @@ function execute (frameIndex : FrameIndex) : FrameIndex {
 
     console.group('START ->');
     while (true) {
+        console.log('!!FRAME', frame);
         let op     = program[frame.ip] as Op;      // fetch
         let opcode = Opcodes[op.inst] as Opcode;  // decode
         frame.ip   = opcode(frame, op) as OpIndex; // execute

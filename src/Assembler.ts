@@ -2,13 +2,14 @@
 import { Instruction } from './InstructionSet'
 import { Op, Program } from './Program'
 
-import * as OpPool from '../src/OpPool'
+import { OpAllocator } from '../src/OpPool'
 
 export type Code   = [ Instruction, any[] ]
 export type Source = Code[];
 
 export function assemble (source : Source) : Program {
-    let program = source.map((c) => OpPool.allocateOp(...c));
+    let opAlloc = new OpAllocator();
+    let program = source.map((c) => opAlloc.alloc(...c));
 
     let i = 1;
     while (i < program.length) {
@@ -17,5 +18,6 @@ export function assemble (source : Source) : Program {
         prev.next = next.addr;
         i++;
     }
+
     return program;
 }

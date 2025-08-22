@@ -2,19 +2,24 @@
 import { Op } from './Program'
 import { Instruction, HALT } from './InstructionSet'
 
-export const OpPool : Op[] = [];
+export class OpAllocator {
+    public pool : Op[] = [];
 
-export function allocateOp (inst : Instruction, data : any[] = []) : Op {
-    let opIndex = OpPool.length;
+    alloc (inst : Instruction, data : any[] = []) : Op {
+        let opIndex = this.pool.length;
 
-    let op : Op = {
-        addr : opIndex,
-        inst : inst,
-        next : HALT,
-        data : data
-    } as Op;
+        let op : Op = {
+            addr : opIndex,
+            inst : inst,
+            next : HALT,
+            data : data
+        } as Op;
 
-    OpPool.push(op)
+        this.pool.push(op)
 
-    return op;
+        return op;
+    }
 }
+
+
+
