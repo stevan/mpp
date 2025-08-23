@@ -10,10 +10,7 @@ import {
     Instruction,
 } from './Core'
 
-import {
-    OpcodeNames,
-    Opcodes,
-} from './InstructionSet'
+import { Opcodes } from './InstructionSet'
 
 import * as Assembler   from './Assembler'
 import * as FramePool   from './FramePool'

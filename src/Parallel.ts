@@ -9,10 +9,7 @@ import {
     HALT,
 } from './Core'
 
-import {
-    Opcodes,
-    OpcodeNames,
-} from './InstructionSet'
+import { Opcodes } from './InstructionSet'
 
 import * as Assembler   from './Assembler'
 import * as FramePool   from './FramePool'
