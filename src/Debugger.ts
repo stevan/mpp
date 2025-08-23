@@ -44,7 +44,7 @@ export function resultLogHeader (msg : string = 'RESULTS:') {
 }
 
 export function dumpFrame (frame : Frame) {
-    console.log(`Frame @ pid: ${formatNum(frame.pid, 3)} pc: ${formatNum(frame.pc, 8)} stack: [ ${frame.stack.length == 0 ? '~' : frame.stack.join(', ')} ]`);
+    console.log(`FRAME @ pid: ${formatNum(frame.pid, 3)} pc: ${formatNum(frame.pc, 8)} stack: [ ${frame.stack.length == 0 ? '~' : frame.stack.join(', ')} ]`);
 }
 
 export function tickLine (tick : number) {

@@ -22,22 +22,27 @@ import * as ProgramPool from './ProgramPool'
 import * as DEBUG from './Debugger'
 
 // -----------------------------------------------------------------------------
+// Hmmm ...
+
+export type ProcessControlBlock = {
+    programIndex : ProgramIndex,
+    frameIndex   : FrameIndex,
+    // should also have ...
+    // - input/output channels
+    // - state (RUNNING, WAITING, etc)
+    // - and more
+}
+
+export function newProcessControlBlock (programIndex : ProgramIndex) : ProcessControlBlock {
+    let frameIndex = FramePool.allocateFrame(programIndex);
+    return { programIndex, frameIndex } as ProcessControlBlock
+}
+
+// -----------------------------------------------------------------------------
 // Sequential Compiler
 // -----------------------------------------------------------------------------
 
-export type Thread = {
-    programIndex : ProgramIndex,
-    frameIndex   : FrameIndex,
-}
-
-export function newThread (programIndex : ProgramIndex) : Thread {
-    let frameIndex = FramePool.allocateFrame(programIndex);
-    return { programIndex, frameIndex } as Thread
-}
-
-let formatNum = (n : number, x : number) : string => n.toString().padStart(x, '0');
-
-function execute (thread : Thread) : void {
+function execute (thread : ProcessControlBlock) : void {
     let frame   = FramePool.getFrame(thread.frameIndex);
     let program = ProgramPool.getProgram(thread.programIndex);
 
@@ -64,7 +69,7 @@ export function interpret (source : Assembler.Source) : void {
     let program      = Assembler.assemble(source);
     let programIndex = ProgramPool.allocateProgram(program);
 
-    execute(newThread(programIndex));
+    execute(newProcessControlBlock(programIndex));
 }
 
 
