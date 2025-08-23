@@ -15,35 +15,18 @@ import { Opcodes } from './InstructionSet'
 import * as Assembler   from './Assembler'
 import * as FramePool   from './FramePool'
 import * as ProgramPool from './ProgramPool'
-
-import * as DEBUG from './Debugger'
-
-// -----------------------------------------------------------------------------
-// Hmmm ...
-
-export type ProcessControlBlock = {
-    programIndex : ProgramIndex,
-    frameIndex   : FrameIndex,
-    // should also have ...
-    // - input/output channels
-    // - state (RUNNING, WAITING, etc)
-    // - and more
-}
-
-export function newProcessControlBlock (programIndex : ProgramIndex) : ProcessControlBlock {
-    let frameIndex = FramePool.allocateFrame(programIndex);
-    return { programIndex, frameIndex } as ProcessControlBlock
-}
+import * as PCBPool     from './PCBPool'
+import * as DEBUG       from './Debugger'
 
 // -----------------------------------------------------------------------------
 // Sequential Compiler
 // -----------------------------------------------------------------------------
 
-function execute (thread : ProcessControlBlock) : void {
-    let frame   = FramePool.getFrame(thread.frameIndex);
-    let program = ProgramPool.getProgram(thread.programIndex);
+function execute (pcb : PCBPool.PCB) : void {
+    let frame   = FramePool.getFrame(pcb.frameIndex);
+    let program = ProgramPool.getProgram(pcb.programIndex);
 
-    DEBUG.callLogHeader('START ->');
+    DEBUG.callLogHeader(`START -> pid(${pcb.pid})`);
     while (true) {
         let op     = program[frame.ip] as Op;      // fetch
         let opcode = Opcodes[op.inst]  as Opcode;  // decode
@@ -54,7 +37,7 @@ function execute (thread : ProcessControlBlock) : void {
         frame.pc++;
         // see if we should halt
         if (frame.ip == HALT) {
-            DEBUG.callLogFooter('HALT!');
+            DEBUG.callLogFooter(`HALT! -> pid(${pcb.pid})`);
             break;
         }
     }
@@ -65,8 +48,8 @@ function execute (thread : ProcessControlBlock) : void {
 export function interpret (source : Assembler.Source) : void {
     let program      = Assembler.assemble(source);
     let programIndex = ProgramPool.allocateProgram(program);
-
-    execute(newProcessControlBlock(programIndex));
+    let pcb          = PCBPool.allocatePCB(programIndex);
+    execute(pcb);
 }
 
 
