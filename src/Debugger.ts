@@ -1,6 +1,7 @@
 
 import {
     Frame,
+    FrameIndex,
     Op,
     Instruction,
 } from './Core'
@@ -110,6 +111,10 @@ OpcodeGroups[ Instruction.EQ    ] = OpcodeGroup.OPERATORS;
 OpcodeGroups[ Instruction.ADD   ] = OpcodeGroup.OPERATORS;
 OpcodeGroups[ Instruction.SUB   ] = OpcodeGroup.OPERATORS;
 
+export function getOpcodeName (i : Instruction) : string {
+    return OpcodeNames[i] as string
+}
+
 // =============================================================================
 
 export function callLogHeader (msg : string = 'RUN:') {
@@ -137,6 +142,10 @@ export function warpLogHeader (msg : string) {
     if (msg.length > 0) console.log(msg);
 }
 
+export function warpLogInfo (msg : string) {
+    if (msg.length > 0) console.log(msg);
+}
+
 export function warpLogFooter (msg : string) {
     if (msg.length > 0) console.log(msg);
 }
@@ -159,7 +168,7 @@ export function dumpQueues (queues : any[][]) : void {
     console.log(`QUEUES:`);
     for (let i = 0; i < OpcodeNames.length; i++) {
         let name  = OpcodeNames[i] as string;
-        let queue = queues[i] as any[];
+        let queue = queues[i] as FrameIndex[];
         console.log(`${queue.length > 0 ? '+' : '-'} ${name.toUpperCase().padEnd(8, ' ')} | ${queue.join(' | ')} `);
     }
 }
