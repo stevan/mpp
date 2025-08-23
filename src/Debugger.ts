@@ -59,6 +59,7 @@ ESC[48;2;{r};{g};{b}m   Set background color as RGB.
 */
 
 function formatNum (n : number, x : number) : string {
+    if (n < 0) return '!'.repeat(x);
     return n.toString().padStart(x, '0');
 }
 

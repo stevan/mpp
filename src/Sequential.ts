@@ -8,6 +8,7 @@ import {
     Program,
     HALT,
     Instruction,
+    PCB,
 } from './Core'
 
 import { Opcodes } from './InstructionSet'
@@ -22,7 +23,7 @@ import * as DEBUG       from './Debugger'
 // Sequential Compiler
 // -----------------------------------------------------------------------------
 
-function execute (pcb : PCBPool.PCB) : void {
+function execute (pcb : PCB) : void {
     let frame   = FramePool.getFrame(pcb.frameIndex);
     let program = ProgramPool.getProgram(pcb.programIndex);
 

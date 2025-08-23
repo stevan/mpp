@@ -8,6 +8,7 @@ import {
     Program,
     Instruction,
     HALT,
+    PCB,
 } from './Core'
 
 import { Opcodes } from './InstructionSet'
@@ -23,7 +24,7 @@ import * as DEBUG       from './Debugger'
 
 export type Queue  = FrameIndex[];
 export type Warp   = (q : Queue) => FrameIndex[];
-export type Kernel = PCBPool.PCB[];
+export type Kernel = PCB[];
 
 export type KernelIndex = number;
 
@@ -49,7 +50,7 @@ function compileWarp (opcode : Opcode) : Warp {
     return (q : Queue) : FrameIndex[] => {
         return q.map((frameIndex : FrameIndex) => {
             let frame   = FramePool.getFrame(frameIndex);
-            let program = ProgramPool.getProgram(frame.pid);
+            let program = ProgramPool.getProgram(frame.prog);
             let op      = program[frame.ip] as Op;
 
             DEBUG.logCall(frame, op);
@@ -87,7 +88,7 @@ export function loadKernel (kernel : Kernel) : void {
     DEBUG.warpLogHeader(`LOADING -> Kernel( n: ${kernel.length} )`);
     let queue = Queues[Instruction.ENTER] as Queue;
     DEBUG.warpLogInfo(`... loading ENTER Queue ${queue.length}`);
-    kernel.forEach((pcb : PCBPool.PCB) => queue.push(pcb.frameIndex));
+    kernel.forEach((pcb : PCB) => queue.push(pcb.frameIndex));
     DEBUG.warpLogInfo(`... loaded ENTER Queue ${queue.length}`);
     Kernels.push(kernel);
     DEBUG.warpLogFooter(`LOADED // (${Kernels.length}) are loaded`);
@@ -118,7 +119,7 @@ export function engage () : void {
 
     results.forEach((frameIndex : FrameIndex) : void => {
         let frame   = FramePool.getFrame( frameIndex );
-        let program = ProgramPool.getProgram(frame.pid);
+        let program = ProgramPool.getProgram(frame.prog);
 
         DEBUG.dumpFrame(frame);
 
