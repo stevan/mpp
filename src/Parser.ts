@@ -23,8 +23,11 @@ import {
     HashLiteralNode,
     ListNode,
     ArrayAccessNode,
+    ArraySliceNode,
     HashAccessNode,
-    MethodCallNode
+    HashSliceNode,
+    MethodCallNode,
+    AssignmentNode
 } from './AST.js';
 
 interface OperatorInfo {
@@ -240,6 +243,50 @@ export class Parser {
         // Check for declaration (my, our, state, const)
         if (lexemes[0].category === 'DECLARATION') {
             return this.parseDeclaration(lexemes);
+        }
+
+        // Check for assignment (lvalue ASSIGNOP expression)
+        // Find ASSIGNOP at depth 0
+        let assignDepth = 0;
+        let assignPos = -1;
+        for (let i = 0; i < lexemes.length; i++) {
+            if (lexemes[i].category === 'LPAREN' || lexemes[i].category === 'LBRACKET' || lexemes[i].category === 'LBRACE') {
+                assignDepth++;
+            }
+            if (lexemes[i].category === 'RPAREN' || lexemes[i].category === 'RBRACKET' || lexemes[i].category === 'RBRACE') {
+                assignDepth--;
+            }
+            if (assignDepth === 0 && lexemes[i].category === 'ASSIGNOP') {
+                assignPos = i;
+                break;
+            }
+        }
+
+        if (assignPos !== -1) {
+            // This is an assignment statement
+            const leftLexemes = lexemes.slice(0, assignPos);
+            const operator = lexemes[assignPos].token.value;
+            const rightLexemes = lexemes.slice(assignPos + 1);
+
+            // Parse left side (lvalue)
+            const left = this.parseExpression(leftLexemes, 0);
+            if (!left) {
+                return null;
+            }
+
+            // Parse right side (expression)
+            const right = this.parseExpression(rightLexemes, 0);
+            if (!right) {
+                return null;
+            }
+
+            const assignNode: AssignmentNode = {
+                type: 'Assignment',
+                left,
+                operator,
+                right
+            };
+            return assignNode;
         }
 
         // Otherwise parse as expression
@@ -485,6 +532,220 @@ export class Parser {
         if (lexeme.category === 'SCALAR_VAR' ||
             lexeme.category === 'ARRAY_VAR' ||
             lexeme.category === 'HASH_VAR') {
+
+            // Check for array slice: @array[indices]
+            if (lexeme.category === 'ARRAY_VAR' &&
+                pos + 1 < lexemes.length &&
+                lexemes[pos + 1].category === 'LBRACKET') {
+
+                // Find matching RBRACKET
+                let depth = 1;
+                let endPos = pos + 2;
+                while (endPos < lexemes.length && depth > 0) {
+                    if (lexemes[endPos].category === 'LBRACKET') depth++;
+                    if (lexemes[endPos].category === 'RBRACKET') depth--;
+                    endPos++;
+                }
+
+                // Parse indices expression
+                const indicesLexemes = lexemes.slice(pos + 2, endPos - 1);
+
+                // Check if there are commas at depth 0 (list of indices)
+                let hasComma = false;
+                let checkDepth = 0;
+                for (let i = 0; i < indicesLexemes.length; i++) {
+                    if (indicesLexemes[i].category === 'LPAREN' || indicesLexemes[i].category === 'LBRACKET' || indicesLexemes[i].category === 'LBRACE') {
+                        checkDepth++;
+                    }
+                    if (indicesLexemes[i].category === 'RPAREN' || indicesLexemes[i].category === 'RBRACKET' || indicesLexemes[i].category === 'RBRACE') {
+                        checkDepth--;
+                    }
+                    if (checkDepth === 0 && indicesLexemes[i].category === 'COMMA') {
+                        hasComma = true;
+                        break;
+                    }
+                }
+
+                let indices: ASTNode | null = null;
+
+                if (hasComma) {
+                    // Parse as list (comma-separated indices)
+                    const elements: ASTNode[] = [];
+                    let elemStart = 0;
+                    let elemDepth = 0;
+
+                    for (let i = 0; i < indicesLexemes.length; i++) {
+                        if (indicesLexemes[i].category === 'LPAREN' || indicesLexemes[i].category === 'LBRACKET' || indicesLexemes[i].category === 'LBRACE') {
+                            elemDepth++;
+                        }
+                        if (indicesLexemes[i].category === 'RPAREN' || indicesLexemes[i].category === 'RBRACKET' || indicesLexemes[i].category === 'RBRACE') {
+                            elemDepth--;
+                        }
+
+                        if (elemDepth === 0 && indicesLexemes[i].category === 'COMMA') {
+                            const elemTokens = indicesLexemes.slice(elemStart, i);
+                            if (elemTokens.length > 0) {
+                                const elem = this.parseExpression(elemTokens, 0);
+                                if (elem) {
+                                    elements.push(elem);
+                                }
+                            }
+                            elemStart = i + 1; // Skip the comma
+                        }
+                    }
+
+                    // Don't forget the last element
+                    const lastElemTokens = indicesLexemes.slice(elemStart);
+                    if (lastElemTokens.length > 0) {
+                        const elem = this.parseExpression(lastElemTokens, 0);
+                        if (elem) {
+                            elements.push(elem);
+                        }
+                    }
+
+                    const listNode: ListNode = {
+                        type: 'List',
+                        elements: elements
+                    };
+                    indices = listNode;
+                } else {
+                    // Single expression (often a range)
+                    indices = this.parseExpression(indicesLexemes, 0);
+                }
+
+                if (indices) {
+                    const varNode: VariableNode = {
+                        type: 'Variable',
+                        name: lexeme.token.value
+                    };
+                    const sliceNode: ArraySliceNode = {
+                        type: 'ArraySlice',
+                        base: varNode,
+                        indices: indices
+                    };
+                    return {
+                        node: sliceNode,
+                        nextPos: endPos
+                    };
+                }
+            }
+
+            // Check for hash slice: @hash{keys}
+            if (lexeme.category === 'ARRAY_VAR' &&
+                pos + 1 < lexemes.length &&
+                lexemes[pos + 1].category === 'LBRACE') {
+
+                // Find matching RBRACE
+                let depth = 1;
+                let endPos = pos + 2;
+                while (endPos < lexemes.length && depth > 0) {
+                    if (lexemes[endPos].category === 'LBRACE') depth++;
+                    if (lexemes[endPos].category === 'RBRACE') depth--;
+                    endPos++;
+                }
+
+                // Parse keys expression
+                const keysLexemes = lexemes.slice(pos + 2, endPos - 1);
+
+                // Check if there are commas at depth 0 (list of keys)
+                let hasComma = false;
+                let checkDepth = 0;
+                for (let i = 0; i < keysLexemes.length; i++) {
+                    if (keysLexemes[i].category === 'LPAREN' || keysLexemes[i].category === 'LBRACKET' || keysLexemes[i].category === 'LBRACE') {
+                        checkDepth++;
+                    }
+                    if (keysLexemes[i].category === 'RPAREN' || keysLexemes[i].category === 'RBRACKET' || keysLexemes[i].category === 'RBRACE') {
+                        checkDepth--;
+                    }
+                    if (checkDepth === 0 && keysLexemes[i].category === 'COMMA') {
+                        hasComma = true;
+                        break;
+                    }
+                }
+
+                let keys: ASTNode | null = null;
+
+                if (hasComma) {
+                    // Parse as list (comma-separated keys)
+                    const elements: ASTNode[] = [];
+                    let elemStart = 0;
+                    let elemDepth = 0;
+
+                    for (let i = 0; i < keysLexemes.length; i++) {
+                        if (keysLexemes[i].category === 'LPAREN' || keysLexemes[i].category === 'LBRACKET' || keysLexemes[i].category === 'LBRACE') {
+                            elemDepth++;
+                        }
+                        if (keysLexemes[i].category === 'RPAREN' || keysLexemes[i].category === 'RBRACKET' || keysLexemes[i].category === 'RBRACE') {
+                            elemDepth--;
+                        }
+
+                        if (elemDepth === 0 && keysLexemes[i].category === 'COMMA') {
+                            const elemTokens = keysLexemes.slice(elemStart, i);
+                            if (elemTokens.length > 0) {
+                                // Check for bareword key
+                                let elem: ASTNode | null = null;
+                                if (elemTokens.length === 1 && elemTokens[0].category === 'IDENTIFIER') {
+                                    const barewordKey: StringNode = {
+                                        type: 'String',
+                                        value: elemTokens[0].token.value
+                                    };
+                                    elem = barewordKey;
+                                } else {
+                                    elem = this.parseExpression(elemTokens, 0);
+                                }
+                                if (elem) {
+                                    elements.push(elem);
+                                }
+                            }
+                            elemStart = i + 1; // Skip the comma
+                        }
+                    }
+
+                    // Don't forget the last element
+                    const lastElemTokens = keysLexemes.slice(elemStart);
+                    if (lastElemTokens.length > 0) {
+                        let elem: ASTNode | null = null;
+                        if (lastElemTokens.length === 1 && lastElemTokens[0].category === 'IDENTIFIER') {
+                            const barewordKey: StringNode = {
+                                type: 'String',
+                                value: lastElemTokens[0].token.value
+                            };
+                            elem = barewordKey;
+                        } else {
+                            elem = this.parseExpression(lastElemTokens, 0);
+                        }
+                        if (elem) {
+                            elements.push(elem);
+                        }
+                    }
+
+                    const listNode: ListNode = {
+                        type: 'List',
+                        elements: elements
+                    };
+                    keys = listNode;
+                } else {
+                    // Single expression (e.g., @hash{@keys})
+                    keys = this.parseExpression(keysLexemes, 0);
+                }
+
+                if (keys) {
+                    const varNode: VariableNode = {
+                        type: 'Variable',
+                        name: lexeme.token.value
+                    };
+                    const sliceNode: HashSliceNode = {
+                        type: 'HashSlice',
+                        base: varNode,
+                        keys: keys
+                    };
+                    return {
+                        node: sliceNode,
+                        nextPos: endPos
+                    };
+                }
+            }
+
             const varNode: VariableNode = {
                 type: 'Variable',
                 name: lexeme.token.value
@@ -984,7 +1245,20 @@ export class Parser {
 
                 // Parse key expression
                 const keyLexemes = lexemes.slice(pos + 1, endPos - 1);
-                const key = this.parseExpression(keyLexemes, 0);
+                let key: ASTNode | null = null;
+
+                // Check for bareword key (single IDENTIFIER)
+                if (keyLexemes.length === 1 && keyLexemes[0].category === 'IDENTIFIER') {
+                    // Bareword hash key - convert to string without quotes
+                    const barewordKey: StringNode = {
+                        type: 'String',
+                        value: keyLexemes[0].token.value
+                    };
+                    key = barewordKey;
+                } else {
+                    // Regular expression key
+                    key = this.parseExpression(keyLexemes, 0);
+                }
 
                 if (key) {
                     const hashAccess: HashAccessNode = {

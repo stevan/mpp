@@ -136,10 +136,22 @@ export interface ArrayAccessNode extends ASTNode {
     index: ASTNode; // The index expression
 }
 
+export interface ArraySliceNode extends ASTNode {
+    type: 'ArraySlice';
+    base: ASTNode;    // The array variable (with @ sigil)
+    indices: ASTNode; // The index expression (often a range or list)
+}
+
 export interface HashAccessNode extends ASTNode {
     type: 'HashAccess';
     base: ASTNode;  // The hash variable or expression
     key: ASTNode;   // The key expression
+}
+
+export interface HashSliceNode extends ASTNode {
+    type: 'HashSlice';
+    base: ASTNode;    // The hash variable (with @ sigil)
+    keys: ASTNode;    // The keys expression (often a list)
 }
 
 export interface MethodCallNode extends ASTNode {
@@ -147,4 +159,11 @@ export interface MethodCallNode extends ASTNode {
     object: ASTNode;      // The object/class expression ($obj, ClassName, or any expression)
     method: string;       // Method name (identifier)
     arguments: ASTNode[]; // Argument list (can be empty)
+}
+
+export interface AssignmentNode extends ASTNode {
+    type: 'Assignment';
+    left: ASTNode;        // Variable, ArrayAccess, or HashAccess
+    operator: string;     // =, +=, -=, *=, /=, etc.
+    right: ASTNode;       // Expression to assign
 }

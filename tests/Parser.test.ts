@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { Tokenizer } from '../src/Tokenizer.js';
 import { Lexer } from '../src/Lexer.js';
 import { Parser } from '../src/Parser.js';
-import { BinaryOpNode, DeclarationNode, NumberNode, VariableNode, StringNode, IfNode, UnlessNode, WhileNode, UntilNode, ForeachNode, BlockNode, CallNode, ReturnNode, SubNode, ParameterNode, ArrayLiteralNode, HashLiteralNode, ListNode, ArrayAccessNode, HashAccessNode, UnaryOpNode, TernaryNode, MethodCallNode } from '../src/AST.js';
+import { BinaryOpNode, DeclarationNode, NumberNode, VariableNode, StringNode, IfNode, UnlessNode, WhileNode, UntilNode, ForeachNode, BlockNode, CallNode, ReturnNode, SubNode, ParameterNode, ArrayLiteralNode, HashLiteralNode, ListNode, ArrayAccessNode, ArraySliceNode, HashAccessNode, HashSliceNode, UnaryOpNode, TernaryNode, MethodCallNode, AssignmentNode } from '../src/AST.js';
 
 // Helper to parse source code into AST
 async function parse(source: string) {
@@ -107,8 +107,8 @@ describe('Parser', () => {
         const stmts = await parse('$x = 10;');
 
         assert.strictEqual(stmts.length, 1);
-        const stmt = stmts[0] as BinaryOpNode;
-        assert.strictEqual(stmt.type, 'BinaryOp');
+        const stmt = stmts[0] as AssignmentNode;
+        assert.strictEqual(stmt.type, 'Assignment');
         assert.strictEqual(stmt.operator, '=');
         assert.strictEqual(stmt.left.type, 'Variable');
         assert.strictEqual((stmt.left as VariableNode).name, '$x');
@@ -136,10 +136,90 @@ describe('Parser', () => {
         const stmts = await parse('$x = 5; $y = 10;');
 
         assert.strictEqual(stmts.length, 2);
-        assert.strictEqual(stmts[0].type, 'BinaryOp');
-        assert.strictEqual((stmts[0] as BinaryOpNode).operator, '=');
-        assert.strictEqual(stmts[1].type, 'BinaryOp');
-        assert.strictEqual((stmts[1] as BinaryOpNode).operator, '=');
+        assert.strictEqual(stmts[0].type, 'Assignment');
+        assert.strictEqual((stmts[0] as AssignmentNode).operator, '=');
+        assert.strictEqual(stmts[1].type, 'Assignment');
+        assert.strictEqual((stmts[1] as AssignmentNode).operator, '=');
+    });
+
+    // Range Expression Tests
+    test('parses simple numeric range', async () => {
+        const stmts = await parse('1..10;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as BinaryOpNode;
+        assert.strictEqual(stmt.type, 'BinaryOp');
+        assert.strictEqual(stmt.operator, '..');
+        assert.strictEqual(stmt.left.type, 'Number');
+        assert.strictEqual((stmt.left as NumberNode).value, '1');
+        assert.strictEqual(stmt.right.type, 'Number');
+        assert.strictEqual((stmt.right as NumberNode).value, '10');
+    });
+
+    test('parses range in assignment', async () => {
+        const stmts = await parse('my @nums = (1..10);');
+
+        assert.strictEqual(stmts.length, 1);
+        const decl = stmts[0] as DeclarationNode;
+        assert.strictEqual(decl.type, 'Declaration');
+        assert.strictEqual(decl.variable.name, '@nums');
+        assert.strictEqual(decl.initializer?.type, 'BinaryOp');
+        const range = decl.initializer as BinaryOpNode;
+        assert.strictEqual(range.operator, '..');
+        assert.strictEqual((range.left as NumberNode).value, '1');
+        assert.strictEqual((range.right as NumberNode).value, '10');
+    });
+
+    test('parses string range', async () => {
+        const stmts = await parse("'a'..'z';");
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as BinaryOpNode;
+        assert.strictEqual(stmt.type, 'BinaryOp');
+        assert.strictEqual(stmt.operator, '..');
+        assert.strictEqual(stmt.left.type, 'String');
+        assert.strictEqual((stmt.left as StringNode).value, "'a'");
+        assert.strictEqual(stmt.right.type, 'String');
+        assert.strictEqual((stmt.right as StringNode).value, "'z'");
+    });
+
+    test('parses range with variable bounds', async () => {
+        const stmts = await parse('$start..$end;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as BinaryOpNode;
+        assert.strictEqual(stmt.type, 'BinaryOp');
+        assert.strictEqual(stmt.operator, '..');
+        assert.strictEqual(stmt.left.type, 'Variable');
+        assert.strictEqual((stmt.left as VariableNode).name, '$start');
+        assert.strictEqual(stmt.right.type, 'Variable');
+        assert.strictEqual((stmt.right as VariableNode).name, '$end');
+    });
+
+    test('parses range with expressions', async () => {
+        const stmts = await parse('(1 + 1)..(5 * 2);');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as BinaryOpNode;
+        assert.strictEqual(stmt.type, 'BinaryOp');
+        assert.strictEqual(stmt.operator, '..');
+        assert.strictEqual(stmt.left.type, 'BinaryOp');
+        assert.strictEqual((stmt.left as BinaryOpNode).operator, '+');
+        assert.strictEqual(stmt.right.type, 'BinaryOp');
+        assert.strictEqual((stmt.right as BinaryOpNode).operator, '*');
+    });
+
+    test('parses range in array literal', async () => {
+        const stmts = await parse('[1..5, 10..15];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArrayLiteralNode;
+        assert.strictEqual(stmt.type, 'ArrayLiteral');
+        assert.strictEqual(stmt.elements.length, 2);
+        assert.strictEqual(stmt.elements[0].type, 'BinaryOp');
+        assert.strictEqual((stmt.elements[0] as BinaryOpNode).operator, '..');
+        assert.strictEqual(stmt.elements[1].type, 'BinaryOp');
+        assert.strictEqual((stmt.elements[1] as BinaryOpNode).operator, '..');
     });
 
     test('parses variable declaration', async () => {
@@ -164,7 +244,7 @@ describe('Parser', () => {
         assert.strictEqual(ifStmt.condition.type, 'BinaryOp');
         assert.strictEqual((ifStmt.condition as BinaryOpNode).operator, '>');
         assert.strictEqual(ifStmt.thenBlock.length, 1);
-        assert.strictEqual(ifStmt.thenBlock[0].type, 'BinaryOp');
+        assert.strictEqual(ifStmt.thenBlock[0].type, 'Assignment');
         assert.strictEqual(ifStmt.elseIfClauses.length, 0);
         assert.strictEqual(ifStmt.elseBlock, undefined);
     });
@@ -178,7 +258,7 @@ describe('Parser', () => {
         assert.strictEqual(ifStmt.thenBlock.length, 1);
         assert.strictEqual(ifStmt.elseIfClauses.length, 0);
         assert.strictEqual(ifStmt.elseBlock?.length, 1);
-        assert.strictEqual(ifStmt.elseBlock?.[0].type, 'BinaryOp');
+        assert.strictEqual(ifStmt.elseBlock?.[0].type, 'Assignment');
     });
 
     test('parses if-elsif statement', async () => {
@@ -227,7 +307,7 @@ describe('Parser', () => {
         assert.strictEqual(whileStmt.condition.type, 'BinaryOp');
         assert.strictEqual((whileStmt.condition as BinaryOpNode).operator, '<');
         assert.strictEqual(whileStmt.block.length, 1);
-        assert.strictEqual(whileStmt.block[0].type, 'BinaryOp');
+        assert.strictEqual(whileStmt.block[0].type, 'Assignment');
     });
 
     test('parses until loop', async () => {
@@ -239,7 +319,7 @@ describe('Parser', () => {
         assert.strictEqual(untilStmt.condition.type, 'Variable');
         assert.strictEqual((untilStmt.condition as VariableNode).name, '$done');
         assert.strictEqual(untilStmt.block.length, 1);
-        assert.strictEqual(untilStmt.block[0].type, 'BinaryOp');
+        assert.strictEqual(untilStmt.block[0].type, 'Assignment');
     });
 
     test('parses while loop with multiple statements', async () => {
@@ -249,8 +329,8 @@ describe('Parser', () => {
         const whileStmt = stmts[0] as WhileNode;
         assert.strictEqual(whileStmt.type, 'While');
         assert.strictEqual(whileStmt.block.length, 2);
-        assert.strictEqual(whileStmt.block[0].type, 'BinaryOp');
-        assert.strictEqual(whileStmt.block[1].type, 'BinaryOp');
+        assert.strictEqual(whileStmt.block[0].type, 'Assignment');
+        assert.strictEqual(whileStmt.block[1].type, 'Assignment');
     });
 
     test('parses foreach loop with declared variable', async () => {
@@ -298,8 +378,8 @@ describe('Parser', () => {
         const foreachStmt = stmts[0] as ForeachNode;
         assert.strictEqual(foreachStmt.type, 'Foreach');
         assert.strictEqual(foreachStmt.block.length, 2);
-        assert.strictEqual(foreachStmt.block[0].type, 'BinaryOp');
-        assert.strictEqual(foreachStmt.block[1].type, 'BinaryOp');
+        assert.strictEqual(foreachStmt.block[0].type, 'Assignment');
+        assert.strictEqual(foreachStmt.block[1].type, 'Assignment');
     });
 
     test('parses postfix if', async () => {
@@ -311,8 +391,8 @@ describe('Parser', () => {
         assert.strictEqual(ifStmt.condition.type, 'Variable');
         assert.strictEqual((ifStmt.condition as VariableNode).name, '$condition');
         assert.strictEqual(ifStmt.thenBlock.length, 1);
-        assert.strictEqual(ifStmt.thenBlock[0].type, 'BinaryOp');
-        assert.strictEqual((ifStmt.thenBlock[0] as BinaryOpNode).operator, '=');
+        assert.strictEqual(ifStmt.thenBlock[0].type, 'Assignment');
+        assert.strictEqual((ifStmt.thenBlock[0] as AssignmentNode).operator, '=');
         assert.strictEqual(ifStmt.elseIfClauses.length, 0);
         assert.strictEqual(ifStmt.elseBlock, undefined);
     });
@@ -326,7 +406,7 @@ describe('Parser', () => {
         assert.strictEqual(unlessStmt.condition.type, 'Variable');
         assert.strictEqual((unlessStmt.condition as VariableNode).name, '$error');
         assert.strictEqual(unlessStmt.thenBlock.length, 1);
-        assert.strictEqual(unlessStmt.thenBlock[0].type, 'BinaryOp');
+        assert.strictEqual(unlessStmt.thenBlock[0].type, 'Assignment');
     });
 
     test('parses postfix while', async () => {
@@ -338,7 +418,7 @@ describe('Parser', () => {
         assert.strictEqual(whileStmt.condition.type, 'Variable');
         assert.strictEqual((whileStmt.condition as VariableNode).name, '$running');
         assert.strictEqual(whileStmt.block.length, 1);
-        assert.strictEqual(whileStmt.block[0].type, 'BinaryOp');
+        assert.strictEqual(whileStmt.block[0].type, 'Assignment');
     });
 
     test('parses postfix until', async () => {
@@ -350,7 +430,7 @@ describe('Parser', () => {
         assert.strictEqual(untilStmt.condition.type, 'Variable');
         assert.strictEqual((untilStmt.condition as VariableNode).name, '$done');
         assert.strictEqual(untilStmt.block.length, 1);
-        assert.strictEqual(untilStmt.block[0].type, 'BinaryOp');
+        assert.strictEqual(untilStmt.block[0].type, 'Assignment');
     });
 
     test('parses bare block statement', async () => {
@@ -360,7 +440,7 @@ describe('Parser', () => {
         const blockStmt = stmts[0] as BlockNode;
         assert.strictEqual(blockStmt.type, 'Block');
         assert.strictEqual(blockStmt.statements.length, 1);
-        assert.strictEqual(blockStmt.statements[0].type, 'BinaryOp');
+        assert.strictEqual(blockStmt.statements[0].type, 'Assignment');
     });
 
     test('parses block with multiple statements', async () => {
@@ -371,7 +451,7 @@ describe('Parser', () => {
         assert.strictEqual(blockStmt.type, 'Block');
         assert.strictEqual(blockStmt.statements.length, 2);
         assert.strictEqual(blockStmt.statements[0].type, 'Declaration');
-        assert.strictEqual(blockStmt.statements[1].type, 'BinaryOp');
+        assert.strictEqual(blockStmt.statements[1].type, 'Assignment');
     });
 
     test('parses nested blocks', async () => {
@@ -381,12 +461,12 @@ describe('Parser', () => {
         const outerBlock = stmts[0] as BlockNode;
         assert.strictEqual(outerBlock.type, 'Block');
         assert.strictEqual(outerBlock.statements.length, 2);
-        assert.strictEqual(outerBlock.statements[0].type, 'BinaryOp');
+        assert.strictEqual(outerBlock.statements[0].type, 'Assignment');
         assert.strictEqual(outerBlock.statements[1].type, 'Block');
 
         const innerBlock = outerBlock.statements[1] as BlockNode;
         assert.strictEqual(innerBlock.statements.length, 1);
-        assert.strictEqual(innerBlock.statements[0].type, 'BinaryOp');
+        assert.strictEqual(innerBlock.statements[0].type, 'Assignment');
     });
 
     test('parses block followed by statement', async () => {
@@ -394,7 +474,7 @@ describe('Parser', () => {
 
         assert.strictEqual(stmts.length, 2);
         assert.strictEqual(stmts[0].type, 'Block');
-        assert.strictEqual(stmts[1].type, 'BinaryOp');
+        assert.strictEqual(stmts[1].type, 'Assignment');
     });
 
     test('parses function call with no arguments', async () => {
@@ -884,6 +964,59 @@ describe('Parser', () => {
         assert.strictEqual(stmt.base.type, 'Call');
     });
 
+    // Array Slice Tests
+    test('parses array slice with range', async () => {
+        const stmts = await parse('@array[0..4];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArraySliceNode;
+        assert.strictEqual(stmt.type, 'ArraySlice');
+        assert.strictEqual(stmt.base.type, 'Variable');
+        assert.strictEqual((stmt.base as VariableNode).name, '@array');
+        assert.strictEqual(stmt.indices.type, 'BinaryOp');
+        assert.strictEqual((stmt.indices as BinaryOpNode).operator, '..');
+        assert.strictEqual(((stmt.indices as BinaryOpNode).left as NumberNode).value, '0');
+        assert.strictEqual(((stmt.indices as BinaryOpNode).right as NumberNode).value, '4');
+    });
+
+    test('parses array slice with list of indices', async () => {
+        const stmts = await parse('@array[0, 2, 4];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArraySliceNode;
+        assert.strictEqual(stmt.type, 'ArraySlice');
+        assert.strictEqual(stmt.base.type, 'Variable');
+        assert.strictEqual((stmt.base as VariableNode).name, '@array');
+        assert.strictEqual(stmt.indices.type, 'List');
+        const indicesList = stmt.indices as ListNode;
+        assert.strictEqual(indicesList.elements.length, 3);
+        assert.strictEqual((indicesList.elements[0] as NumberNode).value, '0');
+        assert.strictEqual((indicesList.elements[1] as NumberNode).value, '2');
+        assert.strictEqual((indicesList.elements[2] as NumberNode).value, '4');
+    });
+
+    test('parses array slice with variable range', async () => {
+        const stmts = await parse('@items[$start..$end];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArraySliceNode;
+        assert.strictEqual(stmt.type, 'ArraySlice');
+        assert.strictEqual(stmt.indices.type, 'BinaryOp');
+        assert.strictEqual((stmt.indices as BinaryOpNode).operator, '..');
+    });
+
+    test('parses array slice in assignment', async () => {
+        const stmts = await parse('my @subset = @data[0..9];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.type, 'Declaration');
+        assert.strictEqual(stmt.variable.name, '@subset');
+        assert.strictEqual(stmt.initializer?.type, 'ArraySlice');
+        const slice = stmt.initializer as ArraySliceNode;
+        assert.strictEqual((slice.base as VariableNode).name, '@data');
+    });
+
     // Hash Access Tests
     test('parses simple hash value access', async () => {
         const stmts = await parse('$hash{"key"};');
@@ -935,6 +1068,119 @@ describe('Parser', () => {
         const stmt = stmts[0] as HashAccessNode;
         assert.strictEqual(stmt.type, 'HashAccess');
         assert.strictEqual(stmt.base.type, 'Call');
+    });
+
+    // Bareword Hash Key Tests
+    test('parses bareword hash key', async () => {
+        const stmts = await parse('$hash{key};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashAccessNode;
+        assert.strictEqual(stmt.type, 'HashAccess');
+        assert.strictEqual(stmt.base.type, 'Variable');
+        assert.strictEqual((stmt.base as VariableNode).name, '$hash');
+        assert.strictEqual(stmt.key.type, 'String');
+        assert.strictEqual((stmt.key as StringNode).value, 'key');
+    });
+
+    test('parses bareword hash key in assignment', async () => {
+        const stmts = await parse('my $value = $hash{name};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.initializer?.type, 'HashAccess');
+        const access = stmt.initializer as HashAccessNode;
+        assert.strictEqual((access.base as VariableNode).name, '$hash');
+        assert.strictEqual(access.key.type, 'String');
+        assert.strictEqual((access.key as StringNode).value, 'name');
+    });
+
+    test('parses bareword key with hash reference dereference', async () => {
+        const stmts = await parse('$href->{key};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashAccessNode;
+        assert.strictEqual(stmt.type, 'HashAccess');
+        assert.strictEqual(stmt.base.type, 'Variable');
+        assert.strictEqual((stmt.base as VariableNode).name, '$href');
+        assert.strictEqual(stmt.key.type, 'String');
+        assert.strictEqual((stmt.key as StringNode).value, 'key');
+    });
+
+    test('parses mixed quoted and bareword keys in chain', async () => {
+        const stmts = await parse('$hash{foo}{"bar"}{baz};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashAccessNode;
+        assert.strictEqual(stmt.type, 'HashAccess');
+        assert.strictEqual(stmt.key.type, 'String');
+        assert.strictEqual((stmt.key as StringNode).value, 'baz');
+
+        const middle = stmt.base as HashAccessNode;
+        assert.strictEqual(middle.type, 'HashAccess');
+        assert.strictEqual((middle.key as StringNode).value, '"bar"');
+
+        const base = middle.base as HashAccessNode;
+        assert.strictEqual(base.type, 'HashAccess');
+        assert.strictEqual((base.key as StringNode).value, 'foo');
+    });
+
+    // Hash Slice Tests
+    test('parses hash slice with list of keys', async () => {
+        const stmts = await parse('@hash{"a", "b", "c"};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashSliceNode;
+        assert.strictEqual(stmt.type, 'HashSlice');
+        assert.strictEqual(stmt.base.type, 'Variable');
+        assert.strictEqual((stmt.base as VariableNode).name, '@hash');
+        assert.strictEqual(stmt.keys.type, 'List');
+        const keysList = stmt.keys as ListNode;
+        assert.strictEqual(keysList.elements.length, 3);
+        assert.strictEqual((keysList.elements[0] as StringNode).value, '"a"');
+        assert.strictEqual((keysList.elements[1] as StringNode).value, '"b"');
+        assert.strictEqual((keysList.elements[2] as StringNode).value, '"c"');
+    });
+
+    test('parses hash slice with bareword keys', async () => {
+        const stmts = await parse('@hash{foo, bar, baz};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashSliceNode;
+        assert.strictEqual(stmt.type, 'HashSlice');
+        assert.strictEqual(stmt.base.type, 'Variable');
+        assert.strictEqual((stmt.base as VariableNode).name, '@hash');
+        assert.strictEqual(stmt.keys.type, 'List');
+        const keysList = stmt.keys as ListNode;
+        assert.strictEqual(keysList.elements.length, 3);
+        assert.strictEqual((keysList.elements[0] as StringNode).value, 'foo');
+        assert.strictEqual((keysList.elements[1] as StringNode).value, 'bar');
+        assert.strictEqual((keysList.elements[2] as StringNode).value, 'baz');
+    });
+
+    test('parses hash slice with array variable', async () => {
+        const stmts = await parse('@hash{@keys};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashSliceNode;
+        assert.strictEqual(stmt.type, 'HashSlice');
+        assert.strictEqual(stmt.base.type, 'Variable');
+        assert.strictEqual((stmt.base as VariableNode).name, '@hash');
+        assert.strictEqual(stmt.keys.type, 'Variable');
+        assert.strictEqual((stmt.keys as VariableNode).name, '@keys');
+    });
+
+    test('parses hash slice in assignment', async () => {
+        const stmts = await parse('my @values = @config{"host", "port"};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.type, 'Declaration');
+        assert.strictEqual(stmt.variable.name, '@values');
+        assert.strictEqual(stmt.initializer?.type, 'HashSlice');
+        const slice = stmt.initializer as HashSliceNode;
+        assert.strictEqual((slice.base as VariableNode).name, '@config');
+        assert.strictEqual(slice.keys.type, 'List');
     });
 
     // Chained Access Tests
@@ -1353,5 +1599,167 @@ describe('Parser', () => {
         assert.strictEqual(stmts.length, 1);
         const stmt = stmts[0];
         assert.strictEqual(stmt.type, 'MethodCall');
+    });
+
+    // Assignment to Elements Tests
+    test('parses simple variable assignment', async () => {
+        const stmts = await parse('$x = 42;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Assignment');
+    });
+
+    test('parses array element assignment', async () => {
+        const stmts = await parse('$array[0] = 42;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Assignment');
+    });
+
+    test('parses array reference element assignment', async () => {
+        const stmts = await parse('$aref->[1] = "hello";');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Assignment');
+    });
+
+    test('parses hash element assignment', async () => {
+        const stmts = await parse('$hash{"key"} = "value";');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Assignment');
+    });
+
+    test('parses hash reference element assignment', async () => {
+        const stmts = await parse('$href->{"name"} = "Alice";');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Assignment');
+    });
+
+    test('parses chained access assignment', async () => {
+        const stmts = await parse('$data->[0]{"key"} = 100;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Assignment');
+    });
+
+    test('parses assignment with expression on right side', async () => {
+        const stmts = await parse('$array[$i] = $x + $y;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Assignment');
+    });
+
+    test('parses compound assignment +=', async () => {
+        const stmts = await parse('$count += 1;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Assignment');
+    });
+
+    test('parses compound assignment on array element', async () => {
+        const stmts = await parse('$scores[$i] += 10;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Assignment');
+    });
+
+    test('parses string concatenation assignment', async () => {
+        const stmts = await parse('$str .= " world";');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Assignment');
+    });
+
+    test('parses assignment with function call on right', async () => {
+        const stmts = await parse('$result[0] = calculate($x);');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Assignment');
+    });
+
+    test('parses assignment with method call on right', async () => {
+        const stmts = await parse('$config{"timeout"} = $obj->get_timeout();');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Assignment');
+    });
+
+    // List Assignment Tests
+    test('parses simple list assignment', async () => {
+        const stmts = await parse('($x, $y) = (1, 2);');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as AssignmentNode;
+        assert.strictEqual(stmt.type, 'Assignment');
+        assert.strictEqual(stmt.operator, '=');
+        assert.strictEqual(stmt.left.type, 'List');
+        const leftList = stmt.left as ListNode;
+        assert.strictEqual(leftList.elements.length, 2);
+        assert.strictEqual(leftList.elements[0].type, 'Variable');
+        assert.strictEqual((leftList.elements[0] as VariableNode).name, '$x');
+        assert.strictEqual(leftList.elements[1].type, 'Variable');
+        assert.strictEqual((leftList.elements[1] as VariableNode).name, '$y');
+
+        assert.strictEqual(stmt.right.type, 'List');
+        const rightList = stmt.right as ListNode;
+        assert.strictEqual(rightList.elements.length, 2);
+        assert.strictEqual(rightList.elements[0].type, 'Number');
+        assert.strictEqual((rightList.elements[0] as NumberNode).value, '1');
+        assert.strictEqual(rightList.elements[1].type, 'Number');
+        assert.strictEqual((rightList.elements[1] as NumberNode).value, '2');
+    });
+
+    test('parses list assignment from array variable', async () => {
+        const stmts = await parse('($first, $second) = @array;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as AssignmentNode;
+        assert.strictEqual(stmt.type, 'Assignment');
+        assert.strictEqual(stmt.left.type, 'List');
+        const leftList = stmt.left as ListNode;
+        assert.strictEqual(leftList.elements.length, 2);
+
+        assert.strictEqual(stmt.right.type, 'Variable');
+        assert.strictEqual((stmt.right as VariableNode).name, '@array');
+    });
+
+    test('parses list assignment with three variables', async () => {
+        const stmts = await parse('($a, $b, $c) = (10, 20, 30);');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as AssignmentNode;
+        assert.strictEqual(stmt.type, 'Assignment');
+        const leftList = stmt.left as ListNode;
+        assert.strictEqual(leftList.elements.length, 3);
+        assert.strictEqual((leftList.elements[0] as VariableNode).name, '$a');
+        assert.strictEqual((leftList.elements[1] as VariableNode).name, '$b');
+        assert.strictEqual((leftList.elements[2] as VariableNode).name, '$c');
+    });
+
+    test('parses list assignment with mixed variable types', async () => {
+        const stmts = await parse('($scalar, @array, %hash) = (1, 2, 3);');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as AssignmentNode;
+        assert.strictEqual(stmt.type, 'Assignment');
+        const leftList = stmt.left as ListNode;
+        assert.strictEqual(leftList.elements.length, 3);
+        assert.strictEqual((leftList.elements[0] as VariableNode).name, '$scalar');
+        assert.strictEqual((leftList.elements[1] as VariableNode).name, '@array');
+        assert.strictEqual((leftList.elements[2] as VariableNode).name, '%hash');
     });
 });

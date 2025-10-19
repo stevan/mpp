@@ -1,329 +1,307 @@
-# Session 7: Method Calls
+# Session 10 Prompt - MPP Parser Development
 
-I'm continuing development on the **MPP (Modern Perl Parser)** project. This is a parser framework built using async generators with a streaming pipeline architecture.
+## Quick Start
 
-## Current State (After Session 6)
+You are continuing development of the **MPP (Modern Perl Parser)** project. This is a TypeScript-based parser for a modern subset of Perl, built with strict TDD methodology.
 
-The project is in `/Users/stevan/Projects/typescript/100-Opal/mpp/`
+**Current Status:**
+- **193 tests passing** ✅
+- **~1,850 lines of parser code**
+- Last session: Implemented range expressions, bareword hash keys, list assignment, array slices, and hash slices
+- Created comprehensive feature roadmap
 
-### ✅ Completed Features (144 tests passing)
+## Critical Files to Read First
 
-**Complete Expression Parsing**:
-- Literals (numbers, strings)
-- Variables with sigils ($scalar, @array, %hash)
-- Binary operators (20 precedence levels with correct associativity)
-- **Unary operators** (`-`, `+`, `!`) - NEW IN SESSION 6!
-- **Ternary operator** (`? :`) - NEW IN SESSION 6!
-- Parenthesized expressions
-- Variable declarations (`my $x = 10;`)
+1. **FEATURE_PRIORITIES.md** ⭐ **READ THIS FIRST** ⭐
+   - Replaces NEXT_STEPS.md
+   - Comprehensive roadmap of 23 features to implement
+   - Organized into 9 phases with time estimates
+   - Shows what to defer and what to drop
+   - **ALWAYS consult this before planning work**
 
-**Complete Control Flow**:
-- If/elsif/else chains with multiple branches
-- Unless (prefix and postfix forms)
-- While/until loops
-- Foreach/for loops with ranges (`for my $i (1..10)`)
-- Postfix conditionals (all statement types: `return 0 if $x`)
-- Block statements for lexical scoping (`{ my $x = 5; }`)
+2. **DEVELOPMENT_LOG.md** (Session 9 section at bottom)
+   - Summary of what was built in Session 9
+   - 5 features: ranges, bareword keys, list assignment, slices
+   - Architecture insights and lessons learned
 
-**Complete Function Support**:
-- Function definitions with parameters (`sub add($x, $y) { ... }`)
-- Anonymous subs (`my $fn = sub ($x) { return $x * 2; };`)
-- Default parameter values (`sub greet($name = "World") { ... }`)
-- Function calls with arguments (`add(5, 10)`)
-- Return statements (`return $x + $y;`)
-- Recursive function calls
+3. **README.md**
+   - Project overview and capabilities
+   - How to run tests: `npm test`
+   - How to run REPL: `npm run repl`
 
-**Complete Data Structure Support**:
-- Array literals: `[1, 2, 3]`
-- Hash literals: `+{ "key" => "value" }`
-- List literals: `(1, 2, 3)`
-- Nested structures: `[1, +{ "x" => [2, 3] }]`
-- Array access: `$array[0]`, `$aref->[0]`
-- Hash access: `$hash{"key"}`, `$href->{"key"}`
-- Chained access: `$data->[0]{"key"}[1]`
-- Dereference operator: `->`
+## Recommended Next Steps
 
-**Developer Tools**:
-- **Interactive REPL** (`npm run repl`) - NEW IN SESSION 6!
-- Comprehensive test suite (144 tests)
-- Strict TDD methodology
+### Option 1: Sprint 1 - Essential Builtins (RECOMMENDED)
 
-### Parser Can Currently Handle
+**Time:** 2-3 hours | **Value:** HIGH | **Complexity:** LOW
 
-```perl
-# Complete programs with expressions and data structures!
-my $users = [
-    +{ "name" => "Alice", "scores" => [95, 87, 92], "active" => 1 },
-    +{ "name" => "Bob", "scores" => [88, 91, 85], "active" => 0 }
-];
+Implement core built-in functions:
 
-sub average_score($person) {
-    my $scores = $person->{"scores"};
-    my $sum = $scores->[0] + $scores->[1] + $scores->[2];
-    return $sum / 3;
-}
+1. **`die` and `warn` statements** (~10 lines)
+   - Parse as built-in function calls (like return)
+   - Example: `die "Error: $msg";`
 
-sub get_status($person) {
-    return $person->{"active"} ? "active" : "inactive";
-}
+2. **`print` and `say` statements** (~15 lines)
+   - Parse as built-in function calls
+   - Example: `print "Hello";`, `say $message;`
 
-for my $i (0..1) {
-    my $user = $users->[$i];
-    my $name = $user->{"name"};
-    my $avg = average_score($user);
-    my $status = get_status($user);
+3. **`do` blocks** (~20 lines)
+   - Return value from block
+   - Example: `my $x = do { ... };`
 
-    my $grade = $avg >= 90 ? "A" : $avg >= 80 ? "B" : "C";
+4. **`require` builtin** (~15 lines)
+   - Verify it works as function call (likely already works!)
+   - Example: `require "Config.pm";`
 
-    print($name);
-    print($grade);
-    print($status);
-}
+**Why Sprint 1:**
+- High practical value
+- No architectural changes needed
+- Enables error handling and output
+- Quick wins build momentum
+
+### Option 2: Sprint 2 - Loop Control
+
+**Time:** 2-3 hours | **Value:** HIGH | **Complexity:** LOW
+
+Implement loop control flow:
+
+1. **`last`, `next`, `redo` statements** (~40 lines)
+   - Add keywords to tokenizer
+   - New AST nodes
+   - Parse like `return`
+
+2. **Labels for loops** (~60 lines)
+   - `OUTER: while (...) { ... last OUTER; }`
+   - Add label field to loop AST nodes
+
+**Why Sprint 2:**
+- Completes control flow
+- Natural progression
+- Commonly used in real code
+
+## Development Workflow
+
+### 1. Test-Driven Development (TDD)
+
+**Always follow this pattern:**
+
+```bash
+# 1. Write tests first (tests/Parser.test.ts)
+npm test  # Should fail
+
+# 2. Implement feature (src/Parser.ts, src/AST.ts)
+npm test  # Should pass
+
+# 3. Verify all tests still pass
+npm test  # 193+ tests passing
 ```
 
-**Achievement**: Complete expression support! Parser handles unary (`-$x`), binary (`$a + $b`), and ternary (`$x ? $a : $b`) operators with correct precedence and associativity.
+### 2. Architecture Guidelines
 
-## What I Want to Build This Session
+**Parser Structure:**
+- **Tokenizer** (`src/Tokenizer.ts`) - Converts source to tokens
+- **Lexer** (`src/Lexer.ts`) - Classifies tokens into categories
+- **Parser** (`src/Parser.ts`) - Builds AST using precedence climbing
+- **AST** (`src/AST.ts`) - Node type definitions
 
-I want to add **method calls**, the foundation for object-oriented programming:
+**Key Methods:**
+- `parseStatement()` - Top-level statement dispatcher
+- `parsePrimary()` - Literals, variables, atoms
+- `precedenceClimb()` - Binary operators with precedence
+- `parsePostfixOps()` - Array/hash access, method calls, slices
 
-```perl
-# Object method calls
-$obj->method($arg);
-$person->get_name();
-$config->set("timeout", 30);
+**Adding New Features:**
+1. Define AST node in `src/AST.ts`
+2. Add keyword to `src/Tokenizer.ts` if needed
+3. Add parsing logic to appropriate method
+4. Write comprehensive tests
 
-# Class method calls (static methods)
-Point->new(x => 5, y => 10);
-Math->sqrt(16);
+### 3. Common Patterns
 
-# Chained method calls
-$obj->method1()->method2()->method3();
-$db->connect()->query("SELECT * FROM users")->fetch();
-
-# Method calls with data structure access
-my $name = $users->[0]->get_profile()->get_name();
-$data->{"config"}->validate()->save();
-
-# Method calls in expressions
-my $result = $obj->calculate() * 2 + 10;
-my $total = $cart->get_total() + $tax->calculate($cart);
-```
-
-This will enable:
-- Object-oriented programming
-- Method chaining patterns
-- Foundation for class definitions (future session)
-- Integration with existing data structure access
-
-## Implementation Plan
-
-### 1. AST Node Type
-
-Add to `src/AST.ts`:
-
+**Depth Tracking** (for nested structures):
 ```typescript
-export interface MethodCallNode extends ASTNode {
-    type: 'MethodCall';
-    object: ASTNode;      // $obj, ClassName (identifier), or any expression
-    method: string;       // method name (identifier)
-    arguments: ASTNode[]; // argument list (can be empty)
+let depth = 0;
+for (let i = 0; i < lexemes.length; i++) {
+    if (lexemes[i].category === 'LPAREN') depth++;
+    if (lexemes[i].category === 'RPAREN') depth--;
+    // Process at depth 0
 }
 ```
 
-### 2. Test Cases to Write
-
-In `tests/Parser.test.ts`:
-- Simple method call: `$obj->method()`
-- Method with arguments: `$obj->method($a, $b)`
-- Method with no arguments: `$obj->get_value()`
-- Class method call: `Class->new()`
-- Chained method calls: `$obj->m1()->m2()->m3()`
-- Method call on expression: `get_obj()->method()`
-- Method after array access: `$array->[0]->method()`
-- Method after hash access: `$hash{"key"}->method()`
-- Complex chain: `$data->[0]->method()->{"key"}`
-- Method in expression: `$obj->value() + 10`
-
-### 3. Parser Implementation
-
-In `src/Parser.ts`, modify `parsePostfixOperators()`:
-
-The key is to detect when `->` is followed by an identifier and `(`, indicating a method call (not array/hash dereference).
-
+**Bareword Detection**:
 ```typescript
-// Inside parsePostfixOperators() while loop:
-
-// Dereference: -> followed by [ or {
-else if ((lexeme.category === 'BINOP' || lexeme.category === 'OPERATOR')
-         && lexeme.token.value === '->') {
-
-    // Check what follows the ->
-    if (pos + 1 >= lexemes.length) break;
-
-    const next = lexemes[pos + 1];
-
-    // Method call: -> followed by identifier and (
-    if (next.category === 'IDENTIFIER') {
-        // Check if followed by (
-        if (pos + 2 < lexemes.length && lexemes[pos + 2].category === 'LPAREN') {
-            const methodName = next.token.value;
-
-            // Parse arguments (similar to function call parsing)
-            // Build MethodCallNode
-            // Update current and pos
-            // Continue to allow chaining
-        }
-    }
-
-    // Array/hash dereference: -> followed by [ or {
-    else if (next.category === 'LBRACKET' || next.category === 'LBRACE') {
-        // ... existing dereference code ...
-    }
+if (lexemes.length === 1 && lexemes[0].category === 'IDENTIFIER') {
+    // It's a bareword
+    const bareword: StringNode = {
+        type: 'String',
+        value: lexemes[0].token.value
+    };
 }
 ```
 
-### 4. Key Challenges
+**Statement vs Expression**:
+- Statements: if, while, foreach, sub, return, die, etc.
+- Expressions: literals, variables, operators, function calls
 
-**Challenge 1: Distinguishing Method Calls from Dereference**
-- `$obj->[0]` is array dereference
-- `$obj->{"key"}` is hash dereference
-- `$obj->method()` is method call
+## Project Structure
 
-**Solution**:
-- Check the token after `->`
-- If identifier followed by `(` → method call
-- If `[` → array dereference
-- If `{` → hash dereference
-
-**Challenge 2: Class Method Calls**
-```perl
-Point->new(x => 5, y => 10);  # Point is an identifier, not a variable
+```
+mpp/
+├── src/
+│   ├── Tokenizer.ts    (~330 lines) - Token generation
+│   ├── Lexer.ts        (~120 lines) - Token classification
+│   ├── Parser.ts       (~1,850 lines) - Main parser
+│   └── AST.ts          (~157 lines) - AST node definitions
+├── tests/
+│   ├── Tokenizer.test.ts
+│   ├── Lexer.test.ts
+│   ├── Parser.test.ts  (193 tests!)
+│   ├── DataStructures.test.ts
+│   └── Examples.test.ts
+├── bin/
+│   └── repl.js         - Interactive REPL
+├── FEATURE_PRIORITIES.md ⭐ - Implementation roadmap
+├── DEVELOPMENT_LOG.md   - Session summaries
+├── SESSION_PROMPT.md    - This file
+└── README.md           - Project overview
 ```
 
-**Solution**:
-- When parsing `->`, the base can be:
-  - A variable (`$obj`)
-  - An identifier (`ClassName`)
-  - Any expression (`get_obj()`)
-- parsePostfixOperators already handles this - base is ASTNode
+## Quick Reference
 
-**Challenge 3: Method Chaining**
-```perl
-$obj->m1()->m2()->m3();
+### Running Tests
+```bash
+npm test                 # Run all tests
+npm run build            # Compile TypeScript
+npm run repl             # Interactive REPL
 ```
 
-**Solution**: The while loop in parsePostfixOperators naturally handles this:
-1. Parse `$obj->m1()` → MethodCallNode
-2. Current = MethodCallNode
-3. Continue loop, see `->m2()`
-4. Parse with current as base → nested MethodCallNode
-5. Repeat for `->m3()`
+### Test Locations
+- **Unit tests**: `tests/Parser.test.ts` (most tests here)
+- **Integration**: `tests/Examples.test.ts` (complete programs)
+- **Milestones**: `tests/DataStructures.test.ts` (feature groups)
 
-**Challenge 4: Mixing Methods and Access**
-```perl
-$users->[0]->get_name();
-$obj->method()->{"result"}[0];
+### Adding a New Feature
+
+**Example: Adding `die` statement**
+
+1. **Define AST node** (src/AST.ts):
+```typescript
+export interface DieNode extends ASTNode {
+    type: 'Die';
+    message?: ASTNode;  // Optional error message
+}
 ```
 
-**Solution**: The postfix loop already handles array/hash access. Methods are just another postfix operator in the same loop.
+2. **Add to imports** (src/Parser.ts):
+```typescript
+import { ..., DieNode } from './AST.js';
+```
 
-**Challenge 5: Parsing Arguments**
-Method arguments use the same syntax as function calls. Need to:
-1. Find matching `)`
-2. Split arguments by `,` at depth 0
-3. Parse each argument expression
-4. Reuse existing function call argument parsing logic
+3. **Add keyword** (src/Tokenizer.ts):
+```typescript
+private keywords = new Set([
+    'if', 'elsif', 'else', ..., 'die'  // Add here
+]);
+```
 
-### 5. Integration Points
+4. **Parse it** (src/Parser.ts in parseStatement):
+```typescript
+if (lexemes[0].token.value === 'die') {
+    return this.parseDieStatement(lexemes);
+}
 
-**With Existing Features**:
-- **Data structure access** (Session 5): Methods integrate into same postfix chain
-- **Function calls** (Session 2): Reuse argument parsing logic
-- **Dereference operator** (Session 5): `->` already tokenized and handled
+private parseDieStatement(lexemes: Lexeme[]): DieNode | null {
+    // Parse optional message
+    const messageLexemes = lexemes.slice(1);
+    const message = messageLexemes.length > 0
+        ? this.parseExpression(messageLexemes, 0)
+        : undefined;
 
-**Precedence**:
-- Methods bind as postfix operators (highest precedence)
-- Handled in `parsePostfixOperators()` after `parsePrimary()`
-- Before binary operators in `precedenceClimb()`
+    return { type: 'Die', message };
+}
+```
 
-## Development Approach
+5. **Write tests** (tests/Parser.test.ts):
+```typescript
+test('parses die with message', async () => {
+    const stmts = await parse('die "Error";');
+    assert.strictEqual(stmts[0].type, 'Die');
+    // ... more assertions
+});
+```
 
-Please continue using **strict TDD**:
-1. Write comprehensive tests first (15-20 tests)
-2. Add `MethodCallNode` to AST
-3. Import `MethodCallNode` in Parser
-4. Extend `parsePostfixOperators()` logic
-5. Reuse argument parsing from function calls
-6. Run tests frequently
-7. Use REPL to experiment
-8. Keep tests high-level (not overly specific)
-9. Maintain 100% type safety (no `any` types)
+## Current Capabilities
 
-## Key Design Decisions (Don't Change)
+**The parser now handles:**
 
-- No barewords (method names require explicit `->` syntax)
-- `+{ }` syntax for hash literals (blocks use bare `{ }`)
-- No regex literals yet (deferred for later)
-- Pure syntax-directed parsing (no symbol table feedback)
-- Parentheses required for all method calls (even with no args)
-- `$_` is a keyword
+✅ **Control Flow**: if/elsif/else, unless, while/until, for/foreach, postfix conditionals
+✅ **Functions**: Named subs, anonymous subs, parameters with defaults, return statements
+✅ **Data Structures**: Arrays, hashes, lists, nested structures
+✅ **Access**: Array/hash access, dereferencing, chained access
+✅ **Slicing**: Array slices, hash slices
+✅ **Operators**: 20 precedence levels, unary, binary, ternary, range
+✅ **Methods**: Method calls, chaining, class methods
+✅ **Assignment**: Simple, compound, list assignment, element mutation
+✅ **Syntax**: Bareword hash keys, fat comma, blocks
 
-## Critical Lessons from Previous Sessions
+**193 tests covering all features!**
 
-### Session 5: Postfix Operator Chain Pattern
-- **Lesson**: Postfix operators (array/hash access) handled in loop after primary
-- **Application**: Methods fit into same pattern - just check for `->identifier(`
+## What's Deferred
 
-### Session 6: Operator Category Checking
-- **Lesson**: Always check lexer categories (BINOP, UNOP, OPERATOR, etc.)
-- **Application**: `->` is BINOP, need to check category when detecting it
+**Not implementing yet** (see FEATURE_PRIORITIES.md for full list):
+- Regex (m/.../, s///, tr///, =~, !~)
+- String interpolation ("$var")
+- Here-docs (<<EOF)
 
-### Session 6: Lookahead for Disambiguation
-- **Lesson**: Check next token to disambiguate similar syntax
-- **Application**: After `->`, check if next is identifier+`(` vs `[` or `{`
+## What's Dropped
 
-## Files to Reference
+**Never implementing** (obsolete or too complex):
+- Subroutine prototypes
+- `bless` (using `class` instead)
+- Typeglobs and symbolic refs
+- Formats and `write`
+- `tie` mechanism
+- Most magic variables
 
-- `README.md` - Project documentation with REPL usage
-- `DEVELOPMENT_LOG.md` - Sessions 1-6 notes, especially Session 5 postfix operators
-- `NEXT_STEPS.md` - Updated plan for Session 7+
-- `src/Parser.ts` - Current parser (~1500 lines)
-  - See `parsePostfixOperators()` around line 741
-  - See function call parsing for argument pattern
-- `src/AST.ts` - AST node definitions (~142 lines)
-- `tests/Parser.test.ts` - 144 unit tests
-- `bin/repl.js` - Interactive REPL for experimentation
+## Session Goals
 
-## Success Criteria for This Session
+**Primary Goal:** Implement Sprint 1 (Essential Builtins)
+- 4 features
+- ~60 lines of code
+- 2-3 hours
+- High practical value
 
-By the end:
-- ✅ Can parse simple method calls: `$obj->method()`
-- ✅ Can parse method calls with arguments: `$obj->method($a, $b)`
-- ✅ Can parse class method calls: `Class->new()`
-- ✅ Can parse chained method calls: `$obj->m1()->m2()->m3()`
-- ✅ Can parse methods mixed with data access: `$arr->[0]->method()`
-- ✅ Method calls work in expressions
-- ✅ All existing tests still pass (no regressions)
-- ✅ ~155-165 tests passing (144 + 11-21 new tests)
+**Secondary Goal:** If time permits, start Sprint 2 (Loop Control)
 
-## After This Session
+**Documentation Goal:** Update DEVELOPMENT_LOG.md with session summary
 
-Once method calls are complete, natural next steps:
-1. **Assignment to elements** (`$array[0] = 5;`) - Mutable data structures
-2. **Range as expression** (`my @nums = (1..10);`) - Complete range operator
-3. **String interpolation** (`"Hello, $name!"`) - Enhanced strings
-4. **Class definitions** (`class Point { ... }`) - Full OOP (requires methods)
+## Getting Started Checklist
 
-## Let's Get Started!
+- [ ] Read FEATURE_PRIORITIES.md (especially Sprint 1 section)
+- [ ] Run `npm test` to verify 193 tests pass
+- [ ] Review Session 9 summary in DEVELOPMENT_LOG.md
+- [ ] Choose Sprint 1 or Sprint 2 to implement
+- [ ] Write tests first!
+- [ ] Implement features
+- [ ] Run all tests
+- [ ] Update DEVELOPMENT_LOG.md
 
-Please begin by:
-1. Use the REPL to explore current `->` behavior with arrays/hashes
-2. Write comprehensive tests for method calls in `tests/Parser.test.ts`
-3. Add `MethodCallNode` to `src/AST.ts`
-4. Import `MethodCallNode` in `src/Parser.ts`
-5. Extend `parsePostfixOperators()` to detect `->identifier(`
-6. Reuse argument parsing logic from function calls
-7. Test with existing tests to ensure no regressions
+## Important Notes
 
-Ready to add method calls and enable OOP! 🚀
+⚠️ **Always use FEATURE_PRIORITIES.md** - It's the authoritative roadmap
+⚠️ **TDD is mandatory** - Write tests before implementation
+⚠️ **Keep tests passing** - All 193 tests must pass after changes
+⚠️ **No `any` types** - Maintain 100% type safety
+⚠️ **Document sessions** - Update DEVELOPMENT_LOG.md when done
+
+## Ready to Start!
+
+You have everything you need to begin:
+- Clear roadmap (FEATURE_PRIORITIES.md)
+- Proven architecture (193 passing tests)
+- Comprehensive documentation (DEVELOPMENT_LOG.md)
+- Strong foundation (~1,850 lines of parser code)
+
+**Recommended first command:** Read FEATURE_PRIORITIES.md, then start Sprint 1!
+
+Good luck! 🚀
