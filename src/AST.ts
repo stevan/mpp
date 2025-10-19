@@ -237,3 +237,23 @@ export interface UseNode extends ASTNode {
     module: string;       // Module name (e.g., "strict", "List::Util")
     imports?: ASTNode;    // Optional import list (e.g., qw(max min))
 }
+
+// Modern OO (Perl 5.38+)
+export interface ClassNode extends ASTNode {
+    type: 'Class';
+    name: string;         // Class name (e.g., "Point", "Point::3D")
+    body: ASTNode[];      // Class body (fields, methods, etc.)
+}
+
+export interface FieldNode extends ASTNode {
+    type: 'Field';
+    variable: VariableNode;  // The field variable (e.g., $x, @items)
+    attributes?: string[];    // Attributes like 'param', 'reader', 'writer'
+}
+
+export interface MethodNode extends ASTNode {
+    type: 'Method';
+    name: string;           // Method name
+    parameters: ParameterNode[];  // Parameters (automatic $self not included)
+    body: ASTNode[];        // Method body
+}

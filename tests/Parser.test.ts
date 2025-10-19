@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { Tokenizer } from '../src/Tokenizer.js';
 import { Lexer } from '../src/Lexer.js';
 import { Parser } from '../src/Parser.js';
-import { BinaryOpNode, DeclarationNode, NumberNode, VariableNode, StringNode, IfNode, UnlessNode, WhileNode, UntilNode, ForeachNode, BlockNode, DoBlockNode, CallNode, ReturnNode, DieNode, WarnNode, PrintNode, SayNode, SubNode, ParameterNode, ArrayLiteralNode, HashLiteralNode, ListNode, ArrayAccessNode, ArraySliceNode, HashAccessNode, HashSliceNode, UnaryOpNode, TernaryNode, MethodCallNode, AssignmentNode, LastNode, NextNode, RedoNode, PostfixDerefNode, PostfixDerefSliceNode, PackageNode, UseNode } from '../src/AST.js';
+import { BinaryOpNode, DeclarationNode, NumberNode, VariableNode, StringNode, IfNode, UnlessNode, WhileNode, UntilNode, ForeachNode, BlockNode, DoBlockNode, CallNode, ReturnNode, DieNode, WarnNode, PrintNode, SayNode, SubNode, ParameterNode, ArrayLiteralNode, HashLiteralNode, ListNode, ArrayAccessNode, ArraySliceNode, HashAccessNode, HashSliceNode, UnaryOpNode, TernaryNode, MethodCallNode, AssignmentNode, LastNode, NextNode, RedoNode, PostfixDerefNode, PostfixDerefSliceNode, PackageNode, UseNode, ClassNode, FieldNode, MethodNode } from '../src/AST.js';
 
 // Helper to parse source code into AST
 async function parse(source: string) {
@@ -2506,5 +2506,226 @@ describe('Parser', () => {
         assert.strictEqual(init.type, 'BinaryOp');
         assert.strictEqual(init.left.type, 'Variable');
         assert.strictEqual((init.left as VariableNode).name, '$Config::VERSION');
+    });
+
+    // Class syntax tests (modern OO - Perl 5.38+)
+    test('parses simple class declaration', async () => {
+        const stmts = await parse('class Point { }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        assert.strictEqual(classNode.type, 'Class');
+        assert.strictEqual(classNode.name, 'Point');
+        assert.strictEqual(classNode.body.length, 0);
+    });
+
+    test('parses class declaration with :: separator', async () => {
+        const stmts = await parse('class Point::3D { }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        assert.strictEqual(classNode.type, 'Class');
+        assert.strictEqual(classNode.name, 'Point::3D');
+        assert.strictEqual(classNode.body.length, 0);
+    });
+
+    test('parses class declaration with multiple :: separators', async () => {
+        const stmts = await parse('class My::Geo::Point { }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        assert.strictEqual(classNode.type, 'Class');
+        assert.strictEqual(classNode.name, 'My::Geo::Point');
+        assert.strictEqual(classNode.body.length, 0);
+    });
+
+    test('parses class followed by other statements', async () => {
+        const stmts = await parse('class Point { } my $x = 10;');
+
+        assert.strictEqual(stmts.length, 2);
+        const classNode = stmts[0] as ClassNode;
+        assert.strictEqual(classNode.type, 'Class');
+        assert.strictEqual(classNode.name, 'Point');
+        const decl = stmts[1] as DeclarationNode;
+        assert.strictEqual(decl.type, 'Declaration');
+    });
+
+    test('parses field declaration with scalar', async () => {
+        const stmts = await parse('class Point { field $x; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        assert.strictEqual(classNode.type, 'Class');
+        assert.strictEqual(classNode.body.length, 1);
+        const field = classNode.body[0] as FieldNode;
+        assert.strictEqual(field.type, 'Field');
+        assert.strictEqual(field.variable.name, '$x');
+        assert.strictEqual(field.attributes, undefined);
+    });
+
+    test('parses field declaration with :param attribute', async () => {
+        const stmts = await parse('class Point { field $x :param; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        const field = classNode.body[0] as FieldNode;
+        assert.strictEqual(field.type, 'Field');
+        assert.strictEqual(field.variable.name, '$x');
+        assert.notStrictEqual(field.attributes, undefined);
+        assert.strictEqual(field.attributes?.length, 1);
+        assert.strictEqual(field.attributes?.[0], 'param');
+    });
+
+    test('parses field declaration with multiple attributes', async () => {
+        const stmts = await parse('class Point { field $x :param :reader; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        const field = classNode.body[0] as FieldNode;
+        assert.strictEqual(field.type, 'Field');
+        assert.strictEqual(field.attributes?.length, 2);
+        assert.strictEqual(field.attributes?.[0], 'param');
+        assert.strictEqual(field.attributes?.[1], 'reader');
+    });
+
+    test('parses field declaration with array variable', async () => {
+        const stmts = await parse('class Container { field @items; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        const field = classNode.body[0] as FieldNode;
+        assert.strictEqual(field.type, 'Field');
+        assert.strictEqual(field.variable.name, '@items');
+    });
+
+    test('parses field declaration with hash variable', async () => {
+        const stmts = await parse('class Config { field %settings; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        const field = classNode.body[0] as FieldNode;
+        assert.strictEqual(field.type, 'Field');
+        assert.strictEqual(field.variable.name, '%settings');
+    });
+
+    test('parses method declaration with no parameters', async () => {
+        const stmts = await parse('class Point { method get_x() { return $x; } }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        const method = classNode.body[0] as MethodNode;
+        assert.strictEqual(method.type, 'Method');
+        assert.strictEqual(method.name, 'get_x');
+        assert.strictEqual(method.parameters.length, 0);
+        assert.strictEqual(method.body.length, 1);
+    });
+
+    test('parses method declaration with parameters', async () => {
+        const stmts = await parse('class Point { method move($dx, $dy) { } }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        const method = classNode.body[0] as MethodNode;
+        assert.strictEqual(method.type, 'Method');
+        assert.strictEqual(method.name, 'move');
+        assert.strictEqual(method.parameters.length, 2);
+        assert.strictEqual((method.parameters[0].variable as VariableNode).name, '$dx');
+        assert.strictEqual((method.parameters[1].variable as VariableNode).name, '$dy');
+    });
+
+    test('parses method with default parameter values', async () => {
+        const stmts = await parse('class Point { method move($dx = 0, $dy = 0) { } }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        const method = classNode.body[0] as MethodNode;
+        assert.strictEqual(method.parameters.length, 2);
+        assert.notStrictEqual(method.parameters[0].defaultValue, undefined);
+        assert.notStrictEqual(method.parameters[1].defaultValue, undefined);
+    });
+
+    test('parses has declaration with scalar', async () => {
+        const stmts = await parse('class Point { has $x; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        const field = classNode.body[0] as FieldNode;
+        assert.strictEqual(field.type, 'Field');
+        assert.strictEqual(field.variable.name, '$x');
+    });
+
+    test('parses has declaration with attributes', async () => {
+        const stmts = await parse('class Point { has $x :reader :writer :param; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        const field = classNode.body[0] as FieldNode;
+        assert.strictEqual(field.type, 'Field');
+        assert.strictEqual(field.attributes?.length, 3);
+        assert.strictEqual(field.attributes?.[0], 'reader');
+        assert.strictEqual(field.attributes?.[1], 'writer');
+        assert.strictEqual(field.attributes?.[2], 'param');
+    });
+
+    test('parses class with multiple fields', async () => {
+        const stmts = await parse('class Point { field $x :param; field $y :param; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        assert.strictEqual(classNode.body.length, 2);
+        const field1 = classNode.body[0] as FieldNode;
+        const field2 = classNode.body[1] as FieldNode;
+        assert.strictEqual(field1.variable.name, '$x');
+        assert.strictEqual(field2.variable.name, '$y');
+    });
+
+    test('parses class with fields and methods', async () => {
+        const stmts = await parse('class Point { field $x :param; method get_x() { return $x; } }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        assert.strictEqual(classNode.body.length, 2);
+        const field = classNode.body[0] as FieldNode;
+        const method = classNode.body[1] as MethodNode;
+        assert.strictEqual(field.type, 'Field');
+        assert.strictEqual(method.type, 'Method');
+    });
+
+    test('parses complete class with fields and methods', async () => {
+        const stmts = await parse(`
+            class Point {
+                field $x :param;
+                field $y :param;
+
+                method move($dx, $dy) {
+                    $x += $dx;
+                    $y += $dy;
+                }
+
+                method coordinates() {
+                    return ($x, $y);
+                }
+            }
+        `);
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        assert.strictEqual(classNode.type, 'Class');
+        assert.strictEqual(classNode.name, 'Point');
+        assert.strictEqual(classNode.body.length, 4);
+
+        // Check fields
+        const field1 = classNode.body[0] as FieldNode;
+        const field2 = classNode.body[1] as FieldNode;
+        assert.strictEqual(field1.type, 'Field');
+        assert.strictEqual(field2.type, 'Field');
+
+        // Check methods
+        const method1 = classNode.body[2] as MethodNode;
+        const method2 = classNode.body[3] as MethodNode;
+        assert.strictEqual(method1.type, 'Method');
+        assert.strictEqual(method1.name, 'move');
+        assert.strictEqual(method2.type, 'Method');
+        assert.strictEqual(method2.name, 'coordinates');
     });
 });

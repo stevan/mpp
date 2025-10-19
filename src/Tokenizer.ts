@@ -12,7 +12,7 @@ export class Tokenizer {
         'given', 'when', 'default', 'break',
         'next', 'last', 'redo', 'continue', 'return',
         'my', 'our', 'state', 'const',
-        'sub', 'async', 'class', 'field', 'method',
+        'sub', 'async', 'class', 'field', 'method', 'has',
         'and', 'or', 'not', 'xor',
         'cmp', 'eq', 'ne', 'lt', 'gt', 'le', 'ge',
         'use', 'require', 'package', 'import',

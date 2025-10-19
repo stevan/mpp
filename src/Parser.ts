@@ -39,7 +39,10 @@ import {
     PostfixDerefNode,
     PostfixDerefSliceNode,
     PackageNode,
-    UseNode
+    UseNode,
+    ClassNode,
+    FieldNode,
+    MethodNode
 } from './AST.js';
 
 interface OperatorInfo {
@@ -109,6 +112,13 @@ export class Parser {
                         buffer = [];
                     } else if (buffer[0].category === 'DECLARATION' && buffer[0].token.value === 'sub') {
                         // Sub definition - parse immediately
+                        const ast = this.parseStatement(buffer);
+                        if (ast) {
+                            yield ast;
+                        }
+                        buffer = [];
+                    } else if (buffer[0].category === 'DECLARATION' && buffer[0].token.value === 'class') {
+                        // Class definition - parse immediately
                         const ast = this.parseStatement(buffer);
                         if (ast) {
                             yield ast;
@@ -296,6 +306,11 @@ export class Parser {
         // Check for use statement
         if (lexemes[0].category === 'KEYWORD' && lexemes[0].token.value === 'use') {
             return this.parseUseStatement(lexemes);
+        }
+
+        // Check for class declaration
+        if (lexemes[0].category === 'DECLARATION' && lexemes[0].token.value === 'class') {
+            return this.parseClassDeclaration(lexemes);
         }
 
         // Check for print and say (can be either statements or function calls)
@@ -2533,6 +2548,263 @@ export class Parser {
         }
 
         return useNode;
+    }
+
+    private parseClassDeclaration(lexemes: Lexeme[]): ClassNode | null {
+        // class Name { body }
+        // class Name::Foo { body }
+
+        // Skip 'class' keyword
+        let i = 1;
+
+        // Parse class name (can include ::)
+        let name = '';
+        while (i < lexemes.length) {
+            if (lexemes[i].category === 'IDENTIFIER') {
+                name += lexemes[i].token.value;
+                i++;
+            } else if (i + 1 < lexemes.length &&
+                       lexemes[i].category === 'BINOP' &&
+                       lexemes[i].token.value === ':' &&
+                       lexemes[i + 1].category === 'BINOP' &&
+                       lexemes[i + 1].token.value === ':') {
+                // Handle :: separator
+                name += '::';
+                i += 2; // Skip both :
+            } else {
+                break;
+            }
+        }
+
+        if (name === '') {
+            return null;
+        }
+
+        // Expect opening brace
+        if (i >= lexemes.length || lexemes[i].category !== 'LBRACE') {
+            return null;
+        }
+        i++; // Skip opening brace
+
+        // Parse class body until closing brace
+        const body: ASTNode[] = [];
+        const bodyLexemes: Lexeme[] = [];
+        let depth = 1; // We're already inside the first brace
+        let prevDepth = 1;
+
+        while (i < lexemes.length) {
+            const lexeme = lexemes[i];
+
+            if (lexeme.category === 'LBRACE') {
+                depth++;
+                bodyLexemes.push(lexeme);
+            } else if (lexeme.category === 'RBRACE') {
+                depth--;
+                if (depth === 0) {
+                    // End of class body
+                    // Parse any remaining buffered lexemes
+                    if (bodyLexemes.length > 0) {
+                        const stmt = this.parseClassBodyStatement(bodyLexemes);
+                        if (stmt) {
+                            body.push(stmt);
+                        }
+                    }
+                    break;
+                } else {
+                    bodyLexemes.push(lexeme);
+                    // If we just closed a nested block (e.g., method body), parse the statement
+                    if (depth === 1 && prevDepth === 2) {
+                        if (bodyLexemes.length > 0) {
+                            const stmt = this.parseClassBodyStatement(bodyLexemes);
+                            if (stmt) {
+                                body.push(stmt);
+                            }
+                            bodyLexemes.length = 0; // Clear buffer
+                        }
+                    }
+                }
+            } else if (lexeme.category === 'TERMINATOR' && depth === 1) {
+                // Statement terminator at class body level
+                if (bodyLexemes.length > 0) {
+                    const stmt = this.parseClassBodyStatement(bodyLexemes);
+                    if (stmt) {
+                        body.push(stmt);
+                    }
+                    bodyLexemes.length = 0; // Clear buffer
+                }
+            } else {
+                bodyLexemes.push(lexeme);
+            }
+
+            prevDepth = depth;
+            i++;
+        }
+
+        return {
+            type: 'Class',
+            name,
+            body
+        };
+    }
+
+    private parseClassBodyStatement(lexemes: Lexeme[]): ASTNode | null {
+        if (lexemes.length === 0) {
+            return null;
+        }
+
+        // Check for field declaration
+        if (lexemes[0].category === 'DECLARATION' && lexemes[0].token.value === 'field') {
+            return this.parseFieldDeclaration(lexemes);
+        }
+
+        // Check for has declaration (synonym for field)
+        if (lexemes[0].category === 'KEYWORD' && lexemes[0].token.value === 'has') {
+            return this.parseFieldDeclaration(lexemes);
+        }
+
+        // Check for method declaration
+        if (lexemes[0].category === 'DECLARATION' && lexemes[0].token.value === 'method') {
+            return this.parseMethodDeclaration(lexemes);
+        }
+
+        // Otherwise, parse as regular statement (allows subs, etc. in classes)
+        return this.parseStatement(lexemes);
+    }
+
+    private parseFieldDeclaration(lexemes: Lexeme[]): FieldNode | null {
+        // field $x;
+        // field $x :param;
+        // field $x :param :reader;
+        // has $x :reader :writer :param;
+
+        // Skip 'field' or 'has' keyword
+        let i = 1;
+
+        // Expect a variable (scalar, array, or hash)
+        if (i >= lexemes.length ||
+            (lexemes[i].category !== 'SCALAR_VAR' &&
+             lexemes[i].category !== 'ARRAY_VAR' &&
+             lexemes[i].category !== 'HASH_VAR')) {
+            return null;
+        }
+
+        const variable: VariableNode = {
+            type: 'Variable',
+            name: lexemes[i].token.value
+        };
+        i++;
+
+        // Parse optional attributes (starting with :)
+        const attributes: string[] = [];
+        while (i < lexemes.length) {
+            if (lexemes[i].category === 'BINOP' && lexemes[i].token.value === ':') {
+                // Next should be an identifier (attribute name)
+                if (i + 1 < lexemes.length && lexemes[i + 1].category === 'IDENTIFIER') {
+                    attributes.push(lexemes[i + 1].token.value);
+                    i += 2; // Skip : and attribute name
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        const fieldNode: FieldNode = {
+            type: 'Field',
+            variable
+        };
+
+        if (attributes.length > 0) {
+            fieldNode.attributes = attributes;
+        }
+
+        return fieldNode;
+    }
+
+    private parseMethodDeclaration(lexemes: Lexeme[]): MethodNode | null {
+        // method name() { body }
+        // method name($x, $y) { body }
+
+        // Skip 'method' keyword
+        let pos = 1;
+
+        // Expect method name (identifier)
+        if (pos >= lexemes.length || lexemes[pos].category !== 'IDENTIFIER') {
+            return null;
+        }
+
+        const name = lexemes[pos].token.value;
+        pos++;
+
+        // Expect opening parenthesis for parameters
+        if (pos >= lexemes.length || lexemes[pos].category !== 'LPAREN') {
+            return null;
+        }
+        pos++; // Skip LPAREN
+
+        // Find matching closing parenthesis
+        let depth = 1;
+        let paramEnd = pos;
+        while (paramEnd < lexemes.length && depth > 0) {
+            if (lexemes[paramEnd].category === 'LPAREN') depth++;
+            if (lexemes[paramEnd].category === 'RPAREN') depth--;
+            paramEnd++;
+        }
+
+        // Parse parameters (same logic as sub declaration)
+        const paramLexemes = lexemes.slice(pos, paramEnd - 1);
+        const parameters: ParameterNode[] = [];
+
+        if (paramLexemes.length > 0) {
+            // Split by commas at depth 0
+            let paramStart = 0;
+            let parenDepth = 0;
+
+            for (let i = 0; i < paramLexemes.length; i++) {
+                if (paramLexemes[i].category === 'LPAREN') parenDepth++;
+                if (paramLexemes[i].category === 'RPAREN') parenDepth--;
+
+                if (paramLexemes[i].category === 'COMMA' && parenDepth === 0) {
+                    // Found a parameter boundary
+                    const paramTokens = paramLexemes.slice(paramStart, i);
+                    const param = this.parseParameter(paramTokens);
+                    if (param) {
+                        parameters.push(param);
+                    }
+                    paramStart = i + 1; // Skip the comma
+                }
+            }
+
+            // Don't forget the last parameter
+            const lastParamTokens = paramLexemes.slice(paramStart);
+            if (lastParamTokens.length > 0) {
+                const param = this.parseParameter(lastParamTokens);
+                if (param) {
+                    parameters.push(param);
+                }
+            }
+        }
+
+        pos = paramEnd; // Move past RPAREN
+
+        // Expect LBRACE for body
+        if (pos >= lexemes.length || lexemes[pos].category !== 'LBRACE') {
+            return null;
+        }
+
+        // Parse the block body
+        const blockResult = this.parseBlock(lexemes, pos);
+        if (!blockResult) {
+            return null;
+        }
+
+        return {
+            type: 'Method',
+            name,
+            parameters,
+            body: blockResult.statements
+        };
     }
 
     private buildPrecedenceTable(): Map<string, OperatorInfo> {

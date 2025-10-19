@@ -1,14 +1,14 @@
-# Session 14 Prompt - MPP Parser Development
+# Session 15 Prompt - MPP Parser Development
 
 ## Quick Start
 
 You are continuing development of the **MPP (Modern Perl Parser)** project. This is a TypeScript-based parser for a modern subset of Perl, built with strict TDD methodology.
 
 **Current Status:**
-- **247 tests passing** ✅
-- **~2,550 lines of parser code**
-- Last session: Implemented Sprint 4 (Modern Postfix Dereferencing)
-- Sprint 4 COMPLETE - Modern dereferencing done!
+- **266 tests passing** ✅
+- **~2,650 lines of parser code**
+- Last session: Implemented Sprint 5 (Package System)
+- Sprint 5 COMPLETE - Module organization done!
 
 ## Critical Files to Read First
 
@@ -31,34 +31,39 @@ You are continuing development of the **MPP (Modern Perl Parser)** project. This
 
 ## Recommended Next Steps
 
-### Option 1: Sprint 5 - Package System (RECOMMENDED)
+### Option 1: Sprint 6 - Class Syntax (RECOMMENDED)
 
-**Time:** 4-5 hours | **Value:** HIGH | **Complexity:** MEDIUM
+**Time:** 5-6 hours | **Value:** HIGH | **Complexity:** MEDIUM
 
-Implement module organization:
+Implement modern OO (Perl 5.38+):
 
-1. **Package declarations** (~80 lines)
-   - `package Foo::Bar;`
-   - New AST node: PackageNode
+1. **`class` keyword** (~120 lines)
+   - `class Point { ... }`
+   - New AST node: ClassNode
 
-2. **Fully qualified names** (~100 lines)
-   - `Package::Name::function()`
-   - `$Package::Variable`
+2. **`field` declarations** (~80 lines)
+   - `field $x :param;`
+   - New AST node: FieldNode
 
-3. **`use` statements** (~70 lines)
-   - `use strict;`, `use List::Util qw(max min);`
-   - New AST node: UseNode
+3. **`method` modifier** (~50 lines)
+   - `method move($dx, $dy) { ... }`
+   - Automatic `$self` parameter
 
-**Why Sprint 5:**
-- Foundation for larger programs
-- Module organization
-- Natural progression
+4. **`has` attribute syntax** (~50 lines)
+   - `has $x :reader :writer;`
+   - Alternative to `field`
 
-### Option 2: Sprint 6 - Class Syntax (Alternative)
+**Why Sprint 6:**
+- Modern OO support
+- Replaces old `bless`-based OO
+- Natural progression from package system
+- Completes module/class infrastructure
 
-**Time:** 5-6 hours | **Value:** MEDIUM | **Complexity:** MEDIUM
+### Option 2: Sprint 7 - Advanced Subs (Alternative)
 
-Modern OO with `class` keyword instead of `bless`
+**Time:** 2-3 hours | **Value:** MEDIUM | **Complexity:** LOW
+
+Enhanced function signatures (named params, slurpy, attributes)
 
 ## Development Workflow
 
@@ -227,8 +232,9 @@ test('parses die with message', async () => {
 ✅ **Assignment**: Simple, compound, list assignment, element mutation
 ✅ **Special Variables**: %ENV, @ARGV, $_
 ✅ **Syntax**: Bareword hash keys, fat comma, blocks, qw// operator
+✅ **Packages**: Package declarations, use statements, fully qualified names (Package::Name)
 
-**247 tests covering all features!**
+**266 tests covering all features!**
 
 ## What's Deferred
 
@@ -249,22 +255,22 @@ test('parses die with message', async () => {
 
 ## Session Goals
 
-**Primary Goal:** Implement Sprint 5 (Package System)
-- 3 features: package declarations, fully qualified names, use statements
-- ~250 lines of code
-- 4-5 hours
-- Foundation for module organization
+**Primary Goal:** Implement Sprint 6 (Class Syntax)
+- 4 features: class keyword, field declarations, method modifier, has attributes
+- ~300 lines of code
+- 5-6 hours
+- Modern OO support (Perl 5.38+)
 
-**Secondary Goal:** If time permits, start Sprint 6 (Class Syntax)
+**Secondary Goal:** If time permits, start Sprint 7 (Advanced Subs)
 
 **Documentation Goal:** Update DEVELOPMENT_LOG.md with session summary
 
 ## Getting Started Checklist
 
-- [ ] Read FEATURE_PRIORITIES.md (especially Sprint 5 section)
-- [ ] Run `npm test` to verify 247 tests pass
-- [ ] Review Session 13 summary in DEVELOPMENT_LOG.md
-- [ ] Implement Sprint 5 (Package System) or Sprint 6 (Class Syntax)
+- [ ] Read FEATURE_PRIORITIES.md (especially Sprint 6 section)
+- [ ] Run `npm test` to verify 266 tests pass
+- [ ] Review Session 14 summary in DEVELOPMENT_LOG.md
+- [ ] Implement Sprint 6 (Class Syntax) or Sprint 7 (Advanced Subs)
 - [ ] Write tests first!
 - [ ] Implement features
 - [ ] Run all tests
