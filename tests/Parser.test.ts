@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { Tokenizer } from '../src/Tokenizer.js';
 import { Lexer } from '../src/Lexer.js';
 import { Parser } from '../src/Parser.js';
-import { BinaryOpNode, DeclarationNode, NumberNode, VariableNode, StringNode, IfNode, UnlessNode, WhileNode, UntilNode, ForeachNode, BlockNode, CallNode, ReturnNode, SubNode, ParameterNode, ArrayLiteralNode, HashLiteralNode, ListNode, ArrayAccessNode, ArraySliceNode, HashAccessNode, HashSliceNode, UnaryOpNode, TernaryNode, MethodCallNode, AssignmentNode } from '../src/AST.js';
+import { BinaryOpNode, DeclarationNode, NumberNode, VariableNode, StringNode, IfNode, UnlessNode, WhileNode, UntilNode, ForeachNode, BlockNode, DoBlockNode, CallNode, ReturnNode, DieNode, WarnNode, PrintNode, SayNode, SubNode, ParameterNode, ArrayLiteralNode, HashLiteralNode, ListNode, ArrayAccessNode, ArraySliceNode, HashAccessNode, HashSliceNode, UnaryOpNode, TernaryNode, MethodCallNode, AssignmentNode, LastNode, NextNode, RedoNode } from '../src/AST.js';
 
 // Helper to parse source code into AST
 async function parse(source: string) {
@@ -382,6 +382,57 @@ describe('Parser', () => {
         assert.strictEqual(foreachStmt.block[1].type, 'Assignment');
     });
 
+    // Loop label tests
+    test('parses while loop with label', async () => {
+        const stmts = await parse('OUTER: while ($condition) { $x = $x + 1; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const whileStmt = stmts[0] as WhileNode;
+        assert.strictEqual(whileStmt.type, 'While');
+        assert.strictEqual(whileStmt.label, 'OUTER');
+        assert.strictEqual(whileStmt.condition.type, 'Variable');
+        assert.strictEqual(whileStmt.block.length, 1);
+    });
+
+    test('parses until loop with label', async () => {
+        const stmts = await parse('RETRY: until ($done) { process(); }');
+
+        assert.strictEqual(stmts.length, 1);
+        const untilStmt = stmts[0] as UntilNode;
+        assert.strictEqual(untilStmt.type, 'Until');
+        assert.strictEqual(untilStmt.label, 'RETRY');
+        assert.strictEqual(untilStmt.condition.type, 'Variable');
+    });
+
+    test('parses foreach loop with label', async () => {
+        const stmts = await parse('ITEMS: for my $item (@list) { say $item; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const foreachStmt = stmts[0] as ForeachNode;
+        assert.strictEqual(foreachStmt.type, 'Foreach');
+        assert.strictEqual(foreachStmt.label, 'ITEMS');
+        assert.strictEqual(foreachStmt.variable.name, '$item');
+    });
+
+    test('parses nested loops with labels and last', async () => {
+        const stmts = await parse('OUTER: while ($x) { INNER: for my $i (@items) { last OUTER if $done; } }');
+
+        assert.strictEqual(stmts.length, 1);
+        const outerLoop = stmts[0] as WhileNode;
+        assert.strictEqual(outerLoop.type, 'While');
+        assert.strictEqual(outerLoop.label, 'OUTER');
+
+        const innerLoop = outerLoop.block[0] as ForeachNode;
+        assert.strictEqual(innerLoop.type, 'Foreach');
+        assert.strictEqual(innerLoop.label, 'INNER');
+
+        const ifStmt = innerLoop.block[0] as IfNode;
+        assert.strictEqual(ifStmt.type, 'If');
+        const lastStmt = ifStmt.thenBlock[0] as LastNode;
+        assert.strictEqual(lastStmt.type, 'Last');
+        assert.strictEqual(lastStmt.label, 'OUTER');
+    });
+
     test('parses postfix if', async () => {
         const stmts = await parse('$x = 10 if $condition;');
 
@@ -475,6 +526,59 @@ describe('Parser', () => {
         assert.strictEqual(stmts.length, 2);
         assert.strictEqual(stmts[0].type, 'Block');
         assert.strictEqual(stmts[1].type, 'Assignment');
+    });
+
+    // Do block tests
+    test('parses do block with single statement', async () => {
+        const stmts = await parse('my $x = do { 42; };');
+
+        assert.strictEqual(stmts.length, 1);
+        const declStmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(declStmt.type, 'Declaration');
+        assert.strictEqual(declStmt.initializer?.type, 'DoBlock');
+
+        const doBlock = declStmt.initializer as DoBlockNode;
+        assert.strictEqual(doBlock.statements.length, 1);
+        assert.strictEqual(doBlock.statements[0].type, 'Number');
+    });
+
+    test('parses do block with multiple statements', async () => {
+        const stmts = await parse('my $result = do { my $a = 10; my $b = 20; $a + $b; };');
+
+        assert.strictEqual(stmts.length, 1);
+        const declStmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(declStmt.type, 'Declaration');
+        assert.strictEqual(declStmt.initializer?.type, 'DoBlock');
+
+        const doBlock = declStmt.initializer as DoBlockNode;
+        assert.strictEqual(doBlock.statements.length, 3);
+        assert.strictEqual(doBlock.statements[0].type, 'Declaration');
+        assert.strictEqual(doBlock.statements[1].type, 'Declaration');
+        assert.strictEqual(doBlock.statements[2].type, 'BinaryOp');
+    });
+
+    test('parses do block in assignment', async () => {
+        const stmts = await parse('$value = do { $x * 2; };');
+
+        assert.strictEqual(stmts.length, 1);
+        const assignStmt = stmts[0] as AssignmentNode;
+        assert.strictEqual(assignStmt.type, 'Assignment');
+        assert.strictEqual(assignStmt.right.type, 'DoBlock');
+
+        const doBlock = assignStmt.right as DoBlockNode;
+        assert.strictEqual(doBlock.statements.length, 1);
+        assert.strictEqual(doBlock.statements[0].type, 'BinaryOp');
+    });
+
+    test('parses do block as standalone statement', async () => {
+        const stmts = await parse('do { print "hello"; };');
+
+        assert.strictEqual(stmts.length, 1);
+        assert.strictEqual(stmts[0].type, 'DoBlock');
+
+        const doBlock = stmts[0] as DoBlockNode;
+        assert.strictEqual(doBlock.statements.length, 1);
+        assert.strictEqual(doBlock.statements[0].type, 'Print');
     });
 
     test('parses function call with no arguments', async () => {
@@ -606,6 +710,261 @@ describe('Parser', () => {
         assert.strictEqual(returnStmt.type, 'Return');
         assert.strictEqual(returnStmt.value?.type, 'Call');
         assert.strictEqual((returnStmt.value as CallNode).name, 'calculate');
+    });
+
+    // Die and warn statement tests
+    test('parses die with no message', async () => {
+        const stmts = await parse('die;');
+
+        assert.strictEqual(stmts.length, 1);
+        const dieStmt = stmts[0] as DieNode;
+        assert.strictEqual(dieStmt.type, 'Die');
+        assert.strictEqual(dieStmt.message, undefined);
+    });
+
+    test('parses die with string message', async () => {
+        const stmts = await parse('die "Error occurred";');
+
+        assert.strictEqual(stmts.length, 1);
+        const dieStmt = stmts[0] as DieNode;
+        assert.strictEqual(dieStmt.type, 'Die');
+        assert.strictEqual(dieStmt.message?.type, 'String');
+        assert.strictEqual((dieStmt.message as StringNode).value, '"Error occurred"');
+    });
+
+    test('parses die with variable message', async () => {
+        const stmts = await parse('die $error;');
+
+        assert.strictEqual(stmts.length, 1);
+        const dieStmt = stmts[0] as DieNode;
+        assert.strictEqual(dieStmt.type, 'Die');
+        assert.strictEqual(dieStmt.message?.type, 'Variable');
+        assert.strictEqual((dieStmt.message as VariableNode).name, '$error');
+    });
+
+    test('parses die with expression', async () => {
+        const stmts = await parse('die "Error: " . $msg;');
+
+        assert.strictEqual(stmts.length, 1);
+        const dieStmt = stmts[0] as DieNode;
+        assert.strictEqual(dieStmt.type, 'Die');
+        assert.strictEqual(dieStmt.message?.type, 'BinaryOp');
+        assert.strictEqual((dieStmt.message as BinaryOpNode).operator, '.');
+    });
+
+    test('parses warn with no message', async () => {
+        const stmts = await parse('warn;');
+
+        assert.strictEqual(stmts.length, 1);
+        const warnStmt = stmts[0] as WarnNode;
+        assert.strictEqual(warnStmt.type, 'Warn');
+        assert.strictEqual(warnStmt.message, undefined);
+    });
+
+    test('parses warn with string message', async () => {
+        const stmts = await parse('warn "Deprecation notice";');
+
+        assert.strictEqual(stmts.length, 1);
+        const warnStmt = stmts[0] as WarnNode;
+        assert.strictEqual(warnStmt.type, 'Warn');
+        assert.strictEqual(warnStmt.message?.type, 'String');
+        assert.strictEqual((warnStmt.message as StringNode).value, '"Deprecation notice"');
+    });
+
+    test('parses warn with variable', async () => {
+        const stmts = await parse('warn $warning;');
+
+        assert.strictEqual(stmts.length, 1);
+        const warnStmt = stmts[0] as WarnNode;
+        assert.strictEqual(warnStmt.type, 'Warn');
+        assert.strictEqual(warnStmt.message?.type, 'Variable');
+        assert.strictEqual((warnStmt.message as VariableNode).name, '$warning');
+    });
+
+    test('parses warn with function call', async () => {
+        const stmts = await parse('warn get_warning();');
+
+        assert.strictEqual(stmts.length, 1);
+        const warnStmt = stmts[0] as WarnNode;
+        assert.strictEqual(warnStmt.type, 'Warn');
+        assert.strictEqual(warnStmt.message?.type, 'Call');
+        assert.strictEqual((warnStmt.message as CallNode).name, 'get_warning');
+    });
+
+    // Print and say statement tests
+    test('parses print with no arguments', async () => {
+        const stmts = await parse('print;');
+
+        assert.strictEqual(stmts.length, 1);
+        const printStmt = stmts[0] as PrintNode;
+        assert.strictEqual(printStmt.type, 'Print');
+        assert.strictEqual(printStmt.arguments.length, 0);
+    });
+
+    test('parses print with string argument', async () => {
+        const stmts = await parse('print "Hello";');
+
+        assert.strictEqual(stmts.length, 1);
+        const printStmt = stmts[0] as PrintNode;
+        assert.strictEqual(printStmt.type, 'Print');
+        assert.strictEqual(printStmt.arguments.length, 1);
+        assert.strictEqual(printStmt.arguments[0].type, 'String');
+        assert.strictEqual((printStmt.arguments[0] as StringNode).value, '"Hello"');
+    });
+
+    test('parses print with multiple arguments', async () => {
+        const stmts = await parse('print "Hello", " ", "World";');
+
+        assert.strictEqual(stmts.length, 1);
+        const printStmt = stmts[0] as PrintNode;
+        assert.strictEqual(printStmt.type, 'Print');
+        assert.strictEqual(printStmt.arguments.length, 3);
+        assert.strictEqual(printStmt.arguments[0].type, 'String');
+        assert.strictEqual(printStmt.arguments[1].type, 'String');
+        assert.strictEqual(printStmt.arguments[2].type, 'String');
+    });
+
+    test('parses print with variable', async () => {
+        const stmts = await parse('print $message;');
+
+        assert.strictEqual(stmts.length, 1);
+        const printStmt = stmts[0] as PrintNode;
+        assert.strictEqual(printStmt.type, 'Print');
+        assert.strictEqual(printStmt.arguments.length, 1);
+        assert.strictEqual(printStmt.arguments[0].type, 'Variable');
+        assert.strictEqual((printStmt.arguments[0] as VariableNode).name, '$message');
+    });
+
+    test('parses say with no arguments', async () => {
+        const stmts = await parse('say;');
+
+        assert.strictEqual(stmts.length, 1);
+        const sayStmt = stmts[0] as SayNode;
+        assert.strictEqual(sayStmt.type, 'Say');
+        assert.strictEqual(sayStmt.arguments.length, 0);
+    });
+
+    test('parses say with string argument', async () => {
+        const stmts = await parse('say "Hello World";');
+
+        assert.strictEqual(stmts.length, 1);
+        const sayStmt = stmts[0] as SayNode;
+        assert.strictEqual(sayStmt.type, 'Say');
+        assert.strictEqual(sayStmt.arguments.length, 1);
+        assert.strictEqual(sayStmt.arguments[0].type, 'String');
+        assert.strictEqual((sayStmt.arguments[0] as StringNode).value, '"Hello World"');
+    });
+
+    test('parses say with variable', async () => {
+        const stmts = await parse('say $output;');
+
+        assert.strictEqual(stmts.length, 1);
+        const sayStmt = stmts[0] as SayNode;
+        assert.strictEqual(sayStmt.type, 'Say');
+        assert.strictEqual(sayStmt.arguments.length, 1);
+        assert.strictEqual(sayStmt.arguments[0].type, 'Variable');
+        assert.strictEqual((sayStmt.arguments[0] as VariableNode).name, '$output');
+    });
+
+    test('parses say with expression', async () => {
+        const stmts = await parse('say $x + $y;');
+
+        assert.strictEqual(stmts.length, 1);
+        const sayStmt = stmts[0] as SayNode;
+        assert.strictEqual(sayStmt.type, 'Say');
+        assert.strictEqual(sayStmt.arguments.length, 1);
+        assert.strictEqual(sayStmt.arguments[0].type, 'BinaryOp');
+        assert.strictEqual((sayStmt.arguments[0] as BinaryOpNode).operator, '+');
+    });
+
+    // Require builtin test
+    test('parses require as function call', async () => {
+        const stmts = await parse('require("Config.pm");');
+
+        assert.strictEqual(stmts.length, 1);
+        const callStmt = stmts[0] as CallNode;
+        assert.strictEqual(callStmt.type, 'Call');
+        assert.strictEqual(callStmt.name, 'require');
+        assert.strictEqual(callStmt.arguments.length, 1);
+        assert.strictEqual(callStmt.arguments[0].type, 'String');
+    });
+
+    // Loop control statement tests
+    test('parses last without label', async () => {
+        const stmts = await parse('last;');
+
+        assert.strictEqual(stmts.length, 1);
+        const lastStmt = stmts[0] as LastNode;
+        assert.strictEqual(lastStmt.type, 'Last');
+        assert.strictEqual(lastStmt.label, undefined);
+    });
+
+    test('parses next without label', async () => {
+        const stmts = await parse('next;');
+
+        assert.strictEqual(stmts.length, 1);
+        const nextStmt = stmts[0] as NextNode;
+        assert.strictEqual(nextStmt.type, 'Next');
+        assert.strictEqual(nextStmt.label, undefined);
+    });
+
+    test('parses redo without label', async () => {
+        const stmts = await parse('redo;');
+
+        assert.strictEqual(stmts.length, 1);
+        const redoStmt = stmts[0] as RedoNode;
+        assert.strictEqual(redoStmt.type, 'Redo');
+        assert.strictEqual(redoStmt.label, undefined);
+    });
+
+    test('parses last with label', async () => {
+        const stmts = await parse('last OUTER;');
+
+        assert.strictEqual(stmts.length, 1);
+        const lastStmt = stmts[0] as LastNode;
+        assert.strictEqual(lastStmt.type, 'Last');
+        assert.strictEqual(lastStmt.label, 'OUTER');
+    });
+
+    test('parses next with label', async () => {
+        const stmts = await parse('next LOOP;');
+
+        assert.strictEqual(stmts.length, 1);
+        const nextStmt = stmts[0] as NextNode;
+        assert.strictEqual(nextStmt.type, 'Next');
+        assert.strictEqual(nextStmt.label, 'LOOP');
+    });
+
+    test('parses redo with label', async () => {
+        const stmts = await parse('redo RETRY;');
+
+        assert.strictEqual(stmts.length, 1);
+        const redoStmt = stmts[0] as RedoNode;
+        assert.strictEqual(redoStmt.type, 'Redo');
+        assert.strictEqual(redoStmt.label, 'RETRY');
+    });
+
+    test('parses last in while loop', async () => {
+        const stmts = await parse('while ($x) { last; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const whileStmt = stmts[0] as WhileNode;
+        assert.strictEqual(whileStmt.type, 'While');
+        assert.strictEqual(whileStmt.block.length, 1);
+        assert.strictEqual(whileStmt.block[0].type, 'Last');
+    });
+
+    test('parses next in foreach loop', async () => {
+        const stmts = await parse('for my $item (@items) { next if $skip; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const forStmt = stmts[0] as ForeachNode;
+        assert.strictEqual(forStmt.type, 'Foreach');
+        assert.strictEqual(forStmt.block.length, 1);
+        const ifStmt = forStmt.block[0] as IfNode;
+        assert.strictEqual(ifStmt.type, 'If');
+        assert.strictEqual(ifStmt.thenBlock.length, 1);
+        assert.strictEqual(ifStmt.thenBlock[0].type, 'Next');
     });
 
     // Sub definition tests
@@ -1761,5 +2120,155 @@ describe('Parser', () => {
         assert.strictEqual((leftList.elements[0] as VariableNode).name, '$scalar');
         assert.strictEqual((leftList.elements[1] as VariableNode).name, '@array');
         assert.strictEqual((leftList.elements[2] as VariableNode).name, '%hash');
+    });
+
+    // Special variables tests
+    test('parses $ENV{key} hash element access', async () => {
+        const stmts = await parse('$ENV{PATH};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashAccessNode;
+        assert.strictEqual(stmt.type, 'HashAccess');
+        assert.strictEqual(stmt.base.type, 'Variable');
+        assert.strictEqual((stmt.base as VariableNode).name, '$ENV');
+        assert.strictEqual(stmt.key.type, 'String');
+    });
+
+    test('parses $ARGV[index] array element access', async () => {
+        const stmts = await parse('my $first = $ARGV[0];');
+
+        assert.strictEqual(stmts.length, 1);
+        const decl = stmts[0] as DeclarationNode;
+        assert.strictEqual(decl.type, 'Declaration');
+        const access = decl.initializer as ArrayAccessNode;
+        assert.strictEqual(access.type, 'ArrayAccess');
+        assert.strictEqual(access.base.type, 'Variable');
+        assert.strictEqual((access.base as VariableNode).name, '$ARGV');
+    });
+
+    test('parses @ARGV in foreach loop', async () => {
+        const stmts = await parse('for my $arg (@ARGV) { say $arg; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const foreachStmt = stmts[0] as ForeachNode;
+        assert.strictEqual(foreachStmt.type, 'Foreach');
+        assert.strictEqual(foreachStmt.listExpr.type, 'Variable');
+        assert.strictEqual((foreachStmt.listExpr as VariableNode).name, '@ARGV');
+    });
+
+    test('parses %ENV as hash variable', async () => {
+        const stmts = await parse('my %copy = %ENV;');
+
+        assert.strictEqual(stmts.length, 1);
+        const decl = stmts[0] as DeclarationNode;
+        assert.strictEqual(decl.type, 'Declaration');
+        assert.strictEqual(decl.variable.name, '%copy');
+        assert.strictEqual(decl.initializer?.type, 'Variable');
+        assert.strictEqual((decl.initializer as VariableNode).name, '%ENV');
+    });
+
+    test('parses $_ default variable', async () => {
+        const stmts = await parse('print $_;');
+
+        assert.strictEqual(stmts.length, 1);
+        const printStmt = stmts[0] as PrintNode;
+        assert.strictEqual(printStmt.type, 'Print');
+        assert.strictEqual(printStmt.arguments.length, 1);
+        assert.strictEqual(printStmt.arguments[0].type, 'Variable');
+        assert.strictEqual((printStmt.arguments[0] as VariableNode).name, '$_');
+    });
+
+    test('parses $_ in expression', async () => {
+        const stmts = await parse('my $result = $_ + 10;');
+
+        assert.strictEqual(stmts.length, 1);
+        const decl = stmts[0] as DeclarationNode;
+        assert.strictEqual(decl.type, 'Declaration');
+        const binOp = decl.initializer as BinaryOpNode;
+        assert.strictEqual(binOp.type, 'BinaryOp');
+        assert.strictEqual(binOp.left.type, 'Variable');
+        assert.strictEqual((binOp.left as VariableNode).name, '$_');
+    });
+
+    test('parses $ENV{key} assignment', async () => {
+        const stmts = await parse('$ENV{DEBUG} = 1;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as AssignmentNode;
+        assert.strictEqual(stmt.type, 'Assignment');
+        const hashAccess = stmt.left as HashAccessNode;
+        assert.strictEqual(hashAccess.type, 'HashAccess');
+        assert.strictEqual((hashAccess.base as VariableNode).name, '$ENV');
+    });
+
+    // qw// quote-word operator tests
+    test('parses qw() with parentheses', async () => {
+        const stmts = await parse('my @words = qw(foo bar baz);');
+
+        assert.strictEqual(stmts.length, 1);
+        const decl = stmts[0] as DeclarationNode;
+        assert.strictEqual(decl.type, 'Declaration');
+        const list = decl.initializer as ListNode;
+        assert.strictEqual(list.type, 'List');
+        assert.strictEqual(list.elements.length, 3);
+        assert.strictEqual((list.elements[0] as StringNode).value, 'foo');
+        assert.strictEqual((list.elements[1] as StringNode).value, 'bar');
+        assert.strictEqual((list.elements[2] as StringNode).value, 'baz');
+    });
+
+    test('parses qw/ / with slashes', async () => {
+        const stmts = await parse('my @list = qw/one two three/;');
+
+        assert.strictEqual(stmts.length, 1);
+        const decl = stmts[0] as DeclarationNode;
+        const list = decl.initializer as ListNode;
+        assert.strictEqual(list.type, 'List');
+        assert.strictEqual(list.elements.length, 3);
+        assert.strictEqual((list.elements[0] as StringNode).value, 'one');
+        assert.strictEqual((list.elements[1] as StringNode).value, 'two');
+        assert.strictEqual((list.elements[2] as StringNode).value, 'three');
+    });
+
+    test('parses qw[] with square brackets', async () => {
+        const stmts = await parse('qw[alpha beta gamma];');
+
+        assert.strictEqual(stmts.length, 1);
+        const list = stmts[0] as ListNode;
+        assert.strictEqual(list.type, 'List');
+        assert.strictEqual(list.elements.length, 3);
+    });
+
+    test('parses qw{} with curly braces', async () => {
+        const stmts = await parse('my @nums = qw{1 2 3};');
+
+        assert.strictEqual(stmts.length, 1);
+        const decl = stmts[0] as DeclarationNode;
+        const list = decl.initializer as ListNode;
+        assert.strictEqual(list.elements.length, 3);
+        assert.strictEqual((list.elements[0] as StringNode).value, '1');
+    });
+
+    test('parses qw() with multiple spaces', async () => {
+        const stmts = await parse('qw(a    b     c);');
+
+        assert.strictEqual(stmts.length, 1);
+        const list = stmts[0] as ListNode;
+        assert.strictEqual(list.elements.length, 3);
+        assert.strictEqual((list.elements[0] as StringNode).value, 'a');
+        assert.strictEqual((list.elements[1] as StringNode).value, 'b');
+        assert.strictEqual((list.elements[2] as StringNode).value, 'c');
+    });
+
+    test('parses qw() in function call', async () => {
+        const stmts = await parse('process(qw(foo bar));');
+
+        assert.strictEqual(stmts.length, 1);
+        const call = stmts[0] as CallNode;
+        assert.strictEqual(call.type, 'Call');
+        assert.strictEqual(call.name, 'process');
+        assert.strictEqual(call.arguments.length, 1);
+        const list = call.arguments[0] as ListNode;
+        assert.strictEqual(list.type, 'List');
+        assert.strictEqual(list.elements.length, 2);
     });
 });

@@ -70,12 +70,14 @@ export interface WhileNode extends ASTNode {
     type: 'While';
     condition: ASTNode;
     block: ASTNode[];
+    label?: string;
 }
 
 export interface UntilNode extends ASTNode {
     type: 'Until';
     condition: ASTNode;
     block: ASTNode[];
+    label?: string;
 }
 
 export interface ForeachNode extends ASTNode {
@@ -84,10 +86,16 @@ export interface ForeachNode extends ASTNode {
     declarator?: string; // 'my', 'our', 'state' if variable is declared inline
     listExpr: ASTNode;
     block: ASTNode[];
+    label?: string;
 }
 
 export interface BlockNode extends ASTNode {
     type: 'Block';
+    statements: ASTNode[];
+}
+
+export interface DoBlockNode extends ASTNode {
+    type: 'DoBlock';
     statements: ASTNode[];
 }
 
@@ -100,6 +108,41 @@ export interface CallNode extends ASTNode {
 export interface ReturnNode extends ASTNode {
     type: 'Return';
     value?: ASTNode;
+}
+
+export interface LastNode extends ASTNode {
+    type: 'Last';
+    label?: string;
+}
+
+export interface NextNode extends ASTNode {
+    type: 'Next';
+    label?: string;
+}
+
+export interface RedoNode extends ASTNode {
+    type: 'Redo';
+    label?: string;
+}
+
+export interface DieNode extends ASTNode {
+    type: 'Die';
+    message?: ASTNode;
+}
+
+export interface WarnNode extends ASTNode {
+    type: 'Warn';
+    message?: ASTNode;
+}
+
+export interface PrintNode extends ASTNode {
+    type: 'Print';
+    arguments: ASTNode[];
+}
+
+export interface SayNode extends ASTNode {
+    type: 'Say';
+    arguments: ASTNode[];
 }
 
 export interface ParameterNode extends ASTNode {

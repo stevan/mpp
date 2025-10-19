@@ -15,8 +15,8 @@ export class Lexer {
         'if', 'elsif', 'else', 'unless',
         'while', 'until', 'for', 'foreach',
         'given', 'when', 'default', 'break',
-        'next', 'last', 'continue', 'return',
-        'do', 'eval', 'try', 'catch', 'finally', 'throw'
+        'next', 'last', 'redo', 'continue', 'return',
+        'do', 'eval', 'try', 'catch', 'finally', 'throw', 'die', 'warn'
     ]);
 
     private binaryOperators = new Set([
@@ -48,8 +48,8 @@ export class Lexer {
     }
 
     private classify(token: Token): Lexeme {
-        // Literals
-        if (token.type === 'NUMBER' || token.type === 'STRING') {
+        // Literals (including QWLIST)
+        if (token.type === 'NUMBER' || token.type === 'STRING' || token.type === 'QWLIST') {
             return {
                 category: 'LITERAL',
                 token

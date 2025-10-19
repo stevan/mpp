@@ -2032,3 +2032,944 @@ my @data = @env{@required_keys};
 **Result**: Highly productive session! Added practical features AND created clear path forward. Parser now supports 193 test cases with modern Perl slice syntax.
 
 **Next Session Goal**: Implement Sprint 1 (Essential Builtins: die, warn, print, say, do) - approximately 2-3 hours, high ROI.
+
+
+## Session 10 Summary
+
+**Date**: Session 10 of MPP development
+**Duration**: ~1.5 hours
+**Methodology**: Strict Test-Driven Development (TDD)
+**Result**: Sprint 1 Complete - Essential Builtins implemented!
+
+### Starting Point
+- 193 tests passing
+- Parser with ~1,850 lines
+- Complete slice syntax and range expressions
+
+### Ending Point
+- **214 tests passing** (+21 new tests)
+- **Sprint 1 Complete**: All 4 essential builtins implemented
+- Parser with ~2,100 lines (+~250 lines)
+
+## What We Built This Session
+
+### 1. `die` and `warn` Statements (8 tests)
+
+**Features**:
+- `die` with optional message: `die "Error"`, `die $msg`, `die;`
+- `warn` with optional message: `warn "Deprecation"`, `warn;`
+- Parse as statement keywords similar to `return`
+- Can take expressions as messages
+
+**AST Nodes**:
+```typescript
+interface DieNode extends ASTNode {
+    type: 'Die';
+    message?: ASTNode;
+}
+
+interface WarnNode extends ASTNode {
+    type: 'Warn';
+    message?: ASTNode;
+}
+```
+
+**Implementation**:
+- Added keywords to Tokenizer.ts
+- Added to controlKeywords in Lexer.ts
+- Implemented parseDieStatement() and parseWarnStatement() in Parser.ts
+- ~60 lines of code
+
+### 2. `print` and `say` Statements (8 tests)
+
+**Features**:
+- `print` with arguments: `print "Hello"`, `print "A", "B"`, `print;`
+- `say` with arguments: `say "Hello"`, `say $msg`, `say;`
+- Support multiple comma-separated arguments
+- Can be used as statements OR function calls
+- `print("hello")` with parens → function call
+- `print "hello"` without parens → print statement
+
+**AST Nodes**:
+```typescript
+interface PrintNode extends ASTNode {
+    type: 'Print';
+    arguments: ASTNode[];
+}
+
+interface SayNode extends ASTNode {
+    type: 'Say';
+    arguments: ASTNode[];
+}
+```
+
+**Implementation**:
+- Added keywords to Tokenizer.ts
+- NOT added to controlKeywords (kept as KEYWORD category)
+- Parse as statement when not followed by `(`
+- Parse as function call when followed by `(`
+- Enhanced parsePrimary() to allow KEYWORD tokens as function names
+- ~120 lines of code
+
+### 3. `do` Blocks (4 tests)
+
+**Features**:
+- `do { ... }` blocks that return last expression value
+- Can be used in expressions: `my $x = do { ... };`
+- Can be used as standalone statements: `do { ... };`
+- Multiple statements inside: `do { $a = 1; $b = 2; $a + $b; }`
+
+**AST Node**:
+```typescript
+interface DoBlockNode extends ASTNode {
+    type: 'DoBlock';
+    statements: ASTNode[];
+}
+```
+
+**Implementation**:
+- `do` is already a control keyword
+- Implemented parseDoBlock() in parseStatement
+- Added do block handling in parsePrimary() for expression context
+- Reuses block statement parsing logic
+- ~90 lines of code
+
+### 4. `require` Builtin (1 test)
+
+**Verification**:
+- `require("Config.pm")` already works as function call!
+- No code changes needed
+- Added test to verify it works
+
+**Why it works**:
+- `require` is a KEYWORD in the tokenizer
+- KEYWORDs can be function names when followed by `(`
+- Enhancement made for `print`/`say` also enables `require`
+
+## Test Coverage Summary
+
+**Total Tests**: 214 (was 193)
+
+**New Tests**:
+- die statements: 4 tests
+- warn statements: 4 tests
+- print statements: 4 tests
+- say statements: 4 tests
+- do blocks: 4 tests
+- require builtin: 1 test
+
+**Test Breakdown by Feature**:
+- All tests pass with 100% success rate
+- No regressions in existing features
+
+## Design Decisions Made This Session
+
+### 1. `print` and `say` Dual Parsing
+
+**Decision**: Allow both statement and function call syntax
+**Implementation**: 
+- Check if followed by `(` → parse as function call
+- Otherwise → parse as print/say statement
+**Benefit**: Matches Perl's flexible syntax
+
+### 2. Enhanced Function Call Parsing
+
+**Decision**: Allow KEYWORD tokens as function names
+**Location**: parsePrimary() line 800
+**Impact**: Enables `print()`, `say()`, `require()` as function calls
+**Before**: Only IDENTIFIER could be function names
+**After**: IDENTIFIER or KEYWORD can be function names
+
+### 3. do Blocks in Two Contexts
+
+**Decision**: Parse do blocks in both parseStatement and parsePrimary
+**Reason**: 
+- In statements: `do { ... };` standalone
+- In expressions: `my $x = do { ... };`
+**Implementation**: Same block parsing logic in both places
+
+### 4. Consistent Block Statement Parsing
+
+**Decision**: Reuse parseBlock() logic for do blocks
+**Pattern**: Extract lexemes, parse statements with depth tracking
+**Result**: Consistent behavior across all block types
+
+## Files Modified This Session
+
+```
+src/AST.ts
+├── Added: DieNode interface
+├── Added: WarnNode interface
+├── Added: PrintNode interface
+├── Added: SayNode interface
+└── Added: DoBlockNode interface
+
+src/Tokenizer.ts
+└── Added keywords: 'die', 'warn', 'print', 'say'
+
+src/Lexer.ts
+└── Added to controlKeywords: 'die', 'warn' (not print/say)
+
+src/Parser.ts
+├── Modified: Imports - added DieNode, WarnNode, PrintNode, SayNode, DoBlockNode
+├── Modified: parseStatement() - added die, warn, print, say, do handling
+├── Modified: parsePrimary() - enhanced function call parsing for KEYWORDs
+├── Modified: parsePrimary() - added do block expression parsing
+├── Added: parseDieStatement() (~30 lines)
+├── Added: parseWarnStatement() (~30 lines)
+├── Added: parsePrintStatement() (~60 lines)
+├── Added: parseSayStatement() (~60 lines)
+└── Added: parseDoBlock() (~70 lines)
+
+tests/Parser.test.ts
+├── Modified: Imports - added DieNode, WarnNode, PrintNode, SayNode, DoBlockNode
+├── Added: 4 die tests
+├── Added: 4 warn tests
+├── Added: 4 print tests
+├── Added: 4 say tests
+├── Added: 4 do block tests
+└── Added: 1 require test
+```
+
+## Project Metrics After Session 10
+
+```
+Total Tests:         214 (was 193, +21)
+Source Files:        4 (unchanged)
+Test Files:          4 (unchanged)
+Parser.ts Lines:     ~2,100 (was ~1,850, +~250)
+AST.ts Lines:        ~175 (was ~157, +~18)
+Pass Rate:           100%
+Type Safety:         100% (no any types!)
+Sprint 1:            COMPLETE ✅
+```
+
+## Examples That Now Work
+
+```perl
+# Error handling
+die "Fatal error occurred";
+die "Error: $message" if $error;
+warn "This feature is deprecated";
+
+# Output
+print "Hello, World!";
+print "Value: ", $x, "
+";
+say "Message: $text";  # Adds newline automatically
+say;  # Print newline
+
+# Function call syntax
+print("Hello");
+say("World");
+require("Config.pm");
+
+# Do blocks
+my $result = do {
+    my $a = 10;
+    my $b = 20;
+    $a + $b;  # Returns 30
+};
+
+my $value = do { $x > 5 ? $x * 2 : $x + 1; };
+
+# Standalone do
+do {
+    print "Starting...";
+    process_data();
+    print "Done";
+};
+```
+
+## What's Next: Session 11
+
+**Recommended**: Start Sprint 2 from FEATURE_PRIORITIES.md
+
+**Sprint 2: Loop Control (2-3 hours)**:
+1. `last`, `next`, `redo` statements
+2. Loop labels: `OUTER: while (...) { ... last OUTER; }`
+
+**Why Sprint 2**:
+- Completes control flow features
+- Natural progression from Sprint 1
+- Commonly used in real Perl code
+- Similar complexity to Sprint 1
+
+**Alternative**: Sprint 3 (Special Variables: `%ENV`, `@ARGV`, `$_`)
+
+## Lessons Learned
+
+### 1. TDD Catches Integration Issues Early
+
+**Observation**: Tests for `print("hello")` failed initially
+**Root Cause**: KEYWORD tokens weren't allowed as function names
+**Resolution**: Enhanced function call parsing in one place
+**Benefit**: All keyword builtins now work as function calls
+
+### 2. Dual Syntax Requires Careful Disambiguation
+
+**Challenge**: `print` can be statement or function call
+**Solution**: Check for `(` to determine parsing mode
+**Pattern**: Applicable to other dual-syntax features
+
+### 3. Code Reuse Prevents Bugs
+
+**Decision**: Reuse block parsing logic for do blocks
+**Alternative**: Write custom parsing for do blocks
+**Benefit**: Consistent behavior, fewer bugs, less code
+
+### 4. Architecture Decisions Have Wide Impact
+
+**Change**: Allow KEYWORD as function name
+**Impact**: Enabled `print()`, `say()`, AND `require()`
+**Lesson**: Small architectural improvements unlock multiple features
+
+## Session Velocity
+
+- **Features Implemented**: 4 (die/warn, print/say, do, require)
+- **Tests Added**: 21
+- **Lines Added**: ~270 total
+- **Time**: ~1.5 hours
+- **Velocity**: ~180 lines/hour, ~14 tests/hour
+
+**Comparison to Session 9**:
+- Session 9: 5 features, 16 tests, ~225 lines
+- Session 10: 4 features, 21 tests, ~270 lines
+- Similar velocity, maintaining quality
+
+## Sprint 1 Completion Status
+
+✅ **All 4 features complete**:
+1. ✅ `die` and `warn` statements
+2. ✅ `print` and `say` statements
+3. ✅ `do` blocks
+4. ✅ `require` builtin (verified working)
+
+**ROI**: Essential builtins enable error handling, output, and module loading - critical for any practical Perl program.
+
+**Next**: Sprint 2 for loop control flow completion.
+
+
+---
+
+## Session 11 Summary
+
+**Date**: Session 11 of MPP development
+**Duration**: ~2 hours
+**Methodology**: Strict Test-Driven Development (TDD)
+**Result**: Sprint 2 Complete - Loop Control Flow!
+
+### Starting Point
+- 214 tests passing
+- Sprint 1 complete (die, warn, print, say, do, require)
+- Basic loops (while, until, for/foreach) without control
+
+### Ending Point
+- **226 tests passing** (+12 new tests)
+- Loop control statements: `last`, `next`, `redo`
+- Loop labels: `LABEL: while/until/for`
+- Complete control flow support
+
+## What We Built This Session
+
+### 1. Loop Control Statements (last, next, redo)
+
+**Features**:
+- `last` - Exit loop immediately (like `break` in C)
+- `next` - Skip to next iteration (like `continue` in C)
+- `redo` - Restart current iteration without re-evaluating condition
+- Optional label support: `last OUTER;`, `next LOOP;`
+- Works in postfix conditionals: `next if $skip;`
+
+**AST Nodes**:
+```typescript
+interface LastNode extends ASTNode {
+    type: 'Last';
+    label?: string;
+}
+
+interface NextNode extends ASTNode {
+    type: 'Next';
+    label?: string;
+}
+
+interface RedoNode extends ASTNode {
+    type: 'Redo';
+    label?: string;
+}
+```
+
+**Implementation**:
+- Added to Tokenizer keywords: `redo` (last/next already existed)
+- Added to Lexer controlKeywords: `redo`
+- Parser methods: `parseLastStatement()`, `parseNextStatement()`, `parseRedoStatement()`
+- Parse like `return` - keyword + optional label identifier
+
+**Examples**:
+```perl
+# Basic usage
+while ($running) {
+    last if $done;
+    next if $skip;
+    redo if $retry;
+}
+
+# With labels
+OUTER: for my $i (@items) {
+    INNER: for my $j (@others) {
+        last OUTER if $critical_error;
+        next INNER if $j eq 'skip';
+    }
+}
+```
+
+**Tests Added**: 8 tests
+- 3 basic tests (without labels)
+- 3 label tests
+- 2 integration tests (in loops, with conditionals)
+
+### 2. Loop Labels
+
+**Features**:
+- Labels for while, until, for/foreach loops
+- Syntax: `LABEL: while (...) { ... }`
+- Labels are identifiers (typically uppercase by convention)
+- Used with `last LABEL`, `next LABEL`, `redo LABEL`
+- Enables breaking out of nested loops
+
+**AST Changes**:
+```typescript
+interface WhileNode extends ASTNode {
+    type: 'While';
+    condition: ASTNode;
+    block: ASTNode[];
+    label?: string;  // NEW
+}
+
+interface UntilNode extends ASTNode {
+    type: 'Until';
+    condition: ASTNode;
+    block: ASTNode[];
+    label?: string;  // NEW
+}
+
+interface ForeachNode extends ASTNode {
+    type: 'Foreach';
+    variable: VariableNode;
+    declarator?: string;
+    listExpr: ASTNode;
+    block: ASTNode[];
+    label?: string;  // NEW
+}
+```
+
+**Implementation**:
+- Label detection in `parseStatement()`: Check for `IDENTIFIER : CONTROL` pattern
+- Extract label and pass to loop parsing methods
+- Updated signatures: `parseWhileStatement(lexemes, label?)`
+- Updated signatures: `parseUntilStatement(lexemes, label?)`
+- Updated signatures: `parseForeachStatement(lexemes, label?)`
+
+**Parsing Logic**:
+```typescript
+// In parseStatement()
+if (lexemes[0].category === 'IDENTIFIER' &&
+    lexemes[1].token.value === ':' &&
+    lexemes[2].category === 'CONTROL') {
+    
+    const label = lexemes[0].token.value;
+    const keyword = lexemes[2].token.value;
+    // Pass to appropriate loop parser
+}
+```
+
+**Tests Added**: 4 tests
+- while with label
+- until with label
+- foreach with label
+- nested loops with labels and last (integration)
+
+## Architecture Insights
+
+### 1. Colon as Label Separator
+
+**Decision**: Recognize `:` as BINOP in label context
+**Why**: Tokenizer already handles `:` as operator (for ternary and hash pairs)
+**Benefit**: No tokenizer changes needed, just parse-time detection
+
+### 2. Optional Parameters for Labels
+
+**Pattern**: `parseForeachStatement(lexemes, label?: string)`
+**Benefit**: Backward compatible - existing calls work without changes
+**Implementation**: Use spread operator for optional fields
+
+```typescript
+const whileNode: WhileNode = {
+    type: 'While',
+    condition,
+    block: blockResult.statements,
+    ...(label && { label })  // Only add if present
+};
+```
+
+### 3. Label-First Parsing
+
+**Order**: Check for labels BEFORE postfix conditionals
+**Why**: Labels must be detected at statement start
+**Location**: Lines 152-173 in Parser.ts parseStatement()
+
+## Code Changes
+
+### Files Modified
+1. **src/AST.ts** (~15 lines)
+   - Added LastNode, NextNode, RedoNode interfaces
+   - Added optional `label` field to WhileNode, UntilNode, ForeachNode
+
+2. **src/Tokenizer.ts** (~1 line)
+   - Added `redo` to keywords set
+
+3. **src/Lexer.ts** (~1 line)
+   - Added `redo` to controlKeywords set
+
+4. **src/Parser.ts** (~100 lines)
+   - Label detection logic in parseStatement()
+   - parseLastStatement(), parseNextStatement(), parseRedoStatement()
+   - Updated loop parsing methods with optional label parameter
+
+5. **tests/Parser.test.ts** (~110 lines)
+   - 12 new tests for loop control and labels
+   - Imports for new node types
+
+### Total Changes
+- **Lines Added**: ~227 lines
+- **Tests Added**: 12 tests
+- **Test Coverage**: 214 → 226 tests
+
+## Sprint 2 Completion Status
+
+✅ **Both features complete**:
+1. ✅ Loop control: `last`, `next`, `redo`
+2. ✅ Loop labels: `LABEL: while/until/for`
+
+**ROI**: Complete control flow enables complex loop logic and proper error handling in nested loops - essential for real-world programs.
+
+## Examples from Tests
+
+```perl
+# Basic loop control
+last;
+next;
+redo;
+
+# With labels
+last OUTER;
+next LOOP;
+redo RETRY;
+
+# In loops
+while ($x) {
+    last;
+}
+
+for my $item (@items) {
+    next if $skip;
+}
+
+# Labeled loops
+OUTER: while ($condition) {
+    $x = $x + 1;
+}
+
+RETRY: until ($done) {
+    process();
+}
+
+ITEMS: for my $item (@list) {
+    say $item;
+}
+
+# Nested with control
+OUTER: while ($x) {
+    INNER: for my $i (@items) {
+        last OUTER if $done;
+    }
+}
+```
+
+## Lessons Learned
+
+### 1. Keyword Already Existed!
+
+**Surprise**: `last` and `next` were already in tokenizer/lexer
+**Missing**: Only `redo` needed to be added
+**Lesson**: Check existing code before assuming changes needed
+**Saved**: Time and potential bugs from duplicate additions
+
+### 2. Property Names Matter
+
+**Bug**: Test used `whileStmt.body` instead of `whileStmt.block`
+**Root Cause**: WhileNode uses `block`, ForeachNode uses `block`
+**Fix**: Quick - just updated test
+**Lesson**: Stay consistent with existing naming conventions
+
+### 3. Spread Syntax for Optional Fields
+
+**Pattern**: `...(label && { label })`
+**Benefit**: Clean way to conditionally add fields
+**Alternative**: Separate if statements would be verbose
+**Adoption**: Used consistently across all three loop types
+
+### 4. Early Parsing Position Matters
+
+**Decision**: Parse labels before postfix conditionals
+**Why**: Labels appear at statement start
+**Impact**: Natural flow, no conflicts with other features
+
+## Performance Notes
+
+- All 226 tests pass in ~87ms
+- Compilation clean with no TypeScript errors
+- Test coverage maintained at 100% for new features
+
+## What's Next: Session 12
+
+**Recommended**: Start Sprint 3 from FEATURE_PRIORITIES.md
+
+**Sprint 3: Special Variables (1-2 hours)**:
+1. `%ENV`, `@ARGV` special variables
+2. `$_` default variable
+3. Possibly `qw//` quote-word operator (if time permits)
+
+**Why Sprint 3**:
+- High practical value
+- Low complexity
+- Natural progression
+- Enables real program I/O
+
+**Alternative**: Sprint 4 (Modern Dereferencing: `->@*`, `->%*`, etc.)
+
+## Session Velocity
+
+- **Features Implemented**: 2 (loop control, labels)
+- **Tests Added**: 12
+- **Lines Added**: ~227 total
+- **Time**: ~2 hours
+- **Velocity**: ~114 lines/hour, 6 tests/hour
+
+**Comparison**:
+- Session 9: 5 features, 16 tests, ~225 lines
+- Session 10: 4 features, 21 tests, ~270 lines
+- Session 11: 2 features, 12 tests, ~227 lines
+- Consistent quality and thoroughness
+
+**Total Progress**:
+- Started: 214 tests
+- Ended: 226 tests
+- Growth: +5.6%
+- All sprints on track!
+
+---
+
+## Session 12 Summary - Sprint 3 Complete!
+
+**Date**: Session 12 of MPP development  
+**Duration**: ~1.5 hours  
+**Methodology**: Strict Test-Driven Development (TDD)  
+**Result**: Sprint 3 Complete - Special Variables & Quote-Word Operator!
+
+### Starting Point
+- 226 tests passing
+- Sprint 2 complete (loop control)
+- No special variable handling
+
+### Ending Point
+- **239 tests passing** (+13 new tests)
+- Special variables: `%ENV`, `@ARGV`, `$_` fully supported
+- `qw//` quote-word operator with multiple delimiters
+- All Sprint 3 features complete!
+
+## What We Built This Session
+
+### 1. Special Variables (%ENV, @ARGV, $_)
+
+**Key Insight**: These "just work" as regular variables! No parser changes needed.
+
+**Examples**:
+```perl
+# %ENV - Environment variables
+$ENV{PATH};                    # Access PATH
+$ENV{DEBUG} = 1;               # Set DEBUG
+my %copy = %ENV;               # Copy entire hash
+
+# @ARGV - Command-line arguments
+$ARGV[0];                      # First argument
+for my $arg (@ARGV) { ... }    # Iterate over args
+
+# $_ - Default variable
+print $_;                      # Print default
+my $result = $_ + 10;          # Use in expression
+```
+
+**Architecture**: 
+- Variable names like `ENV`, `ARGV`, `_` are just identifiers
+- Sigils determine usage context (`$ENV{x}` vs `%ENV`)
+- Already handled correctly by existing tokenizer/parser
+
+**Tests Added**: 7 tests
+- `$ENV{key}` hash element access
+- `$ARGV[index]` array element access
+- `@ARGV` in foreach loop
+- `%ENV` as hash variable
+- `$_` in print statement
+- `$_` in expressions
+- `$ENV{key}` assignment
+
+### 2. qw// Quote-Word Operator
+
+**Features**:
+- Multiple delimiters: `qw()`, `qw[]`, `qw{}`, `qw//`, `qw||`, etc.
+- Paired delimiters: `()`, `[]`, `{}`, `<>` with proper nesting
+- Non-paired delimiters: `/`, `|`, `!`, etc.
+- Splits on whitespace, filters empty strings
+- Returns list of bareword strings
+
+**Implementation**:
+
+**Tokenizer** (~50 lines in Tokenizer.ts):
+```typescript
+// Recognize qw followed by delimiter
+if (value === 'qw') {
+    const delimiter = chunk[i];
+    const closingDelim = this.getClosingDelimiter(delimiter);
+    
+    // Find closing delimiter (with depth tracking for paired)
+    // Split content on whitespace
+    const words = content.split(/\s+/).filter(w => w.length > 0);
+    
+    yield {
+        type: 'QWLIST',
+        value: JSON.stringify(words)
+    };
+}
+```
+
+**Lexer** (~1 line in Lexer.ts):
+```typescript
+// Treat QWLIST as LITERAL
+if (token.type === 'QWLIST') {
+    return { category: 'LITERAL', token };
+}
+```
+
+**Parser** (~15 lines in Parser.ts):
+```typescript
+if (lexeme.token.type === 'QWLIST') {
+    const words: string[] = JSON.parse(lexeme.token.value);
+    const elements: StringNode[] = words.map(word => ({
+        type: 'String',
+        value: word
+    }));
+    return { type: 'List', elements };
+}
+```
+
+**Examples**:
+```perl
+# Various delimiters
+my @words = qw(foo bar baz);      # Parentheses
+my @list = qw/one two three/;     # Slashes
+my @items = qw[alpha beta gamma]; # Square brackets
+my @nums = qw{1 2 3};             # Curly braces
+
+# Multiple spaces normalized
+qw(a    b     c)  # → ('a', 'b', 'c')
+
+# In function calls
+process(qw(foo bar));  # Pass list to function
+```
+
+**Tests Added**: 6 tests
+- `qw()` with parentheses
+- `qw//` with slashes
+- `qw[]` with square brackets
+- `qw{}` with curly braces
+- `qw()` with multiple spaces (normalization)
+- `qw()` in function call
+
+## Code Changes
+
+### Files Modified
+1. **tests/Parser.test.ts** (~80 lines)
+   - 7 special variable tests
+   - 6 qw// operator tests
+
+2. **src/Tokenizer.ts** (~60 lines)
+   - qw// tokenization logic
+   - `getClosingDelimiter()` helper method
+   - Delimiter matching with depth tracking
+
+3. **src/Lexer.ts** (~1 line)
+   - Added QWLIST to literal types
+
+4. **src/Parser.ts** (~15 lines)
+   - QWLIST handling in parsePrimary()
+   - Convert to ListNode with StringNode elements
+
+### Total Changes
+- **Lines Added**: ~156 lines
+- **Tests Added**: 13 tests
+- **Test Coverage**: 226 → 239 tests
+
+## Architecture Insights
+
+### 1. Special Variables Are Just Names
+
+**Realization**: `ENV`, `ARGV`, `_` are regular identifiers  
+**Impact**: Zero parser/tokenizer changes needed  
+**Lesson**: Perl's syntax context magic (sigils) handles everything
+
+The sigil determines behavior:
+- `$ENV{key}` - scalar access to hash
+- `%ENV` - the hash itself
+- `@ARGV` - the array
+- `$ARGV[0]` - scalar from array
+
+### 2. qw// Is Tokenizer-Level
+
+**Decision**: Handle qw// in tokenizer, not parser  
+**Why**: Content parsing (splitting) is tokenization  
+**Benefit**: Parser sees clean ListNode, no special logic needed
+
+**Alternative Considered**: Parse qw in parser
+**Rejected**: Would require parser to split strings, handle delimiters
+
+### 3. JSON for Token Value Transfer
+
+**Pattern**: Store word list as JSON in token value  
+**Benefit**: Type-safe transfer from tokenizer to parser  
+**Implementation**: `JSON.stringify(words)` → `JSON.parse(value)`
+
+### 4. Delimiter Pairing Logic
+
+**Challenge**: Paired `()` vs non-paired `//` delimiters  
+**Solution**: `getClosingDelimiter()` helper  
+**Logic**:
+- Paired: track depth, match opener with closer
+- Non-paired: delimiter is its own closer
+
+## Performance Notes
+
+- All 239 tests pass in ~88ms
+- qw// tokenization adds minimal overhead
+- No breaking changes to existing features
+
+## Examples from Tests
+
+```perl
+# Special Variables
+$ENV{PATH};                  # Environment variable
+my $first = $ARGV[0];        # Command-line arg
+for my $arg (@ARGV) { }      # Iterate args
+print $_;                    # Default variable
+my %copy = %ENV;             # Copy environment
+
+# qw// Quote-Word
+my @words = qw(foo bar baz); # Simple list
+my @list = qw/one two three/; # Different delimiter
+my @items = qw[a b c];       # Square brackets
+my @nums = qw{1 2 3};        # Curly braces
+qw(a    b     c);            # Whitespace normalized
+process(qw(foo bar));        # In function call
+```
+
+## Sprint 3 Completion Status
+
+✅ **All features complete**:
+1. ✅ `%ENV`, `@ARGV` special variables
+2. ✅ `$_` default variable
+3. ✅ `qw//` quote-word operator (bonus!)
+
+**ROI**: Essential for real programs - environment access, command-line args, and convenient list syntax.
+
+## Lessons Learned
+
+### 1. Not Everything Needs Special Handling
+
+**Assumption**: Special variables need parser changes  
+**Reality**: They're just names with special meaning at runtime  
+**Lesson**: Check if existing mechanisms suffice before adding complexity
+
+### 2. Test Corrections Are Learning Opportunities
+
+**Issue**: Initial tests used `%ENV` in `$ENV{key}` context  
+**Learning**: Sigil context switching is fundamental to Perl  
+**Fix**: Corrected tests to reflect proper Perl semantics  
+**Value**: Deepened understanding of sigil behavior
+
+### 3. Tokenizer vs Parser Responsibility
+
+**Question**: Where to implement qw//?  
+**Answer**: Tokenizer - it's about text processing  
+**Benefit**: Clean separation of concerns  
+**Pattern**: Tokenizer handles syntax, parser handles structure
+
+### 4. JSON as Protocol
+
+**Pattern**: Use JSON to pass structured data in token values  
+**Benefit**: Type-safe, simple, debuggable  
+**Usage**: `JSON.stringify(words)` in tokenizer, `JSON.parse()` in parser
+
+## What's Next: Session 13
+
+**Recommended**: Sprint 4 from FEATURE_PRIORITIES.md
+
+**Sprint 4: Modern Dereferencing (3-4 hours)**:
+1. Anonymous constructors: `[]`, `{}` (~70 lines)
+2. Postfix dereference: `->@*`, `->%*`, `->$*` (~80 lines)
+3. Postfix deref slice: `->@[...]`, `->@{...}` (~50 lines)
+
+**Why Sprint 4**:
+- Modern Perl syntax (5.20+)
+- Cleaner than old-style dereferencing
+- Natural progression from existing deref
+
+**Alternative**: Sprint 5 (Package System) or Sprint 6 (Class Syntax)
+
+## Session Velocity
+
+- **Features Implemented**: 3 (special vars, qw//)
+- **Tests Added**: 13
+- **Lines Added**: ~156 total
+- **Time**: ~1.5 hours
+- **Velocity**: ~104 lines/hour, ~9 tests/hour
+
+**Comparison**:
+- Session 10: 4 features, 21 tests, ~270 lines, 2h
+- Session 11: 2 features, 12 tests, ~227 lines, 2h
+- Session 12: 3 features, 13 tests, ~156 lines, 1.5h
+- **Consistent productivity**, adaptive to complexity
+
+**Total Progress**:
+- Started Session 12: 226 tests
+- Ended Session 12: 239 tests
+- Growth: +5.8%
+- **All sprints on track!**
+
+---
+
+## Cumulative Stats (Through Session 12)
+
+**Test Count**: 239 passing ✅  
+**Code Size**: ~2,300 lines of parser code  
+**Features**: 9 complete sprints/features  
+
+**Completed Sprints**:
+1. ✅ Sprint 1: Essential Builtins (die, warn, print, say, do, require)
+2. ✅ Sprint 2: Loop Control (last, next, redo, labels)
+3. ✅ Sprint 3: Special Variables (%ENV, @ARGV, $_, qw//)
+
+**Upcoming**:
+- Sprint 4: Modern Dereferencing
+- Sprint 5: Package System
+- Sprint 6: Class Syntax (Modern OO)
+

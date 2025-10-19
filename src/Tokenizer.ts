@@ -10,13 +10,13 @@ export class Tokenizer {
         'if', 'elsif', 'else', 'unless',
         'while', 'until', 'for', 'foreach',
         'given', 'when', 'default', 'break',
-        'next', 'last', 'continue', 'return',
+        'next', 'last', 'redo', 'continue', 'return',
         'my', 'our', 'state', 'const',
         'sub', 'async', 'class', 'field', 'method',
         'and', 'or', 'not', 'xor',
         'cmp', 'eq', 'ne', 'lt', 'gt', 'le', 'ge',
         'use', 'require', 'package', 'import',
-        'do', 'eval', 'try', 'catch', 'finally', 'throw',
+        'do', 'eval', 'try', 'catch', 'finally', 'throw', 'die', 'warn', 'print', 'say',
         'spawn', 'send', 'recv', 'self', 'kill', 'alive',
         'defined', 'undef', 'exists', 'delete'
     ]);
@@ -106,6 +106,59 @@ export class Tokenizer {
                     }
 
                     const value = chunk.substring(start, i);
+
+                    // Special handling for qw// quote-word operator
+                    if (value === 'qw') {
+                        // Skip whitespace between 'qw' and delimiter
+                        while (i < chunk.length && this.isWhitespace(chunk[i]) && chunk[i] !== '\n') {
+                            i++;
+                            column++;
+                        }
+
+                        if (i < chunk.length) {
+                            const delimiter = chunk[i];
+                            const closingDelim = this.getClosingDelimiter(delimiter);
+                            i++;
+                            column++;
+
+                            // Find closing delimiter
+                            const contentStart = i;
+                            let depth = 1;
+                            while (i < chunk.length && depth > 0) {
+                                if (chunk[i] === delimiter) {
+                                    if (closingDelim === delimiter) {
+                                        // Non-paired delimiter (/, |, etc.)
+                                        depth--;
+                                        break;
+                                    } else {
+                                        // Opening of paired delimiter
+                                        depth++;
+                                    }
+                                } else if (closingDelim !== delimiter && chunk[i] === closingDelim) {
+                                    depth--;
+                                    if (depth === 0) break;
+                                }
+                                i++;
+                                column++;
+                            }
+
+                            const content = chunk.substring(contentStart, i);
+                            // Split on whitespace and filter empty strings
+                            const words = content.split(/\s+/).filter(w => w.length > 0);
+
+                            i++; // Skip closing delimiter
+                            column++;
+
+                            yield {
+                                type: 'QWLIST',
+                                value: JSON.stringify(words), // Store as JSON array
+                                line,
+                                column: startColumn
+                            };
+                            continue;
+                        }
+                    }
+
                     const type = this.keywords.has(value) ? 'KEYWORD' : 'IDENTIFIER';
 
                     yield {
@@ -266,6 +319,18 @@ export class Tokenizer {
             case ';': return 'TERMINATOR';
             case ',': return 'COMMA';
             default: return 'UNKNOWN';
+        }
+    }
+
+    private getClosingDelimiter(opening: string): string {
+        // For paired delimiters, return the closing one
+        switch (opening) {
+            case '(': return ')';
+            case '{': return '}';
+            case '[': return ']';
+            case '<': return '>';
+            // For non-paired delimiters, return the same one
+            default: return opening;
         }
     }
 

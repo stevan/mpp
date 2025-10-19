@@ -1,7 +1,7 @@
 # MPP Feature Priorities
 
-**Status:** 193 tests passing | ~1,800 lines of parser code
-**Last Updated:** Session 9
+**Status:** 239 tests passing | ~2,300 lines of parser code
+**Last Updated:** Session 12
 **Note:** This file replaces NEXT_STEPS.md - always consult this for implementation priorities
 
 ---
@@ -17,7 +17,7 @@
 
 ## 🟢 PHASE 1: Core Builtins (2-3 hours, ~60 lines)
 
-**Status:** Not started
+**Status:** ✅ COMPLETE (Session 10)
 **Priority:** HIGH - Essential for basic programs
 
 ### 1. `die` and `warn` statements (10 lines)
@@ -61,39 +61,39 @@
 
 ---
 
-## 🟠 PHASE 3: Special Variables (1-2 hours, ~40 lines)
+## 🟢 PHASE 3: Special Variables (1-2 hours, ~40 lines)
 
-**Status:** Not started
+**Status:** ✅ COMPLETE (Session 12)
 **Priority:** HIGH - Practical programming features
 
-### 7. Special variables: `%ENV`, `@ARGV` (20 lines)
-- Add to tokenizer as special variable names
+### 7. Special variables: `%ENV`, `@ARGV` ✅
+- Work automatically - no special handling needed!
 - Parse like regular hash/array variables
 - Example: `$ENV{PATH}`, `for my $arg (@ARGV) { ... }`
 
-### 8. `$_` default variable (20 lines)
-- Useful even with signatures (map, grep, while context)
-- Special tokenization for `$_`
+### 8. `$_` default variable ✅
+- Works automatically with existing tokenizer
+- Special tokenization for `$_` already present
 - Example: `for (@array) { print $_; }`
 
 ---
 
-## 🟠 PHASE 4: Quote Operators (1-2 hours, ~75 lines)
+## 🟢 PHASE 4: Quote Operators (1-2 hours, ~75 lines)
 
-**Status:** Not started
+**Status:** ✅ COMPLETE (Session 12) - qw// implemented
 **Priority:** MEDIUM - Convenient syntax
 
-### 9. `qw//` quote-word operator (50 lines)
+### 9. `qw//` quote-word operator ✅ (66 lines actual)
 - Tokenizer: recognize `qw/.../` with various delimiters
 - Split on whitespace, return list of barewords
+- Supports paired delimiters: `()`, `[]`, `{}`, `<>`
+- Supports non-paired: `/`, `|`, `!`, etc.
 - Example: `qw(foo bar baz)` → `('foo', 'bar', 'baz')`
-- Example: `qw/one two three/`, `qw[a b c]`
 
-### 10. Fat comma auto-quoting (25 lines)
+### 10. Fat comma auto-quoting (25 lines) - DEFERRED
 - `foo => bar` auto-quotes left side if bareword
-- Modify hash pair parsing in parsePair()
-- Example: `{foo => 1}` treats `foo` as `"foo"`
-- Already works with quoted strings
+- May already work - needs testing
+- Lower priority - defer to later session
 
 ---
 
@@ -400,15 +400,13 @@ After completing these, you'll have:
 
 ---
 
-## Current Status (Session 9)
+## Current Status (Session 12)
 
-**Completed Features:**
-- ✅ Range expressions (6 tests)
-- ✅ Bareword hash keys (4 tests)
-- ✅ List assignment (4 tests)
-- ✅ Array slices (4 tests)
-- ✅ Hash slices (4 tests)
+**Completed Sprints:**
+- ✅ Sprint 1: Essential Builtins (Session 10) - die, warn, print, say, do, require
+- ✅ Sprint 2: Loop Control (Session 11) - last, next, redo, loop labels
+- ✅ Sprint 3: Special Variables (Session 12) - %ENV, @ARGV, $_, qw//
 
-**Test Count:** 193 passing
-**Parser Size:** ~1,800 lines
-**Next Session:** Start with Sprint 1 (Essential Builtins)
+**Test Count:** 239 passing
+**Parser Size:** ~2,300 lines
+**Next Session:** Start Sprint 4 (Modern Dereferencing)

@@ -15,8 +15,16 @@ import {
     UntilNode,
     ForeachNode,
     BlockNode,
+    DoBlockNode,
     CallNode,
     ReturnNode,
+    LastNode,
+    NextNode,
+    RedoNode,
+    DieNode,
+    WarnNode,
+    PrintNode,
+    SayNode,
     SubNode,
     ParameterNode,
     ArrayLiteralNode,
@@ -141,6 +149,29 @@ export class Parser {
             return null;
         }
 
+        // Check for loop labels (LABEL: while/until/for/foreach)
+        if (lexemes.length >= 3 &&
+            lexemes[0].category === 'IDENTIFIER' &&
+            lexemes[1].category === 'BINOP' &&
+            lexemes[1].token.value === ':' &&
+            lexemes[2].category === 'CONTROL') {
+
+            const label = lexemes[0].token.value;
+            const keyword = lexemes[2].token.value;
+            const remainingLexemes = lexemes.slice(2); // Skip label and colon
+
+            // Only loops can have labels
+            if (keyword === 'while') {
+                return this.parseWhileStatement(remainingLexemes, label);
+            }
+            if (keyword === 'until') {
+                return this.parseUntilStatement(remainingLexemes, label);
+            }
+            if (keyword === 'for' || keyword === 'foreach') {
+                return this.parseForeachStatement(remainingLexemes, label);
+            }
+        }
+
         // Check for postfix conditionals (if/unless/while/until appearing after statement)
         // Only detect at depth 0 (not inside braces or parens)
         let depth = 0;
@@ -232,6 +263,42 @@ export class Parser {
             }
             if (lexemes[0].token.value === 'return') {
                 return this.parseReturnStatement(lexemes);
+            }
+            if (lexemes[0].token.value === 'last') {
+                return this.parseLastStatement(lexemes);
+            }
+            if (lexemes[0].token.value === 'next') {
+                return this.parseNextStatement(lexemes);
+            }
+            if (lexemes[0].token.value === 'redo') {
+                return this.parseRedoStatement(lexemes);
+            }
+            if (lexemes[0].token.value === 'die') {
+                return this.parseDieStatement(lexemes);
+            }
+            if (lexemes[0].token.value === 'warn') {
+                return this.parseWarnStatement(lexemes);
+            }
+            if (lexemes[0].token.value === 'do') {
+                return this.parseDoBlock(lexemes);
+            }
+        }
+
+        // Check for print and say (can be either statements or function calls)
+        if (lexemes[0].category === 'KEYWORD') {
+            if (lexemes[0].token.value === 'print') {
+                // If followed by '(', treat as function call, not statement
+                if (lexemes.length === 1 || lexemes[1].category !== 'LPAREN') {
+                    return this.parsePrintStatement(lexemes);
+                }
+                // Otherwise, let it fall through to be parsed as a function call
+            }
+            if (lexemes[0].token.value === 'say') {
+                // If followed by '(', treat as function call, not statement
+                if (lexemes.length === 1 || lexemes[1].category !== 'LPAREN') {
+                    return this.parseSayStatement(lexemes);
+                }
+                // Otherwise, let it fall through to be parsed as a function call
             }
         }
 
@@ -504,6 +571,70 @@ export class Parser {
             }
         }
 
+        // Do blocks (can be used in expressions)
+        if (lexeme.category === 'CONTROL' && lexeme.token.value === 'do') {
+            // Expect: do { statements }
+            if (pos + 1 < lexemes.length && lexemes[pos + 1].category === 'LBRACE') {
+                // Find matching RBRACE
+                let depth = 1;
+                let endPos = pos + 2;
+                while (endPos < lexemes.length && depth > 0) {
+                    if (lexemes[endPos].category === 'LBRACE') depth++;
+                    if (lexemes[endPos].category === 'RBRACE') depth--;
+                    endPos++;
+                }
+
+                // Extract block contents
+                const blockLexemes = lexemes.slice(pos + 2, endPos - 1);
+
+                // Parse statements inside the block (same logic as parseBlock)
+                const statements: ASTNode[] = [];
+                let blockPos = 0;
+
+                while (blockPos < blockLexemes.length) {
+                    let stmtEnd = blockPos;
+                    let braceDepth = 0;
+
+                    while (stmtEnd < blockLexemes.length) {
+                        if (blockLexemes[stmtEnd].category === 'LBRACE') {
+                            braceDepth++;
+                        } else if (blockLexemes[stmtEnd].category === 'RBRACE') {
+                            braceDepth--;
+                            if (braceDepth === 0) {
+                                stmtEnd++;
+                                break;
+                            }
+                        } else if (blockLexemes[stmtEnd].category === 'TERMINATOR' && braceDepth === 0) {
+                            break;
+                        }
+                        stmtEnd++;
+                    }
+
+                    const stmtLexemes = blockLexemes.slice(blockPos, stmtEnd);
+                    if (stmtLexemes.length > 0) {
+                        const stmt = this.parseStatement(stmtLexemes);
+                        if (stmt) {
+                            statements.push(stmt);
+                        }
+                    }
+
+                    blockPos = stmtEnd;
+                    if (blockPos < blockLexemes.length && blockLexemes[blockPos].category === 'TERMINATOR') {
+                        blockPos++;
+                    }
+                }
+
+                const doBlockNode: DoBlockNode = {
+                    type: 'DoBlock',
+                    statements
+                };
+                return {
+                    node: doBlockNode,
+                    nextPos: endPos
+                };
+            }
+        }
+
         // Literals
         if (lexeme.category === 'LITERAL') {
             if (lexeme.token.type === 'NUMBER') {
@@ -523,6 +654,22 @@ export class Parser {
                 };
                 return {
                     node: strNode,
+                    nextPos: pos + 1
+                };
+            }
+            if (lexeme.token.type === 'QWLIST') {
+                // Parse qw// as a list of strings
+                const words: string[] = JSON.parse(lexeme.token.value);
+                const elements: StringNode[] = words.map(word => ({
+                    type: 'String',
+                    value: word
+                }));
+                const listNode: ListNode = {
+                    type: 'List',
+                    elements
+                };
+                return {
+                    node: listNode,
                     nextPos: pos + 1
                 };
             }
@@ -769,7 +916,7 @@ export class Parser {
         }
 
         // Function calls and identifiers
-        if (lexeme.category === 'IDENTIFIER') {
+        if (lexeme.category === 'IDENTIFIER' || lexeme.category === 'KEYWORD') {
             // Check if next token is LPAREN
             if (pos + 1 < lexemes.length && lexemes[pos + 1].category === 'LPAREN') {
                 // This is a function call
@@ -1313,6 +1460,305 @@ export class Parser {
         return returnNode;
     }
 
+    private parseLastStatement(lexemes: Lexeme[]): LastNode | null {
+        // Skip 'last' keyword
+        const remainingLexemes = lexemes.slice(1);
+
+        // Check if there's a label (an identifier)
+        if (remainingLexemes.length > 0 && remainingLexemes[0].category === 'IDENTIFIER') {
+            const lastNode: LastNode = {
+                type: 'Last',
+                label: remainingLexemes[0].token.value
+            };
+            return lastNode;
+        }
+
+        // No label
+        const lastNode: LastNode = {
+            type: 'Last'
+        };
+        return lastNode;
+    }
+
+    private parseNextStatement(lexemes: Lexeme[]): NextNode | null {
+        // Skip 'next' keyword
+        const remainingLexemes = lexemes.slice(1);
+
+        // Check if there's a label (an identifier)
+        if (remainingLexemes.length > 0 && remainingLexemes[0].category === 'IDENTIFIER') {
+            const nextNode: NextNode = {
+                type: 'Next',
+                label: remainingLexemes[0].token.value
+            };
+            return nextNode;
+        }
+
+        // No label
+        const nextNode: NextNode = {
+            type: 'Next'
+        };
+        return nextNode;
+    }
+
+    private parseRedoStatement(lexemes: Lexeme[]): RedoNode | null {
+        // Skip 'redo' keyword
+        const remainingLexemes = lexemes.slice(1);
+
+        // Check if there's a label (an identifier)
+        if (remainingLexemes.length > 0 && remainingLexemes[0].category === 'IDENTIFIER') {
+            const redoNode: RedoNode = {
+                type: 'Redo',
+                label: remainingLexemes[0].token.value
+            };
+            return redoNode;
+        }
+
+        // No label
+        const redoNode: RedoNode = {
+            type: 'Redo'
+        };
+        return redoNode;
+    }
+
+    private parseDieStatement(lexemes: Lexeme[]): DieNode | null {
+        // Skip 'die' keyword
+        const remainingLexemes = lexemes.slice(1);
+
+        // If there are no more lexemes, this is a die with no message
+        if (remainingLexemes.length === 0) {
+            const dieNode: DieNode = {
+                type: 'Die'
+            };
+            return dieNode;
+        }
+
+        // Parse the die message as an expression
+        const message = this.parseExpression(remainingLexemes, 0);
+        if (!message) {
+            // Empty die if expression parsing fails
+            const dieNode: DieNode = {
+                type: 'Die'
+            };
+            return dieNode;
+        }
+
+        const dieNode: DieNode = {
+            type: 'Die',
+            message
+        };
+        return dieNode;
+    }
+
+    private parseWarnStatement(lexemes: Lexeme[]): WarnNode | null {
+        // Skip 'warn' keyword
+        const remainingLexemes = lexemes.slice(1);
+
+        // If there are no more lexemes, this is a warn with no message
+        if (remainingLexemes.length === 0) {
+            const warnNode: WarnNode = {
+                type: 'Warn'
+            };
+            return warnNode;
+        }
+
+        // Parse the warn message as an expression
+        const message = this.parseExpression(remainingLexemes, 0);
+        if (!message) {
+            // Empty warn if expression parsing fails
+            const warnNode: WarnNode = {
+                type: 'Warn'
+            };
+            return warnNode;
+        }
+
+        const warnNode: WarnNode = {
+            type: 'Warn',
+            message
+        };
+        return warnNode;
+    }
+
+    private parsePrintStatement(lexemes: Lexeme[]): PrintNode | null {
+        // Skip 'print' keyword
+        const remainingLexemes = lexemes.slice(1);
+
+        // If there are no more lexemes, this is a print with no arguments
+        if (remainingLexemes.length === 0) {
+            const printNode: PrintNode = {
+                type: 'Print',
+                arguments: []
+            };
+            return printNode;
+        }
+
+        // Parse the arguments as a comma-separated list
+        const args: ASTNode[] = [];
+        let depth = 0;
+        let start = 0;
+
+        for (let i = 0; i < remainingLexemes.length; i++) {
+            const lex = remainingLexemes[i];
+
+            // Track depth for nested expressions
+            if (lex.category === 'LPAREN' || lex.category === 'LBRACKET' || lex.category === 'LBRACE') {
+                depth++;
+            } else if (lex.category === 'RPAREN' || lex.category === 'RBRACKET' || lex.category === 'RBRACE') {
+                depth--;
+            }
+
+            // At depth 0, commas separate arguments
+            if (depth === 0 && lex.category === 'COMMA') {
+                const argLexemes = remainingLexemes.slice(start, i);
+                if (argLexemes.length > 0) {
+                    const arg = this.parseExpression(argLexemes, 0);
+                    if (arg) {
+                        args.push(arg);
+                    }
+                }
+                start = i + 1;
+            }
+        }
+
+        // Parse the last argument
+        const lastArgLexemes = remainingLexemes.slice(start);
+        if (lastArgLexemes.length > 0) {
+            const arg = this.parseExpression(lastArgLexemes, 0);
+            if (arg) {
+                args.push(arg);
+            }
+        }
+
+        const printNode: PrintNode = {
+            type: 'Print',
+            arguments: args
+        };
+        return printNode;
+    }
+
+    private parseSayStatement(lexemes: Lexeme[]): SayNode | null {
+        // Skip 'say' keyword
+        const remainingLexemes = lexemes.slice(1);
+
+        // If there are no more lexemes, this is a say with no arguments
+        if (remainingLexemes.length === 0) {
+            const sayNode: SayNode = {
+                type: 'Say',
+                arguments: []
+            };
+            return sayNode;
+        }
+
+        // Parse the arguments as a comma-separated list
+        const args: ASTNode[] = [];
+        let depth = 0;
+        let start = 0;
+
+        for (let i = 0; i < remainingLexemes.length; i++) {
+            const lex = remainingLexemes[i];
+
+            // Track depth for nested expressions
+            if (lex.category === 'LPAREN' || lex.category === 'LBRACKET' || lex.category === 'LBRACE') {
+                depth++;
+            } else if (lex.category === 'RPAREN' || lex.category === 'RBRACKET' || lex.category === 'RBRACE') {
+                depth--;
+            }
+
+            // At depth 0, commas separate arguments
+            if (depth === 0 && lex.category === 'COMMA') {
+                const argLexemes = remainingLexemes.slice(start, i);
+                if (argLexemes.length > 0) {
+                    const arg = this.parseExpression(argLexemes, 0);
+                    if (arg) {
+                        args.push(arg);
+                    }
+                }
+                start = i + 1;
+            }
+        }
+
+        // Parse the last argument
+        const lastArgLexemes = remainingLexemes.slice(start);
+        if (lastArgLexemes.length > 0) {
+            const arg = this.parseExpression(lastArgLexemes, 0);
+            if (arg) {
+                args.push(arg);
+            }
+        }
+
+        const sayNode: SayNode = {
+            type: 'Say',
+            arguments: args
+        };
+        return sayNode;
+    }
+
+    private parseDoBlock(lexemes: Lexeme[]): DoBlockNode | null {
+        // Expect: do { statements }
+        if (lexemes.length < 3) {
+            return null;
+        }
+
+        // Skip 'do' keyword
+        if (lexemes[1].category !== 'LBRACE') {
+            return null;
+        }
+
+        // Find matching RBRACE
+        let depth = 1;
+        let endPos = 2;
+        while (endPos < lexemes.length && depth > 0) {
+            if (lexemes[endPos].category === 'LBRACE') depth++;
+            if (lexemes[endPos].category === 'RBRACE') depth--;
+            endPos++;
+        }
+
+        // Extract block contents
+        const blockLexemes = lexemes.slice(2, endPos - 1);
+
+        // Parse statements inside the block (same logic as parseBlock)
+        const statements: ASTNode[] = [];
+        let blockPos = 0;
+
+        while (blockPos < blockLexemes.length) {
+            let stmtEnd = blockPos;
+            let braceDepth = 0;
+
+            while (stmtEnd < blockLexemes.length) {
+                if (blockLexemes[stmtEnd].category === 'LBRACE') {
+                    braceDepth++;
+                } else if (blockLexemes[stmtEnd].category === 'RBRACE') {
+                    braceDepth--;
+                    if (braceDepth === 0) {
+                        stmtEnd++;
+                        break;
+                    }
+                } else if (blockLexemes[stmtEnd].category === 'TERMINATOR' && braceDepth === 0) {
+                    break;
+                }
+                stmtEnd++;
+            }
+
+            const stmtLexemes = blockLexemes.slice(blockPos, stmtEnd);
+            if (stmtLexemes.length > 0) {
+                const stmt = this.parseStatement(stmtLexemes);
+                if (stmt) {
+                    statements.push(stmt);
+                }
+            }
+
+            blockPos = stmtEnd;
+            if (blockPos < blockLexemes.length && blockLexemes[blockPos].category === 'TERMINATOR') {
+                blockPos++;
+            }
+        }
+
+        const doBlockNode: DoBlockNode = {
+            type: 'DoBlock',
+            statements
+        };
+        return doBlockNode;
+    }
+
     private parseSubDeclaration(lexemes: Lexeme[]): SubNode | null {
         let pos = 1; // Skip 'sub' keyword
 
@@ -1631,7 +2077,7 @@ export class Parser {
         return unlessNode;
     }
 
-    private parseWhileStatement(lexemes: Lexeme[]): WhileNode | null {
+    private parseWhileStatement(lexemes: Lexeme[], label?: string): WhileNode | null {
         let pos = 1; // Skip 'while'
 
         // Parse condition (must be parenthesized)
@@ -1666,13 +2112,14 @@ export class Parser {
         const whileNode: WhileNode = {
             type: 'While',
             condition,
-            block: blockResult.statements
+            block: blockResult.statements,
+            ...(label && { label })
         };
 
         return whileNode;
     }
 
-    private parseUntilStatement(lexemes: Lexeme[]): UntilNode | null {
+    private parseUntilStatement(lexemes: Lexeme[], label?: string): UntilNode | null {
         let pos = 1; // Skip 'until'
 
         // Parse condition (must be parenthesized)
@@ -1707,13 +2154,14 @@ export class Parser {
         const untilNode: UntilNode = {
             type: 'Until',
             condition,
-            block: blockResult.statements
+            block: blockResult.statements,
+            ...(label && { label })
         };
 
         return untilNode;
     }
 
-    private parseForeachStatement(lexemes: Lexeme[]): ForeachNode | null {
+    private parseForeachStatement(lexemes: Lexeme[], label?: string): ForeachNode | null {
         let pos = 1; // Skip 'foreach' or 'for'
 
         // Check for optional declarator (my, our, state)
@@ -1763,22 +2211,13 @@ export class Parser {
             return null;
         }
 
-        if (declarator) {
-            const foreachNode: ForeachNode = {
-                type: 'Foreach',
-                variable,
-                declarator,
-                listExpr,
-                block: blockResult.statements
-            };
-            return foreachNode;
-        }
-
         const foreachNode: ForeachNode = {
             type: 'Foreach',
             variable,
+            ...(declarator && { declarator }),
             listExpr,
-            block: blockResult.statements
+            block: blockResult.statements,
+            ...(label && { label })
         };
         return foreachNode;
     }

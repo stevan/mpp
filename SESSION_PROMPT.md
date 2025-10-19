@@ -5,10 +5,10 @@
 You are continuing development of the **MPP (Modern Perl Parser)** project. This is a TypeScript-based parser for a modern subset of Perl, built with strict TDD methodology.
 
 **Current Status:**
-- **193 tests passing** ✅
-- **~1,850 lines of parser code**
-- Last session: Implemented range expressions, bareword hash keys, list assignment, array slices, and hash slices
-- Created comprehensive feature roadmap
+- **214 tests passing** ✅
+- **~2,100 lines of parser code**
+- Last session: Implemented Sprint 1 (die, warn, print, say, do blocks, require)
+- Sprint 1 COMPLETE - Essential builtins done!
 
 ## Critical Files to Read First
 
@@ -31,35 +31,7 @@ You are continuing development of the **MPP (Modern Perl Parser)** project. This
 
 ## Recommended Next Steps
 
-### Option 1: Sprint 1 - Essential Builtins (RECOMMENDED)
-
-**Time:** 2-3 hours | **Value:** HIGH | **Complexity:** LOW
-
-Implement core built-in functions:
-
-1. **`die` and `warn` statements** (~10 lines)
-   - Parse as built-in function calls (like return)
-   - Example: `die "Error: $msg";`
-
-2. **`print` and `say` statements** (~15 lines)
-   - Parse as built-in function calls
-   - Example: `print "Hello";`, `say $message;`
-
-3. **`do` blocks** (~20 lines)
-   - Return value from block
-   - Example: `my $x = do { ... };`
-
-4. **`require` builtin** (~15 lines)
-   - Verify it works as function call (likely already works!)
-   - Example: `require "Config.pm";`
-
-**Why Sprint 1:**
-- High practical value
-- No architectural changes needed
-- Enables error handling and output
-- Quick wins build momentum
-
-### Option 2: Sprint 2 - Loop Control
+### Option 1: Sprint 2 - Loop Control (RECOMMENDED)
 
 **Time:** 2-3 hours | **Value:** HIGH | **Complexity:** LOW
 
@@ -93,7 +65,7 @@ npm test  # Should fail
 npm test  # Should pass
 
 # 3. Verify all tests still pass
-npm test  # 193+ tests passing
+npm test  # 214+ tests passing
 ```
 
 ### 2. Architecture Guidelines
@@ -236,6 +208,7 @@ test('parses die with message', async () => {
 
 ✅ **Control Flow**: if/elsif/else, unless, while/until, for/foreach, postfix conditionals
 ✅ **Functions**: Named subs, anonymous subs, parameters with defaults, return statements
+✅ **Builtins**: die, warn, print, say, require, do blocks
 ✅ **Data Structures**: Arrays, hashes, lists, nested structures
 ✅ **Access**: Array/hash access, dereferencing, chained access
 ✅ **Slicing**: Array slices, hash slices
@@ -244,7 +217,7 @@ test('parses die with message', async () => {
 ✅ **Assignment**: Simple, compound, list assignment, element mutation
 ✅ **Syntax**: Bareword hash keys, fat comma, blocks
 
-**193 tests covering all features!**
+**214 tests covering all features!**
 
 ## What's Deferred
 
@@ -265,22 +238,22 @@ test('parses die with message', async () => {
 
 ## Session Goals
 
-**Primary Goal:** Implement Sprint 1 (Essential Builtins)
-- 4 features
-- ~60 lines of code
+**Primary Goal:** Implement Sprint 2 (Loop Control)
+- 2 features: last/next/redo, loop labels
+- ~100 lines of code
 - 2-3 hours
-- High practical value
+- Completes control flow
 
-**Secondary Goal:** If time permits, start Sprint 2 (Loop Control)
+**Secondary Goal:** If time permits, start Sprint 3 (Special Variables)
 
 **Documentation Goal:** Update DEVELOPMENT_LOG.md with session summary
 
 ## Getting Started Checklist
 
-- [ ] Read FEATURE_PRIORITIES.md (especially Sprint 1 section)
-- [ ] Run `npm test` to verify 193 tests pass
-- [ ] Review Session 9 summary in DEVELOPMENT_LOG.md
-- [ ] Choose Sprint 1 or Sprint 2 to implement
+- [ ] Read FEATURE_PRIORITIES.md (especially Sprint 2 section)
+- [ ] Run `npm test` to verify 214 tests pass
+- [ ] Review Session 10 summary in DEVELOPMENT_LOG.md
+- [ ] Implement Sprint 2 (Loop Control)
 - [ ] Write tests first!
 - [ ] Implement features
 - [ ] Run all tests
@@ -290,7 +263,7 @@ test('parses die with message', async () => {
 
 ⚠️ **Always use FEATURE_PRIORITIES.md** - It's the authoritative roadmap
 ⚠️ **TDD is mandatory** - Write tests before implementation
-⚠️ **Keep tests passing** - All 193 tests must pass after changes
+⚠️ **Keep tests passing** - All 214 tests must pass after changes
 ⚠️ **No `any` types** - Maintain 100% type safety
 ⚠️ **Document sessions** - Update DEVELOPMENT_LOG.md when done
 
@@ -298,10 +271,11 @@ test('parses die with message', async () => {
 
 You have everything you need to begin:
 - Clear roadmap (FEATURE_PRIORITIES.md)
-- Proven architecture (193 passing tests)
+- Proven architecture (214 passing tests)
 - Comprehensive documentation (DEVELOPMENT_LOG.md)
-- Strong foundation (~1,850 lines of parser code)
+- Strong foundation (~2,100 lines of parser code)
+- Sprint 1 complete! ✅
 
-**Recommended first command:** Read FEATURE_PRIORITIES.md, then start Sprint 1!
+**Recommended first command:** Read FEATURE_PRIORITIES.md, then start Sprint 2!
 
 Good luck! 🚀
