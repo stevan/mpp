@@ -5,6 +5,7 @@ import {
     StringNode,
     VariableNode,
     BinaryOpNode,
+    UnaryOpNode,
     DeclarationNode,
     IfNode,
     UnlessNode,
@@ -363,6 +364,33 @@ export class Parser {
         }
 
         const lexeme = lexemes[pos];
+
+        // Unary operators: -, +, !
+        if (lexeme.category === 'BINOP' || lexeme.category === 'OPERATOR' || lexeme.category === 'UNOP') {
+            const op = lexeme.token.value;
+
+            // Handle unary minus, unary plus, and logical not
+            if (op === '-' || op === '!' || op === '+') {
+                // Special case: +{ is a hash literal, not unary plus
+                if (op === '+' && pos + 1 < lexemes.length && lexemes[pos + 1].category === 'LBRACE') {
+                    // Let the hash literal handling below deal with this
+                } else {
+                    // This is a unary operator - recursively parse the operand
+                    const operandResult = this.parsePrimary(lexemes, pos + 1);
+                    if (operandResult) {
+                        const unaryNode: UnaryOpNode = {
+                            type: 'UnaryOp',
+                            operator: op,
+                            operand: operandResult.node
+                        };
+                        return {
+                            node: unaryNode,
+                            nextPos: operandResult.nextPos
+                        };
+                    }
+                }
+            }
+        }
 
         // Literals
         if (lexeme.category === 'LITERAL') {

@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { Tokenizer } from '../src/Tokenizer.js';
 import { Lexer } from '../src/Lexer.js';
 import { Parser } from '../src/Parser.js';
-import { BinaryOpNode, DeclarationNode, NumberNode, VariableNode, StringNode, IfNode, UnlessNode, WhileNode, UntilNode, ForeachNode, BlockNode, CallNode, ReturnNode, SubNode, ParameterNode, ArrayLiteralNode, HashLiteralNode, ListNode, ArrayAccessNode, HashAccessNode } from '../src/AST.js';
+import { BinaryOpNode, DeclarationNode, NumberNode, VariableNode, StringNode, IfNode, UnlessNode, WhileNode, UntilNode, ForeachNode, BlockNode, CallNode, ReturnNode, SubNode, ParameterNode, ArrayLiteralNode, HashLiteralNode, ListNode, ArrayAccessNode, HashAccessNode, UnaryOpNode } from '../src/AST.js';
 
 // Helper to parse source code into AST
 async function parse(source: string) {
@@ -997,5 +997,134 @@ describe('Parser', () => {
         const binop = stmt.initializer as BinaryOpNode;
         assert.strictEqual(binop.left.type, 'HashAccess');
         assert.strictEqual(binop.right.type, 'HashAccess');
+    });
+
+    // Unary Operator Tests
+    test('parses unary minus with literal', async () => {
+        const stmts = await parse('-5;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'UnaryOp');
+    });
+
+    test('parses unary minus with variable', async () => {
+        const stmts = await parse('-$x;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'UnaryOp');
+    });
+
+    test('parses unary minus with parenthesized expression', async () => {
+        const stmts = await parse('-($a + $b);');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'UnaryOp');
+    });
+
+    test('parses unary plus', async () => {
+        const stmts = await parse('+10;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'UnaryOp');
+    });
+
+    test('parses logical not with variable', async () => {
+        const stmts = await parse('!$flag;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'UnaryOp');
+    });
+
+    test('parses logical not with expression', async () => {
+        const stmts = await parse('!($x > 5);');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'UnaryOp');
+    });
+
+    test('parses unary minus in expression', async () => {
+        const stmts = await parse('my $result = -$x + 10;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.type, 'Declaration');
+        assert.strictEqual(stmt.initializer?.type, 'BinaryOp');
+        const binop = stmt.initializer as BinaryOpNode;
+        assert.strictEqual(binop.operator, '+');
+        assert.strictEqual(binop.left.type, 'UnaryOp');
+    });
+
+    test('parses double negation', async () => {
+        const stmts = await parse('!!$value;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'UnaryOp');
+    });
+
+    test('parses multiple unary operators', async () => {
+        const stmts = await parse('-+$x;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'UnaryOp');
+    });
+
+    test('parses unary not in boolean expression', async () => {
+        const stmts = await parse('my $result = !$valid && $ready;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.type, 'Declaration');
+        assert.strictEqual(stmt.initializer?.type, 'BinaryOp');
+        const binop = stmt.initializer as BinaryOpNode;
+        assert.strictEqual(binop.operator, '&&');
+        assert.strictEqual(binop.left.type, 'UnaryOp');
+    });
+
+    test('parses unary minus with binary subtraction disambiguation', async () => {
+        const stmts = await parse('my $result = 10 - -5;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.initializer?.type, 'BinaryOp');
+        const binop = stmt.initializer as BinaryOpNode;
+        assert.strictEqual(binop.operator, '-');
+        assert.strictEqual(binop.right.type, 'UnaryOp');
+    });
+
+    test('parses negative number in variable declaration', async () => {
+        const stmts = await parse('my $negative = -5;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.type, 'Declaration');
+        assert.strictEqual(stmt.initializer?.type, 'UnaryOp');
+    });
+
+    test('parses unary operators preserve precedence with multiplication', async () => {
+        const stmts = await parse('my $result = -$x * 2;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.initializer?.type, 'BinaryOp');
+        const binop = stmt.initializer as BinaryOpNode;
+        assert.strictEqual(binop.operator, '*');
+        assert.strictEqual(binop.left.type, 'UnaryOp');
+    });
+
+    test('ensures hash literal still works with +{ }', async () => {
+        const stmts = await parse('my $hash = +{ "key" => "value" };');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.type, 'Declaration');
+        assert.strictEqual(stmt.initializer?.type, 'HashLiteral');
     });
 });
