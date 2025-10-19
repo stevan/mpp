@@ -56,6 +56,11 @@ export class Lexer {
             };
         }
 
+        // Postfix dereference sigils (@*, %*, $*)
+        if (token.type === 'POSTFIX_DEREF_SIGIL') {
+            return { category: 'POSTFIX_DEREF_SIGIL', token };
+        }
+
         // Variables (classified by sigil)
         if (token.type === 'VARIABLE') {
             const sigil = token.value[0];

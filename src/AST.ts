@@ -210,3 +210,30 @@ export interface AssignmentNode extends ASTNode {
     operator: string;     // =, +=, -=, *=, /=, etc.
     right: ASTNode;       // Expression to assign
 }
+
+// Modern postfix dereferencing (Perl 5.20+)
+export interface PostfixDerefNode extends ASTNode {
+    type: 'PostfixDeref';
+    base: ASTNode;        // The reference expression
+    derefType: string;    // '@' for array, '%' for hash, '$' for scalar
+}
+
+export interface PostfixDerefSliceNode extends ASTNode {
+    type: 'PostfixDerefSlice';
+    base: ASTNode;        // The reference expression
+    sliceType: string;    // '@' for array slice, '@' for hash slice
+    indices: ASTNode;     // The indices/keys expression (for array: range or list, for hash: list)
+    indexType: string;    // '[' for array slice, '{' for hash slice
+}
+
+// Package system
+export interface PackageNode extends ASTNode {
+    type: 'Package';
+    name: string;         // Package name (e.g., "Foo::Bar")
+}
+
+export interface UseNode extends ASTNode {
+    type: 'Use';
+    module: string;       // Module name (e.g., "strict", "List::Util")
+    imports?: ASTNode;    // Optional import list (e.g., qw(max min))
+}

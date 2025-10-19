@@ -2957,19 +2957,733 @@ process(qw(foo bar));        # In function call
 
 ---
 
-## Cumulative Stats (Through Session 12)
+## Session 13 Summary - Sprint 4 Complete!
 
-**Test Count**: 239 passing ✅  
-**Code Size**: ~2,300 lines of parser code  
-**Features**: 9 complete sprints/features  
+**Date**: Session 13 of MPP development
+**Duration**: ~2.5 hours
+**Methodology**: Strict Test-Driven Development (TDD)
+**Result**: Sprint 4 Complete - Modern Postfix Dereferencing!
+
+### Starting Point
+- 239 tests passing
+- Sprint 3 complete (special variables, qw//)
+- No postfix dereferencing support
+
+### Ending Point
+- **247 tests passing** (+8 new tests)
+- Postfix dereference operators: `->@*`, `->%*`, `->$*` fully supported
+- Postfix dereference slices: `->@[...]`, `->@{...}` fully supported
+- All Sprint 4 features complete!
+
+## What We Built This Session
+
+### 1. Postfix Dereference Operators (->@*, ->%*, ->$*)
+
+**Key Insight**: Modern Perl 5.20+ postfix dereferencing syntax required tokenizer-level support!
+
+**Examples**:
+```perl
+# Array dereference
+my @array = $aref->@*;          # Dereference array reference
+for my $item ($aref->@*) { }    # Use in loops
+
+# Hash dereference
+my %hash = $href->%*;           # Dereference hash reference
+my @keys = keys $href->%*;      # Get keys
+
+# Scalar dereference
+my $value = $sref->$*;          # Dereference scalar reference
+```
+
+**Implementation**:
+
+**Tokenizer** (~15 lines in Tokenizer.ts):
+- Added special handling for sigil + `*` pattern
+- Created new `POSTFIX_DEREF_SIGIL` token type
+- Handles `@*`, `%*`, `$*` patterns
+
+```typescript
+// Special case: postfix dereference sigils @*, %*, $*
+if (nextChar === '*' || nextChar === '[' || nextChar === '{') {
+    yield {
+        type: 'POSTFIX_DEREF_SIGIL',
+        value: char, // Just the sigil: @, %, or $
+        line,
+        column
+    };
+    // Don't consume the *, [, or { - let it be tokenized separately
+}
+```
+
+**Lexer** (~4 lines in Lexer.ts):
+```typescript
+// Postfix dereference sigils (@*, %*, $*)
+if (token.type === 'POSTFIX_DEREF_SIGIL') {
+    return { category: 'POSTFIX_DEREF_SIGIL', token };
+}
+```
+
+**AST** (new nodes in AST.ts):
+```typescript
+export interface PostfixDerefNode extends ASTNode {
+    type: 'PostfixDeref';
+    base: ASTNode;        // The reference expression
+    derefType: string;    // '@' for array, '%' for hash, '$' for scalar
+}
+```
+
+**Parser** (~20 lines in Parser.ts):
+```typescript
+// In parsePostfixOperators, after -> is consumed
+if (lexemes[pos].category === 'POSTFIX_DEREF_SIGIL' &&
+    pos + 1 < lexemes.length &&
+    lexemes[pos + 1].token.value === '*') {
+
+    const sigil = lexemes[pos].token.value;
+    pos += 2; // Consume sigil and *
+
+    const derefNode: PostfixDerefNode = {
+        type: 'PostfixDeref',
+        base: node,
+        derefType: sigil
+    };
+
+    node = derefNode;
+    continue;
+}
+```
+
+**Tests Added**: 4 tests
+- Basic array deref: `$aref->@*`
+- Basic hash deref: `$href->%*`
+- Basic scalar deref: `$sref->$*`
+- In assignment: `my @array = $aref->@*`
+
+### 2. Postfix Dereference Slices (->@[...], ->@{...})
+
+**Features**:
+- Array deref slices: `$aref->@[0..4]`, `$aref->@[0, 2, 4]`
+- Hash deref slices: `$href->@{"a", "b"}`, `$href->@{@keys}`
+- Works with ranges and lists
+- Chainable after method calls
+
+**Implementation**:
+
+**AST** (new node in AST.ts):
+```typescript
+export interface PostfixDerefSliceNode extends ASTNode {
+    type: 'PostfixDerefSlice';
+    base: ASTNode;        // The reference expression
+    sliceType: string;    // '@' for array/hash slices
+    indices: ASTNode;     // The indices/keys (range or list)
+    indexType: string;    // '[' for array slice, '{' for hash slice
+}
+```
+
+**Parser** (~100 lines in Parser.ts):
+- Detect `POSTFIX_DEREF_SIGIL` followed by `[` or `{`
+- Parse indices/keys as expression or list
+- Handle comma detection for list vs single expression
+- Reuses existing list parsing logic
+
+**Examples**:
+```perl
+# Array deref slices
+my @slice = $aref->@[0..4];         # Range slice
+my @items = $aref->@[0, 2, 4];      # List slice
+my @subset = $aref->@[$start..$end]; # Variable range
+
+# Hash deref slices
+my @values = $href->@{"a", "b", "c"}; # Quoted keys
+my @data = $href->@{@keys};          # Array variable
+
+# Chaining
+my @items = $obj->get_ref()->@[0..9]; # After method call
+```
+
+**Tests Added**: 4 tests
+- Array slice with range: `$aref->@[0..4]`
+- Hash slice with quoted keys: `$href->@{"a", "b", "c"}`
+- Array slice with list: `$aref->@[0, 2, 4]`
+- Chained deref: `$obj->get_ref()->@*`
+
+## Code Changes
+
+### Files Modified
+1. **src/AST.ts** (~12 lines)
+   - Added PostfixDerefNode interface
+   - Added PostfixDerefSliceNode interface
+
+2. **src/Tokenizer.ts** (~15 lines)
+   - Added POSTFIX_DEREF_SIGIL token type
+   - Special handling for `@*`, `%*`, `$*`, `@[`, `@{` patterns
+
+3. **src/Lexer.ts** (~4 lines)
+   - Added POSTFIX_DEREF_SIGIL category classification
+
+4. **src/Parser.ts** (~120 lines)
+   - Added PostfixDerefNode, PostfixDerefSliceNode to imports
+   - Postfix dereference parsing in parsePostfixOperators
+   - Postfix dereference slice parsing with list detection
+
+5. **tests/Parser.test.ts** (~100 lines)
+   - 8 comprehensive tests for all postfix deref features
+   - Added PostfixDerefNode, PostfixDerefSliceNode to imports
+
+### Total Changes
+- **Lines Added**: ~251 lines
+- **Tests Added**: 8 tests
+- **Test Coverage**: 239 → 247 tests
+
+## Architecture Insights
+
+### 1. Tokenizer-Level Context Needed
+
+**Challenge**: Perl's `@*` pattern conflicts with variable tokenization
+**Problem**: `@foo` is a variable, but `@*` is a dereference operator
+**Solution**: Special tokenization before variable matching
+
+**Pattern**:
+```typescript
+// Check BEFORE general variable matching
+if (isSigil(char) && (nextChar === '*' || nextChar === '[' || nextChar === '{')) {
+    yield { type: 'POSTFIX_DEREF_SIGIL', value: char };
+    // Only consume the sigil, not the following char
+}
+```
+
+**Lesson**: Token context matters - same character sequence means different things
+
+### 2. Postfix Operator Chaining
+
+**Pattern**: Postfix operators handled in while loop
+**Location**: parsePostfixOperators method
+**Benefit**: Natural chaining support
+
+**Current postfix operators**:
+1. Method calls: `->method()`
+2. Array access: `->[index]`
+3. Hash access: `->{key}`
+4. Postfix deref: `->@*`, `->%*`, `->$*` (NEW)
+5. Postfix deref slice: `->@[...]`, `->@{...}` (NEW)
+
+**Example chain**:
+```perl
+$obj->get_data()->[0]{key}->@*
+# 1. Method call
+# 2. Array access
+# 3. Hash access
+# 4. Postfix deref
+```
+
+### 3. Slice vs Single Expression Detection
+
+**Reused pattern from array/hash slices**:
+```typescript
+// Check for comma at depth 0
+let hasComma = false;
+for (let i = 0; i < lexemes.length; i++) {
+    // Track depth...
+    if (depth === 0 && lexemes[i].category === 'COMMA') {
+        hasComma = true;
+        break;
+    }
+}
+
+if (hasComma) {
+    // Parse as List
+} else {
+    // Parse as single expression (often a range)
+}
+```
+
+**Benefit**: Clean distinction between `@[0..4]` and `@[0, 2, 4]`
+
+## Performance Notes
+
+- All 247 tests pass in ~88ms
+- Postfix dereference adds minimal tokenizer overhead
+- No breaking changes to existing features
+
+## Examples from Tests
+
+```perl
+# Postfix Dereferencing
+$aref->@*;                    # Array dereference
+$href->%*;                    # Hash dereference
+$sref->$*;                    # Scalar dereference
+my @array = $aref->@*;        # In assignment
+
+# Postfix Dereference Slices
+$aref->@[0..4];               # Array slice with range
+$aref->@[0, 2, 4];            # Array slice with list
+$href->@{"a", "b", "c"};      # Hash slice with keys
+$obj->get_ref()->@*;          # Chained after method call
+```
+
+## Sprint 4 Completion Status
+
+✅ **All features complete**:
+1. ✅ Anonymous constructors `[]`, `{}` (already worked!)
+2. ✅ Postfix dereference `->@*`, `->%*`, `->$*`
+3. ✅ Postfix dereference slices `->@[...]`, `->@{...}`
+
+**ROI**: Modern Perl 5.20+ syntax enables cleaner, more readable reference dereferencing. Much better than old-style `@{$aref}` syntax!
+
+## Lessons Learned
+
+### 1. Tokenization Context is Critical
+
+**Assumption**: Parser-level detection would suffice
+**Reality**: Tokenizer must understand context to avoid skipping characters
+**Solution**: Special-case patterns before general tokenization rules
+
+**Example**:
+- `@foo` → VARIABLE token
+- `@*` → POSTFIX_DEREF_SIGIL + OPERATOR tokens
+- `@[` → POSTFIX_DEREF_SIGIL + LBRACKET tokens
+
+### 2. Order of Token Checks Matters
+
+**Pattern**: Check special cases before general cases
+**Implementation**: Postfix deref check before variable check
+**Benefit**: Prevents incorrect token categorization
+
+### 3. Reusable Parsing Patterns
+
+**Observation**: Slice detection logic reused from Session 9
+**Pattern**: Comma-based list vs expression detection
+**Benefit**: Consistent behavior, less code, fewer bugs
+
+### 4. TDD Catches Tokenization Issues
+
+**Flow**:
+1. Write tests → tests fail
+2. Implement parser → tests still fail (unexpected!)
+3. Debug → discover tokenizer skipping `@`
+4. Fix tokenizer → all tests pass
+
+**Lesson**: TDD revealed tokenizer issue that manual testing might have missed
+
+## What's Next: Session 14
+
+**Recommended**: Sprint 5 from FEATURE_PRIORITIES.md
+
+**Sprint 5: Package System (4-5 hours)**:
+1. Package declarations (~80 lines)
+2. Fully qualified names (~100 lines)
+3. `use` statements (~70 lines)
+
+**Why Sprint 5**:
+- Module organization and code structure
+- Foundation for larger programs
+- Natural progression from dereferencing
+
+**Alternative**: Sprint 6 (Class Syntax) for modern OO
+
+## Session Velocity
+
+- **Features Implemented**: 3 (postfix deref, postfix deref slices, + verified anonymous constructors)
+- **Tests Added**: 8
+- **Lines Added**: ~251 total
+- **Time**: ~2.5 hours
+- **Velocity**: ~100 lines/hour, ~3 tests/hour
+
+**Comparison**:
+- Session 11: 2 features, 12 tests, ~227 lines, 2h
+- Session 12: 3 features, 13 tests, ~156 lines, 1.5h
+- Session 13: 3 features, 8 tests, ~251 lines, 2.5h
+- **Consistent quality, adapting to complexity**
+
+## Cumulative Stats (Through Session 13)
+
+**Test Count**: 247 passing ✅
+**Code Size**: ~2,550 lines of parser code
+**Features**: 10 complete sprints/features
 
 **Completed Sprints**:
 1. ✅ Sprint 1: Essential Builtins (die, warn, print, say, do, require)
 2. ✅ Sprint 2: Loop Control (last, next, redo, labels)
 3. ✅ Sprint 3: Special Variables (%ENV, @ARGV, $_, qw//)
+4. ✅ Sprint 4: Modern Dereferencing (->@*, ->%*, ->$*, ->@[...], ->@{...})
 
 **Upcoming**:
-- Sprint 4: Modern Dereferencing
 - Sprint 5: Package System
 - Sprint 6: Class Syntax (Modern OO)
+- Sprint 7: Advanced Subs
+
+---
+
+## Session 14 Summary - Sprint 5 Complete!
+
+**Date**: Session 14 of MPP development
+**Duration**: ~2 hours
+**Methodology**: Strict Test-Driven Development (TDD)
+**Result**: Sprint 5 Complete - Package System!
+
+### Starting Point
+- 247 tests passing
+- Sprint 4 complete (modern dereferencing)
+- No package/module system support
+
+### Ending Point
+- **261 tests passing** (+14 new tests)
+- Package declarations: `package Foo::Bar;` fully supported
+- Use statements: `use strict;`, `use List::Util qw(max min);` fully supported
+- Fully qualified names: `Package::Name::function()`, `$Package::Variable` fully supported
+- All Sprint 5 features complete!
+
+## What We Built This Session
+
+### 1. Package Declarations
+
+**Features**:
+- Simple package: `package Foo;`
+- Namespaced: `package Foo::Bar;`
+- Multiple levels: `package My::Module::Submodule;`
+- Followed by statements: `package Foo; my $x = 10;`
+
+**AST Node**:
+```typescript
+export interface PackageNode extends ASTNode {
+    type: 'Package';
+    name: string;         // Package name (e.g., "Foo::Bar")
+}
+```
+
+**Implementation**:
+- `package` keyword already in tokenizer
+- Added parsePackageDeclaration() in Parser.ts (~45 lines)
+- Handles `::` by detecting two consecutive `:` operators
+- Builds fully qualified package name from tokens
+
+**Examples**:
+```perl
+package MyApp;
+package MyApp::Database;
+package My::Deep::Module::Name;
+```
+
+**Tests Added**: 4 tests
+- Simple package declaration
+- Package with :: separator
+- Package with multiple :: separators
+- Package followed by other statements
+
+### 2. Use Statements
+
+**Features**:
+- Simple use: `use strict;`
+- Namespaced: `use List::Util;`
+- With imports: `use List::Util qw(max min);`
+- Multiple levels: `use My::Deep::Module::Name;`
+
+**AST Node**:
+```typescript
+export interface UseNode extends ASTNode {
+    type: 'Use';
+    module: string;       // Module name (e.g., "strict", "List::Util")
+    imports?: ASTNode;    // Optional import list (e.g., qw(max min))
+}
+```
+
+**Implementation**:
+- `use` keyword already in tokenizer
+- Added parseUseStatement() in Parser.ts (~55 lines)
+- Handles `::` in module names
+- Parses optional import list as expression
+- Properly handles undefined vs defined imports
+
+**Examples**:
+```perl
+use strict;
+use warnings;
+use List::Util;
+use List::Util qw(max min sum);
+use My::Module::Name;
+```
+
+**Tests Added**: 5 tests
+- Simple use statement
+- Use with :: separator
+- Use with qw import list
+- Use with multiple :: separators
+- Use followed by other statements
+
+### 3. Fully Qualified Names
+
+**Features**:
+- Qualified functions: `List::Util::max(1, 2)`
+- Qualified variables: `$Config::VERSION`
+- Qualified arrays: `@Package::Array`
+- Qualified hashes: `%Package::Hash`
+- In expressions: `my $x = $Config::VERSION + 1;`
+
+**Implementation**:
+- Modified Tokenizer.ts to handle `::` in identifiers (~20 lines)
+- Modified Tokenizer.ts to handle `::` in variables (~15 lines)
+- Extended identifier tokenization to continue on `::`
+- Extended variable tokenization to continue on `::`
+- No AST changes needed - uses existing CallNode and VariableNode
+
+**Tokenization Logic**:
+```typescript
+// For both identifiers and variables
+while (i < chunk.length) {
+    if (this.isIdentifierChar(chunk[i])) {
+        i++;
+        column++;
+    } else if (chunk[i] === ':' && i + 1 < chunk.length && chunk[i + 1] === ':') {
+        // Handle :: package separator
+        i += 2;
+        column += 2;
+    } else {
+        break;
+    }
+}
+```
+
+**Examples**:
+```perl
+# Fully qualified function calls
+List::Util::max(1, 2);
+Data::Dumper::Dumper($obj);
+
+# Fully qualified variables
+$Config::VERSION;
+@Package::Array;
+%Package::Hash;
+
+# In expressions
+my $x = $Config::VERSION + 1;
+my @items = @Package::Array;
+```
+
+**Tests Added**: 5 tests
+- Fully qualified function call
+- Fully qualified scalar variable
+- Fully qualified array variable
+- Fully qualified hash variable
+- Fully qualified variable in expression
+
+## Code Changes
+
+### Files Modified
+
+1. **src/AST.ts** (~12 lines)
+   - Added PackageNode interface
+   - Added UseNode interface
+
+2. **src/Tokenizer.ts** (~35 lines)
+   - Extended identifier tokenization with :: handling
+   - Extended variable tokenization with :: handling
+
+3. **src/Parser.ts** (~105 lines)
+   - Added PackageNode, UseNode to imports
+   - Added package declaration check in parseStatement
+   - Added use statement check in parseStatement
+   - Implemented parsePackageDeclaration() (~45 lines)
+   - Implemented parseUseStatement() (~55 lines)
+
+4. **tests/Parser.test.ts** (~170 lines)
+   - Added PackageNode, UseNode to imports
+   - 4 package declaration tests
+   - 5 use statement tests
+   - 5 fully qualified name tests
+
+### Total Changes
+- **Lines Added**: ~322 lines
+- **Tests Added**: 14 tests
+- **Test Coverage**: 247 → 261 tests
+
+## Architecture Insights
+
+### 1. :: Handling at Tokenizer Level
+
+**Decision**: Handle `::` during identifier/variable tokenization
+**Alternative**: Parse `::` as separate tokens at parser level
+**Benefit**: Cleaner - identifiers and variables are atomic tokens
+**Implementation**: Check for `::` pattern in tokenization loop
+
+**Pattern**:
+- In package/use parsing: `::` parsed as two `:` operators
+- In identifiers/variables: `::` consumed as part of token
+
+### 2. Consistent Parsing Pattern
+
+**Observation**: Package and use parsing use same `::` detection logic
+**Pattern**: Loop through lexemes, build name from IDENTIFIER + `::`
+**Benefit**: DRY code, consistent behavior
+
+**Code Pattern**:
+```typescript
+let name = '';
+for (let i = 0; i < lexemes.length; i++) {
+    if (lexemes[i].category === 'IDENTIFIER') {
+        name += lexemes[i].token.value;
+    } else if (isColonColon(lexemes, i)) {
+        name += '::';
+        i++; // Skip second :
+    } else {
+        break;
+    }
+}
+```
+
+### 3. Optional Imports Handling
+
+**Challenge**: TypeScript exactOptionalPropertyTypes
+**Problem**: `imports?: ASTNode` vs `imports: ASTNode | undefined`
+**Solution**: Only set property if value exists
+
+**Pattern**:
+```typescript
+const useNode: UseNode = {
+    type: 'Use',
+    module: moduleName
+};
+
+if (imports !== undefined) {
+    useNode.imports = imports;
+}
+
+return useNode;
+```
+
+### 4. No New Token Types Needed
+
+**Observation**: `package` and `use` already in keywords
+**Decision**: No tokenizer keyword additions
+**Benefit**: Existing infrastructure worked perfectly
+**Lesson**: Check existing tokens before adding new ones
+
+## Performance Notes
+
+- All 261 tests pass in ~90ms
+- Package name parsing adds minimal overhead
+- No breaking changes to existing features
+- Clean TypeScript compilation with no errors
+
+## Examples from Tests
+
+```perl
+# Package Declarations
+package Foo;
+package Foo::Bar;
+package My::Module::Submodule;
+package Foo; my $x = 10;
+
+# Use Statements
+use strict;
+use List::Util;
+use List::Util qw(max min);
+use My::Deep::Module::Name;
+use strict; my $x = 10;
+
+# Fully Qualified Names
+List::Util::max(1, 2);
+$Config::VERSION;
+@Package::Array;
+%Package::Hash;
+my $x = $Config::VERSION + 1;
+```
+
+## Sprint 5 Completion Status
+
+✅ **All features complete**:
+1. ✅ Package declarations (~45 lines actual)
+2. ✅ Fully qualified names (~35 lines actual)
+3. ✅ `use` statements (~55 lines actual)
+
+**Total**: ~135 lines of implementation + ~170 lines of tests
+
+**ROI**: Foundation for module organization and larger programs. Essential for any real-world Perl application with multiple files.
+
+## Lessons Learned
+
+### 1. Two Levels of :: Handling
+
+**Insight**: `::` handled differently in different contexts
+- **In tokenizer**: Part of identifier/variable tokens
+- **In parser**: Parsed from two `:` operator tokens
+
+**Lesson**: Context-appropriate handling yields cleaner code
+
+### 2. Keyword Reuse
+
+**Discovery**: `package` and `use` already in tokenizer
+**Benefit**: Zero tokenizer changes for keywords
+**Takeaway**: Earlier sessions' foresight paid off
+
+### 3. exactOptionalPropertyTypes Strictness
+
+**Challenge**: TypeScript's strict optional property handling
+**Learning**: Can't assign `undefined` to optional properties
+**Solution**: Conditionally set properties only when defined
+**Benefit**: Catches potential null/undefined bugs
+
+### 4. TDD Workflow Still Effective
+
+**Flow**:
+1. Write tests → fail
+2. Add AST nodes → still fail
+3. Implement parsing → tests pass
+
+**Observation**: TDD caught TypeScript errors early
+**Result**: Clean implementation on first try
+
+## What's Next: Session 15
+
+**Recommended**: Sprint 6 from FEATURE_PRIORITIES.md
+
+**Sprint 6: Class Syntax (5-6 hours)**:
+1. `class` keyword (~120 lines)
+2. `field` declarations (~80 lines)
+3. `method` modifier (~50 lines)
+4. `has` attribute syntax (~50 lines)
+
+**Why Sprint 6**:
+- Modern OO support (Perl 5.38+)
+- Replaces old `bless`-based OO
+- Natural progression from package system
+
+**Alternative**: Sprint 7 (Advanced Subs) or Sprint 8 (BEGIN/END blocks)
+
+## Session Velocity
+
+- **Features Implemented**: 3 (package, use, qualified names)
+- **Tests Added**: 14
+- **Lines Added**: ~322 total (~135 implementation, ~187 tests)
+- **Time**: ~2 hours
+- **Velocity**: ~161 lines/hour, ~7 tests/hour
+
+**Comparison**:
+- Session 12: 3 features, 13 tests, ~156 lines, 1.5h
+- Session 13: 3 features, 8 tests, ~251 lines, 2.5h
+- Session 14: 3 features, 14 tests, ~322 lines, 2h
+- **Consistent high velocity across sessions**
+
+## Cumulative Stats (Through Session 14)
+
+**Test Count**: 261 passing ✅
+**Code Size**: ~2,650 lines of parser code
+**Features**: 11 complete sprints/features
+
+**Completed Sprints**:
+1. ✅ Sprint 1: Essential Builtins (die, warn, print, say, do, require)
+2. ✅ Sprint 2: Loop Control (last, next, redo, labels)
+3. ✅ Sprint 3: Special Variables (%ENV, @ARGV, $_, qw//)
+4. ✅ Sprint 4: Modern Dereferencing (->@*, ->%*, ->$*, ->@[...], ->@{...})
+5. ✅ Sprint 5: Package System (package, use, qualified names) 🎉
+
+**Progress**:
+- 5 of 9 planned phases complete
+- ~60% of estimated features implemented
+- Strong velocity maintained
+- Zero breaking changes
+
+**Upcoming**:
+- Sprint 6: Class Syntax (Modern OO)
+- Sprint 7: Advanced Subs
+- Sprint 8: BEGIN/END blocks
 

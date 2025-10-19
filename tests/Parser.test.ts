@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { Tokenizer } from '../src/Tokenizer.js';
 import { Lexer } from '../src/Lexer.js';
 import { Parser } from '../src/Parser.js';
-import { BinaryOpNode, DeclarationNode, NumberNode, VariableNode, StringNode, IfNode, UnlessNode, WhileNode, UntilNode, ForeachNode, BlockNode, DoBlockNode, CallNode, ReturnNode, DieNode, WarnNode, PrintNode, SayNode, SubNode, ParameterNode, ArrayLiteralNode, HashLiteralNode, ListNode, ArrayAccessNode, ArraySliceNode, HashAccessNode, HashSliceNode, UnaryOpNode, TernaryNode, MethodCallNode, AssignmentNode, LastNode, NextNode, RedoNode } from '../src/AST.js';
+import { BinaryOpNode, DeclarationNode, NumberNode, VariableNode, StringNode, IfNode, UnlessNode, WhileNode, UntilNode, ForeachNode, BlockNode, DoBlockNode, CallNode, ReturnNode, DieNode, WarnNode, PrintNode, SayNode, SubNode, ParameterNode, ArrayLiteralNode, HashLiteralNode, ListNode, ArrayAccessNode, ArraySliceNode, HashAccessNode, HashSliceNode, UnaryOpNode, TernaryNode, MethodCallNode, AssignmentNode, LastNode, NextNode, RedoNode, PostfixDerefNode, PostfixDerefSliceNode, PackageNode, UseNode } from '../src/AST.js';
 
 // Helper to parse source code into AST
 async function parse(source: string) {
@@ -2270,5 +2270,241 @@ describe('Parser', () => {
         const list = call.arguments[0] as ListNode;
         assert.strictEqual(list.type, 'List');
         assert.strictEqual(list.elements.length, 2);
+    });
+
+    // Postfix Dereferencing Tests (Modern Perl 5.20+)
+    test('parses postfix array dereference ->@*', async () => {
+        const stmts = await parse('$aref->@*;');
+
+        assert.strictEqual(stmts.length, 1);
+        const deref = stmts[0] as PostfixDerefNode;
+        assert.strictEqual(deref.type, 'PostfixDeref');
+        assert.strictEqual(deref.derefType, '@');
+        assert.strictEqual(deref.base.type, 'Variable');
+        assert.strictEqual((deref.base as VariableNode).name, '$aref');
+    });
+
+    test('parses postfix hash dereference ->%*', async () => {
+        const stmts = await parse('$href->%*;');
+
+        assert.strictEqual(stmts.length, 1);
+        const deref = stmts[0] as PostfixDerefNode;
+        assert.strictEqual(deref.type, 'PostfixDeref');
+        assert.strictEqual(deref.derefType, '%');
+        assert.strictEqual(deref.base.type, 'Variable');
+        assert.strictEqual((deref.base as VariableNode).name, '$href');
+    });
+
+    test('parses postfix scalar dereference ->$*', async () => {
+        const stmts = await parse('$sref->$*;');
+
+        assert.strictEqual(stmts.length, 1);
+        const deref = stmts[0] as PostfixDerefNode;
+        assert.strictEqual(deref.type, 'PostfixDeref');
+        assert.strictEqual(deref.derefType, '$');
+        assert.strictEqual(deref.base.type, 'Variable');
+        assert.strictEqual((deref.base as VariableNode).name, '$sref');
+    });
+
+    test('parses postfix array dereference in assignment', async () => {
+        const stmts = await parse('my @array = $aref->@*;');
+
+        assert.strictEqual(stmts.length, 1);
+        const decl = stmts[0] as DeclarationNode;
+        assert.strictEqual(decl.type, 'Declaration');
+        assert.strictEqual(decl.variable.name, '@array');
+        const deref = decl.initializer as PostfixDerefNode;
+        assert.strictEqual(deref.type, 'PostfixDeref');
+        assert.strictEqual(deref.derefType, '@');
+    });
+
+    test('parses postfix deref slice ->@[...]', async () => {
+        const stmts = await parse('$aref->@[0..4];');
+
+        assert.strictEqual(stmts.length, 1);
+        const slice = stmts[0] as PostfixDerefSliceNode;
+        assert.strictEqual(slice.type, 'PostfixDerefSlice');
+        assert.strictEqual(slice.sliceType, '@');
+        assert.strictEqual(slice.indexType, '[');
+        assert.strictEqual(slice.base.type, 'Variable');
+        assert.strictEqual((slice.base as VariableNode).name, '$aref');
+        assert.strictEqual(slice.indices.type, 'BinaryOp');
+    });
+
+    test('parses postfix deref slice ->@{...}', async () => {
+        const stmts = await parse('$href->@{"a", "b", "c"};');
+
+        assert.strictEqual(stmts.length, 1);
+        const slice = stmts[0] as PostfixDerefSliceNode;
+        assert.strictEqual(slice.type, 'PostfixDerefSlice');
+        assert.strictEqual(slice.sliceType, '@');
+        assert.strictEqual(slice.indexType, '{');
+        assert.strictEqual(slice.base.type, 'Variable');
+        assert.strictEqual((slice.base as VariableNode).name, '$href');
+        assert.strictEqual(slice.indices.type, 'List');
+        const list = slice.indices as ListNode;
+        assert.strictEqual(list.elements.length, 3);
+    });
+
+    test('parses postfix deref slice with list', async () => {
+        const stmts = await parse('$aref->@[0, 2, 4];');
+
+        assert.strictEqual(stmts.length, 1);
+        const slice = stmts[0] as PostfixDerefSliceNode;
+        assert.strictEqual(slice.type, 'PostfixDerefSlice');
+        assert.strictEqual(slice.sliceType, '@');
+        assert.strictEqual(slice.indexType, '[');
+        assert.strictEqual(slice.indices.type, 'List');
+        const list = slice.indices as ListNode;
+        assert.strictEqual(list.elements.length, 3);
+    });
+
+    test('parses chained postfix deref after method call', async () => {
+        const stmts = await parse('$obj->get_ref()->@*;');
+
+        assert.strictEqual(stmts.length, 1);
+        const deref = stmts[0] as PostfixDerefNode;
+        assert.strictEqual(deref.type, 'PostfixDeref');
+        assert.strictEqual(deref.derefType, '@');
+        assert.strictEqual(deref.base.type, 'MethodCall');
+    });
+
+    // Package system tests
+    test('parses simple package declaration', async () => {
+        const stmts = await parse('package Foo;');
+
+        assert.strictEqual(stmts.length, 1);
+        const pkg = stmts[0] as PackageNode;
+        assert.strictEqual(pkg.type, 'Package');
+        assert.strictEqual(pkg.name, 'Foo');
+    });
+
+    test('parses package declaration with :: separator', async () => {
+        const stmts = await parse('package Foo::Bar;');
+
+        assert.strictEqual(stmts.length, 1);
+        const pkg = stmts[0] as PackageNode;
+        assert.strictEqual(pkg.type, 'Package');
+        assert.strictEqual(pkg.name, 'Foo::Bar');
+    });
+
+    test('parses package declaration with multiple :: separators', async () => {
+        const stmts = await parse('package My::Module::Submodule;');
+
+        assert.strictEqual(stmts.length, 1);
+        const pkg = stmts[0] as PackageNode;
+        assert.strictEqual(pkg.type, 'Package');
+        assert.strictEqual(pkg.name, 'My::Module::Submodule');
+    });
+
+    test('parses package declaration followed by other statements', async () => {
+        const stmts = await parse('package Foo; my $x = 10;');
+
+        assert.strictEqual(stmts.length, 2);
+        const pkg = stmts[0] as PackageNode;
+        assert.strictEqual(pkg.type, 'Package');
+        assert.strictEqual(pkg.name, 'Foo');
+        const decl = stmts[1] as DeclarationNode;
+        assert.strictEqual(decl.type, 'Declaration');
+    });
+
+    test('parses simple use statement', async () => {
+        const stmts = await parse('use strict;');
+
+        assert.strictEqual(stmts.length, 1);
+        const useStmt = stmts[0] as UseNode;
+        assert.strictEqual(useStmt.type, 'Use');
+        assert.strictEqual(useStmt.module, 'strict');
+        assert.strictEqual(useStmt.imports, undefined);
+    });
+
+    test('parses use statement with :: separator', async () => {
+        const stmts = await parse('use List::Util;');
+
+        assert.strictEqual(stmts.length, 1);
+        const useStmt = stmts[0] as UseNode;
+        assert.strictEqual(useStmt.type, 'Use');
+        assert.strictEqual(useStmt.module, 'List::Util');
+        assert.strictEqual(useStmt.imports, undefined);
+    });
+
+    test('parses use statement with qw import list', async () => {
+        const stmts = await parse('use List::Util qw(max min);');
+
+        assert.strictEqual(stmts.length, 1);
+        const useStmt = stmts[0] as UseNode;
+        assert.strictEqual(useStmt.type, 'Use');
+        assert.strictEqual(useStmt.module, 'List::Util');
+        assert.notStrictEqual(useStmt.imports, undefined);
+        assert.strictEqual(useStmt.imports?.type, 'List');
+    });
+
+    test('parses use statement with multiple :: separators', async () => {
+        const stmts = await parse('use My::Deep::Module::Name;');
+
+        assert.strictEqual(stmts.length, 1);
+        const useStmt = stmts[0] as UseNode;
+        assert.strictEqual(useStmt.type, 'Use');
+        assert.strictEqual(useStmt.module, 'My::Deep::Module::Name');
+    });
+
+    test('parses use statement followed by other statements', async () => {
+        const stmts = await parse('use strict; my $x = 10;');
+
+        assert.strictEqual(stmts.length, 2);
+        const useStmt = stmts[0] as UseNode;
+        assert.strictEqual(useStmt.type, 'Use');
+        assert.strictEqual(useStmt.module, 'strict');
+        const decl = stmts[1] as DeclarationNode;
+        assert.strictEqual(decl.type, 'Declaration');
+    });
+
+    test('parses fully qualified function call', async () => {
+        const stmts = await parse('List::Util::max(1, 2);');
+
+        assert.strictEqual(stmts.length, 1);
+        const call = stmts[0] as CallNode;
+        assert.strictEqual(call.type, 'Call');
+        assert.strictEqual(call.name, 'List::Util::max');
+        assert.strictEqual(call.arguments.length, 2);
+    });
+
+    test('parses fully qualified variable', async () => {
+        const stmts = await parse('$Config::VERSION;');
+
+        assert.strictEqual(stmts.length, 1);
+        const varNode = stmts[0] as VariableNode;
+        assert.strictEqual(varNode.type, 'Variable');
+        assert.strictEqual(varNode.name, '$Config::VERSION');
+    });
+
+    test('parses fully qualified array variable', async () => {
+        const stmts = await parse('@Package::Array;');
+
+        assert.strictEqual(stmts.length, 1);
+        const varNode = stmts[0] as VariableNode;
+        assert.strictEqual(varNode.type, 'Variable');
+        assert.strictEqual(varNode.name, '@Package::Array');
+    });
+
+    test('parses fully qualified hash variable', async () => {
+        const stmts = await parse('%Package::Hash;');
+
+        assert.strictEqual(stmts.length, 1);
+        const varNode = stmts[0] as VariableNode;
+        assert.strictEqual(varNode.type, 'Variable');
+        assert.strictEqual(varNode.name, '%Package::Hash');
+    });
+
+    test('parses fully qualified variable in expression', async () => {
+        const stmts = await parse('my $x = $Config::VERSION + 1;');
+
+        assert.strictEqual(stmts.length, 1);
+        const decl = stmts[0] as DeclarationNode;
+        assert.strictEqual(decl.type, 'Declaration');
+        const init = decl.initializer as BinaryOpNode;
+        assert.strictEqual(init.type, 'BinaryOp');
+        assert.strictEqual(init.left.type, 'Variable');
+        assert.strictEqual((init.left as VariableNode).name, '$Config::VERSION');
     });
 });

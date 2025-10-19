@@ -1,14 +1,14 @@
-# Session 10 Prompt - MPP Parser Development
+# Session 14 Prompt - MPP Parser Development
 
 ## Quick Start
 
 You are continuing development of the **MPP (Modern Perl Parser)** project. This is a TypeScript-based parser for a modern subset of Perl, built with strict TDD methodology.
 
 **Current Status:**
-- **214 tests passing** ✅
-- **~2,100 lines of parser code**
-- Last session: Implemented Sprint 1 (die, warn, print, say, do blocks, require)
-- Sprint 1 COMPLETE - Essential builtins done!
+- **247 tests passing** ✅
+- **~2,550 lines of parser code**
+- Last session: Implemented Sprint 4 (Modern Postfix Dereferencing)
+- Sprint 4 COMPLETE - Modern dereferencing done!
 
 ## Critical Files to Read First
 
@@ -31,25 +31,34 @@ You are continuing development of the **MPP (Modern Perl Parser)** project. This
 
 ## Recommended Next Steps
 
-### Option 1: Sprint 2 - Loop Control (RECOMMENDED)
+### Option 1: Sprint 5 - Package System (RECOMMENDED)
 
-**Time:** 2-3 hours | **Value:** HIGH | **Complexity:** LOW
+**Time:** 4-5 hours | **Value:** HIGH | **Complexity:** MEDIUM
 
-Implement loop control flow:
+Implement module organization:
 
-1. **`last`, `next`, `redo` statements** (~40 lines)
-   - Add keywords to tokenizer
-   - New AST nodes
-   - Parse like `return`
+1. **Package declarations** (~80 lines)
+   - `package Foo::Bar;`
+   - New AST node: PackageNode
 
-2. **Labels for loops** (~60 lines)
-   - `OUTER: while (...) { ... last OUTER; }`
-   - Add label field to loop AST nodes
+2. **Fully qualified names** (~100 lines)
+   - `Package::Name::function()`
+   - `$Package::Variable`
 
-**Why Sprint 2:**
-- Completes control flow
+3. **`use` statements** (~70 lines)
+   - `use strict;`, `use List::Util qw(max min);`
+   - New AST node: UseNode
+
+**Why Sprint 5:**
+- Foundation for larger programs
+- Module organization
 - Natural progression
-- Commonly used in real code
+
+### Option 2: Sprint 6 - Class Syntax (Alternative)
+
+**Time:** 5-6 hours | **Value:** MEDIUM | **Complexity:** MEDIUM
+
+Modern OO with `class` keyword instead of `bless`
 
 ## Development Workflow
 
@@ -206,18 +215,20 @@ test('parses die with message', async () => {
 
 **The parser now handles:**
 
-✅ **Control Flow**: if/elsif/else, unless, while/until, for/foreach, postfix conditionals
+✅ **Control Flow**: if/elsif/else, unless, while/until, for/foreach, postfix conditionals, last/next/redo, loop labels
 ✅ **Functions**: Named subs, anonymous subs, parameters with defaults, return statements
 ✅ **Builtins**: die, warn, print, say, require, do blocks
-✅ **Data Structures**: Arrays, hashes, lists, nested structures
+✅ **Data Structures**: Arrays, hashes, lists, nested structures, anonymous constructors
 ✅ **Access**: Array/hash access, dereferencing, chained access
 ✅ **Slicing**: Array slices, hash slices
+✅ **Modern Dereferencing**: Postfix dereference (->@*, ->%*, ->$*), postfix deref slices (->@[...], ->@{...})
 ✅ **Operators**: 20 precedence levels, unary, binary, ternary, range
 ✅ **Methods**: Method calls, chaining, class methods
 ✅ **Assignment**: Simple, compound, list assignment, element mutation
-✅ **Syntax**: Bareword hash keys, fat comma, blocks
+✅ **Special Variables**: %ENV, @ARGV, $_
+✅ **Syntax**: Bareword hash keys, fat comma, blocks, qw// operator
 
-**214 tests covering all features!**
+**247 tests covering all features!**
 
 ## What's Deferred
 
@@ -238,22 +249,22 @@ test('parses die with message', async () => {
 
 ## Session Goals
 
-**Primary Goal:** Implement Sprint 2 (Loop Control)
-- 2 features: last/next/redo, loop labels
-- ~100 lines of code
-- 2-3 hours
-- Completes control flow
+**Primary Goal:** Implement Sprint 5 (Package System)
+- 3 features: package declarations, fully qualified names, use statements
+- ~250 lines of code
+- 4-5 hours
+- Foundation for module organization
 
-**Secondary Goal:** If time permits, start Sprint 3 (Special Variables)
+**Secondary Goal:** If time permits, start Sprint 6 (Class Syntax)
 
 **Documentation Goal:** Update DEVELOPMENT_LOG.md with session summary
 
 ## Getting Started Checklist
 
-- [ ] Read FEATURE_PRIORITIES.md (especially Sprint 2 section)
-- [ ] Run `npm test` to verify 214 tests pass
-- [ ] Review Session 10 summary in DEVELOPMENT_LOG.md
-- [ ] Implement Sprint 2 (Loop Control)
+- [ ] Read FEATURE_PRIORITIES.md (especially Sprint 5 section)
+- [ ] Run `npm test` to verify 247 tests pass
+- [ ] Review Session 13 summary in DEVELOPMENT_LOG.md
+- [ ] Implement Sprint 5 (Package System) or Sprint 6 (Class Syntax)
 - [ ] Write tests first!
 - [ ] Implement features
 - [ ] Run all tests
@@ -263,7 +274,7 @@ test('parses die with message', async () => {
 
 ⚠️ **Always use FEATURE_PRIORITIES.md** - It's the authoritative roadmap
 ⚠️ **TDD is mandatory** - Write tests before implementation
-⚠️ **Keep tests passing** - All 214 tests must pass after changes
+⚠️ **Keep tests passing** - All 247 tests must pass after changes
 ⚠️ **No `any` types** - Maintain 100% type safety
 ⚠️ **Document sessions** - Update DEVELOPMENT_LOG.md when done
 
@@ -271,11 +282,11 @@ test('parses die with message', async () => {
 
 You have everything you need to begin:
 - Clear roadmap (FEATURE_PRIORITIES.md)
-- Proven architecture (214 passing tests)
+- Proven architecture (247 passing tests)
 - Comprehensive documentation (DEVELOPMENT_LOG.md)
-- Strong foundation (~2,100 lines of parser code)
-- Sprint 1 complete! ✅
+- Strong foundation (~2,550 lines of parser code)
+- Sprints 1-4 complete! ✅
 
-**Recommended first command:** Read FEATURE_PRIORITIES.md, then start Sprint 2!
+**Recommended first command:** Read FEATURE_PRIORITIES.md, then start Sprint 5!
 
 Good luck! 🚀

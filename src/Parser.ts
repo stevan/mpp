@@ -35,7 +35,11 @@ import {
     HashAccessNode,
     HashSliceNode,
     MethodCallNode,
-    AssignmentNode
+    AssignmentNode,
+    PostfixDerefNode,
+    PostfixDerefSliceNode,
+    PackageNode,
+    UseNode
 } from './AST.js';
 
 interface OperatorInfo {
@@ -282,6 +286,16 @@ export class Parser {
             if (lexemes[0].token.value === 'do') {
                 return this.parseDoBlock(lexemes);
             }
+        }
+
+        // Check for package declaration
+        if (lexemes[0].category === 'KEYWORD' && lexemes[0].token.value === 'package') {
+            return this.parsePackageDeclaration(lexemes);
+        }
+
+        // Check for use statement
+        if (lexemes[0].category === 'KEYWORD' && lexemes[0].token.value === 'use') {
+            return this.parseUseStatement(lexemes);
         }
 
         // Check for print and say (can be either statements or function calls)
@@ -1348,6 +1362,127 @@ export class Parser {
                     pos = endPos;
                     continue;
                 }
+
+                // Check for postfix dereferencing: ->@*, ->%*, ->$*
+                if (lexemes[pos].category === 'POSTFIX_DEREF_SIGIL' &&
+                    pos + 1 < lexemes.length &&
+                    lexemes[pos + 1].token.value === '*') {
+
+                    const sigil = lexemes[pos].token.value; // The sigil: @, %, or $
+                    pos += 2; // Consume sigil and *
+
+                    const derefNode: PostfixDerefNode = {
+                        type: 'PostfixDeref',
+                        base: node,
+                        derefType: sigil
+                    };
+
+                    node = derefNode;
+                    continue;
+                }
+
+                // Check for postfix dereference slice: ->@[...], ->@{...}
+                if (lexemes[pos].category === 'POSTFIX_DEREF_SIGIL' &&
+                    pos + 1 < lexemes.length &&
+                    (lexemes[pos + 1].category === 'LBRACKET' ||
+                     lexemes[pos + 1].category === 'LBRACE')) {
+
+                    const indexType = lexemes[pos + 1].category === 'LBRACKET' ? '[' : '{';
+                    const closeType = indexType === '[' ? 'RBRACKET' : 'RBRACE';
+                    const openType = indexType === '[' ? 'LBRACKET' : 'LBRACE';
+
+                    pos++; // Consume sigil
+                    pos++; // Consume [ or {
+
+                    // Find matching closing bracket/brace
+                    let depth = 1;
+                    let endPos = pos;
+                    while (endPos < lexemes.length && depth > 0) {
+                        if (lexemes[endPos].category === openType) depth++;
+                        if (lexemes[endPos].category === closeType) depth--;
+                        endPos++;
+                    }
+
+                    // Parse indices/keys expression
+                    const indexLexemes = lexemes.slice(pos, endPos - 1);
+
+                    // Check for comma to determine if it's a list or single expression
+                    let hasComma = false;
+                    let checkDepth = 0;
+                    for (let i = 0; i < indexLexemes.length; i++) {
+                        if (indexLexemes[i].category === 'LPAREN') checkDepth++;
+                        if (indexLexemes[i].category === 'RPAREN') checkDepth--;
+                        if (indexLexemes[i].category === 'LBRACKET') checkDepth++;
+                        if (indexLexemes[i].category === 'RBRACKET') checkDepth--;
+                        if (indexLexemes[i].category === 'LBRACE') checkDepth++;
+                        if (indexLexemes[i].category === 'RBRACE') checkDepth--;
+
+                        if (checkDepth === 0 && indexLexemes[i].category === 'COMMA') {
+                            hasComma = true;
+                            break;
+                        }
+                    }
+
+                    let indices: ASTNode | null = null;
+                    if (hasComma) {
+                        // Parse as list
+                        const elements: ASTNode[] = [];
+                        let elemStart = 0;
+                        let elemDepth = 0;
+
+                        for (let i = 0; i < indexLexemes.length; i++) {
+                            if (indexLexemes[i].category === 'LPAREN') elemDepth++;
+                            if (indexLexemes[i].category === 'RPAREN') elemDepth--;
+                            if (indexLexemes[i].category === 'LBRACKET') elemDepth++;
+                            if (indexLexemes[i].category === 'RBRACKET') elemDepth--;
+                            if (indexLexemes[i].category === 'LBRACE') elemDepth++;
+                            if (indexLexemes[i].category === 'RBRACE') elemDepth--;
+
+                            if (elemDepth === 0 && indexLexemes[i].category === 'COMMA') {
+                                const elemTokens = indexLexemes.slice(elemStart, i);
+                                if (elemTokens.length > 0) {
+                                    const elem = this.parseExpression(elemTokens, 0);
+                                    if (elem) {
+                                        elements.push(elem);
+                                    }
+                                }
+                                elemStart = i + 1;
+                            }
+                        }
+
+                        // Last element
+                        const lastElemTokens = indexLexemes.slice(elemStart);
+                        if (lastElemTokens.length > 0) {
+                            const elem = this.parseExpression(lastElemTokens, 0);
+                            if (elem) {
+                                elements.push(elem);
+                            }
+                        }
+
+                        indices = {
+                            type: 'List',
+                            elements: elements
+                        } as ListNode;
+                    } else {
+                        // Parse as single expression
+                        indices = this.parseExpression(indexLexemes, 0);
+                    }
+
+                    if (indices) {
+                        const sliceNode: PostfixDerefSliceNode = {
+                            type: 'PostfixDerefSlice',
+                            base: node,
+                            sliceType: '@',
+                            indices: indices,
+                            indexType: indexType
+                        };
+
+                        node = sliceNode;
+                        pos = endPos;
+                        continue;
+                    }
+                }
+
                 // Continue to check for [ or { after ->
             }
 
@@ -2291,6 +2426,113 @@ export class Parser {
             statements,
             nextPos: endPos
         };
+    }
+
+    private parsePackageDeclaration(lexemes: Lexeme[]): PackageNode | null {
+        // package Foo::Bar;
+        // Skip 'package' keyword
+        const remainingLexemes = lexemes.slice(1);
+
+        if (remainingLexemes.length === 0) {
+            return null;
+        }
+
+        // Build the package name from identifiers and :: operators
+        let packageName = '';
+        for (let i = 0; i < remainingLexemes.length; i++) {
+            const lex = remainingLexemes[i];
+
+            if (lex.category === 'IDENTIFIER') {
+                packageName += lex.token.value;
+            } else if (lex.category === 'BINOP' && lex.token.value === ':') {
+                // Handle :: as two : tokens
+                if (i + 1 < remainingLexemes.length &&
+                    remainingLexemes[i + 1].category === 'BINOP' &&
+                    remainingLexemes[i + 1].token.value === ':') {
+                    packageName += '::';
+                    i++; // Skip the second :
+                } else {
+                    // Single : is not valid in package names
+                    break;
+                }
+            } else {
+                // End of package name
+                break;
+            }
+        }
+
+        if (packageName === '') {
+            return null;
+        }
+
+        const packageNode: PackageNode = {
+            type: 'Package',
+            name: packageName
+        };
+        return packageNode;
+    }
+
+    private parseUseStatement(lexemes: Lexeme[]): UseNode | null {
+        // use Module;
+        // use Module qw(...);
+        // Skip 'use' keyword
+        const remainingLexemes = lexemes.slice(1);
+
+        if (remainingLexemes.length === 0) {
+            return null;
+        }
+
+        // Build the module name from identifiers and :: operators
+        let moduleName = '';
+        let i = 0;
+        for (; i < remainingLexemes.length; i++) {
+            const lex = remainingLexemes[i];
+
+            if (lex.category === 'IDENTIFIER') {
+                moduleName += lex.token.value;
+            } else if (lex.category === 'BINOP' && lex.token.value === ':') {
+                // Handle :: as two : tokens
+                if (i + 1 < remainingLexemes.length &&
+                    remainingLexemes[i + 1].category === 'BINOP' &&
+                    remainingLexemes[i + 1].token.value === ':') {
+                    moduleName += '::';
+                    i++; // Skip the second :
+                } else {
+                    // Single : is not valid in module names
+                    break;
+                }
+            } else {
+                // End of module name
+                break;
+            }
+        }
+
+        if (moduleName === '') {
+            return null;
+        }
+
+        // Check for import list (e.g., qw(...))
+        const importLexemes = remainingLexemes.slice(i);
+        let imports: ASTNode | undefined = undefined;
+
+        if (importLexemes.length > 0) {
+            // Parse the import list as an expression
+            const parsedImports = this.parseExpression(importLexemes, 0);
+            if (parsedImports) {
+                imports = parsedImports;
+            }
+        }
+
+        const useNode: UseNode = {
+            type: 'Use',
+            module: moduleName
+        };
+
+        if (imports !== undefined) {
+            useNode.imports = imports;
+        }
+
+        return useNode;
     }
 
     private buildPrecedenceTable(): Map<string, OperatorInfo> {

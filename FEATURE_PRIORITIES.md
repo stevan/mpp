@@ -1,7 +1,7 @@
 # MPP Feature Priorities
 
-**Status:** 239 tests passing | ~2,300 lines of parser code
-**Last Updated:** Session 12
+**Status:** 247 tests passing | ~2,550 lines of parser code
+**Last Updated:** Session 13
 **Note:** This file replaces NEXT_STEPS.md - always consult this for implementation priorities
 
 ---
@@ -97,27 +97,30 @@
 
 ---
 
-## 🔴 PHASE 5: References & Dereferencing (3-4 hours, ~200 lines)
+## 🟢 PHASE 5: References & Dereferencing (3-4 hours, ~200 lines)
 
-**Status:** Not started
+**Status:** ✅ COMPLETE (Session 13)
 **Priority:** MEDIUM - Modern Perl syntax
 
-### 11. Anonymous constructors: `[]` and `{}` (70 lines)
+### 11. Anonymous constructors: `[]` and `{}` ✅ (already worked!)
 - Empty `[]` creates array reference
-- Empty `{}` creates hash reference (distinguish from blocks)
-- May already partially work in expression context
-- Example: `my $aref = [];`, `my $href = {};`
+- Empty `{}` creates hash reference (with `+` prefix)
+- Works in expression context
+- Example: `my $aref = [];`, `my $href = +{};`
 - Example: `my $data = { items => [] };`
 
-### 12. Postfix dereference: `->@*`, `->%*`, `->$*` (80 lines)
-- Tokenizer: recognize multi-char arrow operators
-- Add to postfix operator chain in parsePostfixOps
-- New AST node: `PostfixDerefNode` or extend existing
+### 12. Postfix dereference: `->@*`, `->%*`, `->$*` ✅ (~35 lines actual)
+- Tokenizer: added POSTFIX_DEREF_SIGIL token type
+- Lexer: classify postfix deref sigils
+- Parser: parsePostfixOperators handles ->@*, ->%*, ->$*
+- New AST node: `PostfixDerefNode`
 - Example: `$aref->@*`, `$href->%*`, `$sref->$*`
 
-### 13. Postfix deref slice: `->@[...]`, `->@{...}` (50 lines)
+### 13. Postfix deref slice: `->@[...]`, `->@{...}` ✅ (~120 lines actual)
 - Combines postfix deref with slicing
-- Parse after postfix dereference
+- Parse after postfix dereference in parsePostfixOperators
+- New AST node: `PostfixDerefSliceNode`
+- Handles lists and ranges
 - Example: `$aref->@[0..4]`, `$href->@{qw(a b c)}`
 
 ---
@@ -400,13 +403,14 @@ After completing these, you'll have:
 
 ---
 
-## Current Status (Session 12)
+## Current Status (Session 13)
 
 **Completed Sprints:**
 - ✅ Sprint 1: Essential Builtins (Session 10) - die, warn, print, say, do, require
 - ✅ Sprint 2: Loop Control (Session 11) - last, next, redo, loop labels
 - ✅ Sprint 3: Special Variables (Session 12) - %ENV, @ARGV, $_, qw//
+- ✅ Sprint 4: Modern Dereferencing (Session 13) - ->@*, ->%*, ->$*, ->@[...], ->@{...}
 
-**Test Count:** 239 passing
-**Parser Size:** ~2,300 lines
-**Next Session:** Start Sprint 4 (Modern Dereferencing)
+**Test Count:** 247 passing
+**Parser Size:** ~2,550 lines
+**Next Session:** Start Sprint 5 (Package System) or Sprint 6 (Class Syntax)

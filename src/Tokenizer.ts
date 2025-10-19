@@ -57,6 +57,21 @@ export class Tokenizer {
                 if (this.isSigil(char)) {
                     const nextChar = i + 1 < chunk.length ? chunk[i + 1] : '';
 
+                    // Special case: postfix dereference sigils @*, %*, $*
+                    // Also handle postfix deref slices: @[, @{
+                    // These are used in modern Perl postfix dereferencing: $aref->@*, $href->%*, $aref->@[0..4]
+                    if (nextChar === '*' || nextChar === '[' || nextChar === '{') {
+                        yield {
+                            type: 'POSTFIX_DEREF_SIGIL',
+                            value: char, // Just the sigil: @, %, or $
+                            line,
+                            column
+                        };
+                        i++;
+                        column++;
+                        continue;
+                    }
+
                     // Check if this looks like a variable (sigil + identifier or $_)
                     if (this.isIdentifierStart(nextChar) || nextChar === '_') {
                         const start = i;
@@ -78,10 +93,18 @@ export class Tokenizer {
                             continue;
                         }
 
-                        // Collect identifier characters
-                        while (i < chunk.length && this.isIdentifierChar(chunk[i])) {
-                            i++;
-                            column++;
+                        // Collect identifier characters, including :: for package names
+                        while (i < chunk.length) {
+                            if (this.isIdentifierChar(chunk[i])) {
+                                i++;
+                                column++;
+                            } else if (chunk[i] === ':' && i + 1 < chunk.length && chunk[i + 1] === ':') {
+                                // Handle :: package separator
+                                i += 2;
+                                column += 2;
+                            } else {
+                                break;
+                            }
                         }
 
                         yield {
@@ -100,9 +123,18 @@ export class Tokenizer {
                     const start = i;
                     const startColumn = column;
 
-                    while (i < chunk.length && this.isIdentifierChar(chunk[i])) {
-                        i++;
-                        column++;
+                    // Collect identifier characters, including :: for package names
+                    while (i < chunk.length) {
+                        if (this.isIdentifierChar(chunk[i])) {
+                            i++;
+                            column++;
+                        } else if (chunk[i] === ':' && i + 1 < chunk.length && chunk[i + 1] === ':') {
+                            // Handle :: package separator
+                            i += 2;
+                            column += 2;
+                        } else {
+                            break;
+                        }
                     }
 
                     const value = chunk.substring(start, i);
