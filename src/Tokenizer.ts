@@ -1,0 +1,332 @@
+export interface Token {
+    type: string;
+    value: string;
+    line: number;
+    column: number;
+}
+
+export class Tokenizer {
+    private keywords = new Set([
+        'if', 'elsif', 'else', 'unless',
+        'while', 'until', 'for', 'foreach',
+        'given', 'when', 'default', 'break',
+        'next', 'last', 'continue', 'return',
+        'my', 'our', 'state', 'const',
+        'sub', 'async', 'class', 'field', 'method',
+        'and', 'or', 'not', 'xor',
+        'cmp', 'eq', 'ne', 'lt', 'gt', 'le', 'ge',
+        'use', 'require', 'package', 'import',
+        'do', 'eval', 'try', 'catch', 'finally', 'throw',
+        'spawn', 'send', 'recv', 'self', 'kill', 'alive',
+        'defined', 'undef', 'exists', 'delete'
+    ]);
+
+    async *run(source: AsyncGenerator<string>): AsyncGenerator<Token> {
+        let line = 1;
+        let column = 1;
+
+        for await (const chunk of source) {
+            let i = 0;
+
+            while (i < chunk.length) {
+                const char = chunk[i];
+
+                // Skip whitespace
+                if (this.isWhitespace(char)) {
+                    if (char === '\n') {
+                        line++;
+                        column = 1;
+                    } else {
+                        column++;
+                    }
+                    i++;
+                    continue;
+                }
+
+                // Check for string literals
+                if (char === '"' || char === "'") {
+                    const result = this.tokenizeString(chunk, i, char, line, column);
+                    yield result.token;
+                    i = result.newIndex;
+                    column = result.newColumn;
+                    continue;
+                }
+
+                // Check for variable (starts with $, @, %, &)
+                // Only match if followed by identifier char or _ (for $_)
+                if (this.isSigil(char)) {
+                    const nextChar = i + 1 < chunk.length ? chunk[i + 1] : '';
+
+                    // Check if this looks like a variable (sigil + identifier or $_)
+                    if (this.isIdentifierStart(nextChar) || nextChar === '_') {
+                        const start = i;
+                        const startColumn = column;
+                        i++;
+                        column++;
+
+                        // Special case: $_ is valid
+                        if (nextChar === '_' &&
+                            (i + 1 >= chunk.length || !this.isIdentifierChar(chunk[i + 1]))) {
+                            i++;
+                            column++;
+                            yield {
+                                type: 'VARIABLE',
+                                value: chunk.substring(start, i),
+                                line,
+                                column: startColumn
+                            };
+                            continue;
+                        }
+
+                        // Collect identifier characters
+                        while (i < chunk.length && this.isIdentifierChar(chunk[i])) {
+                            i++;
+                            column++;
+                        }
+
+                        yield {
+                            type: 'VARIABLE',
+                            value: chunk.substring(start, i),
+                            line,
+                            column: startColumn
+                        };
+                        continue;
+                    }
+                    // If not followed by identifier, fall through to operator handling
+                }
+
+                // Check for identifier or keyword
+                if (this.isIdentifierStart(char)) {
+                    const start = i;
+                    const startColumn = column;
+
+                    while (i < chunk.length && this.isIdentifierChar(chunk[i])) {
+                        i++;
+                        column++;
+                    }
+
+                    const value = chunk.substring(start, i);
+                    const type = this.keywords.has(value) ? 'KEYWORD' : 'IDENTIFIER';
+
+                    yield {
+                        type,
+                        value,
+                        line,
+                        column: startColumn
+                    };
+                    continue;
+                }
+
+                // Check for number
+                if (this.isDigit(char)) {
+                    const start = i;
+                    const startColumn = column;
+
+                    while (i < chunk.length && this.isDigit(chunk[i])) {
+                        i++;
+                        column++;
+                    }
+
+                    yield {
+                        type: 'NUMBER',
+                        value: chunk.substring(start, i),
+                        line,
+                        column: startColumn
+                    };
+                    continue;
+                }
+
+                // Check for multi-character operators (3-char first, then 2-char)
+                if (i + 2 < chunk.length) {
+                    const threeChar = chunk.substring(i, i + 3);
+                    if (this.isMultiCharOperator(threeChar)) {
+                        yield {
+                            type: 'OPERATOR',
+                            value: threeChar,
+                            line,
+                            column
+                        };
+                        i += 3;
+                        column += 3;
+                        continue;
+                    }
+                }
+
+                if (i + 1 < chunk.length) {
+                    const twoChar = chunk.substring(i, i + 2);
+                    if (this.isMultiCharOperator(twoChar)) {
+                        yield {
+                            type: 'OPERATOR',
+                            value: twoChar,
+                            line,
+                            column
+                        };
+                        i += 2;
+                        column += 2;
+                        continue;
+                    }
+                }
+
+                // Check for delimiters
+                if (this.isDelimiter(char)) {
+                    const type = this.getDelimiterType(char);
+                    yield {
+                        type,
+                        value: char,
+                        line,
+                        column
+                    };
+                    i++;
+                    column++;
+                    continue;
+                }
+
+                // Check for single-character operator
+                if (this.isOperatorChar(char)) {
+                    yield {
+                        type: 'OPERATOR',
+                        value: char,
+                        line,
+                        column
+                    };
+                    i++;
+                    column++;
+                    continue;
+                }
+
+                // Unknown character - skip for now
+                i++;
+                column++;
+            }
+        }
+    }
+
+    private isWhitespace(char: string): boolean {
+        return char === ' ' || char === '\t' || char === '\n' || char === '\r';
+    }
+
+    private isSigil(char: string): boolean {
+        return char === '$' || char === '@' || char === '%' || char === '&';
+    }
+
+    private isDigit(char: string): boolean {
+        return char >= '0' && char <= '9';
+    }
+
+    private isIdentifierStart(char: string): boolean {
+        return (char >= 'a' && char <= 'z') ||
+               (char >= 'A' && char <= 'Z') ||
+               char === '_';
+    }
+
+    private isIdentifierChar(char: string): boolean {
+        return (char >= 'a' && char <= 'z') ||
+               (char >= 'A' && char <= 'Z') ||
+               (char >= '0' && char <= '9') ||
+               char === '_';
+    }
+
+    private isOperatorChar(char: string): boolean {
+        return '+-*/%=<>!&|^~.'.includes(char);
+    }
+
+    private isMultiCharOperator(op: string): boolean {
+        const multiChar = [
+            // Comparison
+            '==', '!=', '<=', '>=', '<=>',
+            // Logical
+            '&&', '||', '//',
+            // Arithmetic
+            '**',
+            // Bitwise
+            '<<', '>>',
+            // Assignment
+            '+=', '-=', '*=', '/=', '%=', '**=',
+            '.=', 'x=',
+            '||=', '//=', '&&=',
+            '&=', '|=', '^=', '<<=', '>>=',
+            // Special
+            '->', '=>', '..'
+        ];
+        return multiChar.includes(op);
+    }
+
+    private isDelimiter(char: string): boolean {
+        return '(){}[];,'.includes(char);
+    }
+
+    private getDelimiterType(char: string): string {
+        switch (char) {
+            case '(': return 'LPAREN';
+            case ')': return 'RPAREN';
+            case '{': return 'LBRACE';
+            case '}': return 'RBRACE';
+            case '[': return 'LBRACKET';
+            case ']': return 'RBRACKET';
+            case ';': return 'TERMINATOR';
+            case ',': return 'COMMA';
+            default: return 'UNKNOWN';
+        }
+    }
+
+    private tokenizeString(
+        chunk: string,
+        startIndex: number,
+        quote: string,
+        line: number,
+        startColumn: number
+    ): { token: Token; newIndex: number; newColumn: number } {
+        let i = startIndex + 1; // Skip opening quote
+        let column = startColumn + 1;
+        let escaped = false;
+
+        while (i < chunk.length) {
+            const char = chunk[i];
+
+            if (escaped) {
+                escaped = false;
+                i++;
+                column++;
+                continue;
+            }
+
+            if (char === '\\') {
+                escaped = true;
+                i++;
+                column++;
+                continue;
+            }
+
+            if (char === quote) {
+                // Found closing quote
+                i++; // Include closing quote
+                column++;
+                return {
+                    token: {
+                        type: 'STRING',
+                        value: chunk.substring(startIndex, i),
+                        line,
+                        column: startColumn
+                    },
+                    newIndex: i,
+                    newColumn: column
+                };
+            }
+
+            i++;
+            column++;
+        }
+
+        // Unclosed string - return what we have
+        return {
+            token: {
+                type: 'STRING',
+                value: chunk.substring(startIndex),
+                line,
+                column: startColumn
+            },
+            newIndex: i,
+            newColumn: column
+        };
+    }
+}
