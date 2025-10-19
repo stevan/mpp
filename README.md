@@ -45,62 +45,72 @@ Input Chunks → Tokenizer → Lexer → Parser → AST Stream
 
 ## Implementation Status
 
-### ✅ Completed (Session 1)
+### ✅ Session 1: Foundation
+**Tokenizer** (270 lines)
+- [x] Number & string literals
+- [x] Variables with sigils
+- [x] Multi-character operators
+- [x] Position tracking
 
-**Tokenizer** (270 lines, 13 tests)
-- [x] Number literals
-- [x] String literals (single/double quoted with escapes)
-- [x] Variables with sigils ($x, @array, %hash, &sub)
-- [x] Special variable `$_`
-- [x] Keywords (if, my, sub, return, etc.)
-- [x] Identifiers (user-defined names)
-- [x] Operators (single and multi-character)
-- [x] Delimiters (parentheses, braces, brackets, semicolon, comma)
-- [x] Line/column position tracking
+**Lexer** (128 lines)
+- [x] Semantic classification
+- [x] Operator categorization
 
-**Lexer** (128 lines, 9 tests)
-- [x] Literal classification
-- [x] Variable classification by sigil type
-- [x] Operator classification (binary, assignment, unary)
-- [x] Keyword classification (declaration, control)
-- [x] Delimiter preservation
-- [x] Identifier classification
+**Parser** (~300 lines)
+- [x] Precedence climbing (20 levels)
+- [x] Basic expressions & declarations
 
-**Parser** (~300 lines, 10 tests)
-- [x] AST node types (Number, String, Variable, BinaryOp, Declaration)
-- [x] Precedence climbing algorithm
-- [x] 20 operator precedence levels
-- [x] Right-associative operators (**, =, +=, etc.)
-- [x] Left-associative operators (+, -, *, ==, &&, etc.)
-- [x] Parenthesized expressions
-- [x] Multiple statements
-- [x] Variable declarations with initializers
-- [x] Statement-level emission (streams one AST per statement)
+### ✅ Session 2: Control Flow
+- [x] If/elsif/else chains
+- [x] Unless (prefix & postfix)
+- [x] While/until loops
+- [x] Foreach loops with ranges
+- [x] Postfix conditionals
+- [x] Block statements
+
+### ✅ Session 3: Functions
+- [x] Function definitions with parameters
+- [x] Anonymous subs
+- [x] Default parameter values
+- [x] Function calls with arguments
+- [x] Return statements
+- [x] Recursive function calls
+
+### ✅ Session 4: Data Structures
+- [x] Array literals `[1, 2, 3]`
+- [x] Hash literals `+{ "key" => "value" }`
+- [x] List literals `(1, 2, 3)`
+- [x] Nested data structures
+- [x] Fat comma operator `=>`
+- [x] Comma disambiguation (list vs parens)
+
+### ✅ Session 5: Data Structure Access
+- [x] Array element access `$array[0]`
+- [x] Hash value access `$hash{"key"}`
+- [x] Array reference dereference `$aref->[0]`
+- [x] Hash reference dereference `$href->{"key"}`
+- [x] Chained access `$data->[0]{"key"}[1]`
+- [x] Access in expressions `$array[0] + $array[1]`
 
 **Test Coverage**
-- 32 tests total, all passing
+- **122 tests total**, all passing
+- 90 unit tests (Parser.test.ts)
+- 16 milestone tests (DataStructures.test.ts)
+- 5 integration tests (Examples.test.ts)
+- 9 lexer tests, 13 tokenizer tests
 - TDD approach throughout
-- High-level tests (not overly specific)
-- No `any` types used
-- Strict TypeScript configuration
+- No `any` types, strict TypeScript
 
 ### ⏸️ Deferred for Later
 
 **Not Yet Implemented:**
-- [ ] Regex literals (`/pattern/`, `s/old/new/`, `qr//`)
-- [ ] HEREDOCs (excluded from language design)
-- [ ] Control structures (if/elsif/else, while, for)
-- [ ] Function definitions (sub)
+- [ ] Method calls (`$obj->method()`)
+- [ ] Unary operators (`!`, `-`, `not`)
+- [ ] Ternary operator (`?:`)
+- [ ] Range operator (`..`) as expression
+- [ ] Regex literals (`/pattern/`, `s/old/new/`)
 - [ ] Class definitions
-- [ ] Ternary operator (?:)
-- [ ] Postfix conditionals (`say "x" if $y`)
-- [ ] Array/hash literals ([], +{})
-- [ ] Function calls
-- [ ] Method calls (->)
-- [ ] Array/hash indexing
-- [ ] Unary operators (!, -, not)
-- [ ] Range operator (..)
-- [ ] Comma operator (list building)
+- [ ] HEREDOCs (excluded from language design)
 
 ## Design Decisions
 
@@ -129,17 +139,19 @@ Result: **Pure forward-streaming parser, no feedback loops required!**
 ```
 mpp/
 ├── src/
-│   ├── Tokenizer.ts       # Boundary detection + token emission
-│   ├── Lexer.ts           # Semantic classification
-│   ├── Parser.ts          # Precedence climbing parser
-│   └── AST.ts             # AST node type definitions
+│   ├── Tokenizer.ts          # Boundary detection + token emission
+│   ├── Lexer.ts              # Semantic classification
+│   ├── Parser.ts             # Precedence climbing parser (~700 lines)
+│   └── AST.ts                # AST node type definitions
 ├── tests/
-│   ├── Tokenizer.test.ts  # 13 tests
-│   ├── Lexer.test.ts      # 9 tests
-│   └── Parser.test.ts     # 10 tests
-├── tsconfig.json          # Strict TypeScript config
-├── package.json           # Dependencies and scripts
-└── README.md              # This file
+│   ├── Tokenizer.test.ts     # 13 unit tests
+│   ├── Lexer.test.ts         # 9 unit tests
+│   ├── Parser.test.ts        # 74 unit tests
+│   ├── Examples.test.ts      # 5 integration tests
+│   └── DataStructures.test.ts # 16 milestone tests
+├── tsconfig.json             # Strict TypeScript config
+├── package.json              # Dependencies and scripts
+└── README.md                 # This file
 ```
 
 ## Running Tests
@@ -172,60 +184,36 @@ npm run build         # Compile TypeScript
 
 ## Example Usage
 
-```typescript
-import { Tokenizer } from './src/Tokenizer.js';
-import { Lexer } from './src/Lexer.js';
-import { Parser } from './src/Parser.js';
+```perl
+# Complete program with data structures and access
+my $users = [
+    +{ "name" => "Alice", "age" => 30, "scores" => [95, 87, 92] },
+    +{ "name" => "Bob", "age" => 25, "scores" => [88, 91, 85] }
+];
 
-async function* sourceGen() {
-    yield 'my $x = 2 + 3 * 4;';
+sub average_score($person) {
+    my $scores = $person->{"scores"};
+    my $sum = $scores->[0] + $scores->[1] + $scores->[2];
+    return $sum / 3;
 }
 
-const tokenizer = new Tokenizer();
-const lexer = new Lexer();
-const parser = new Parser();
+my $first_user = $users->[0];
+my $name = $first_user->{"name"};
+my $avg = average_score($first_user);
 
-const tokens = tokenizer.run(sourceGen());
-const lexemes = lexer.run(tokens);
-
-for await (const ast of parser.run(lexemes)) {
-    console.log(JSON.stringify(ast, null, 2));
-}
+print($name);
+print($avg);
 ```
 
-Output:
-```json
-{
-  "type": "Declaration",
-  "declarator": "my",
-  "variable": {
-    "type": "Variable",
-    "name": "$x"
-  },
-  "initializer": {
-    "type": "BinaryOp",
-    "operator": "+",
-    "left": {
-      "type": "Number",
-      "value": "2"
-    },
-    "right": {
-      "type": "BinaryOp",
-      "operator": "*",
-      "left": {
-        "type": "Number",
-        "value": "3"
-      },
-      "right": {
-        "type": "Number",
-        "value": "4"
-      }
-    }
-  }
-}
-```
-
-Note the correct precedence: `2 + (3 * 4)`, not `(2 + 3) * 4`.
+The parser can handle:
+- ✅ Array literals: `[1, 2, 3]`
+- ✅ Hash literals: `+{ "key" => "value" }`
+- ✅ Nested structures: `[1, +{ "x" => [2, 3] }]`
+- ✅ Array/hash access: `$array[0]`, `$hash{"key"}`
+- ✅ Dereferencing: `$aref->[0]`, `$href->{"key"}`
+- ✅ Chained access: `$data->[0]{"key"}[1]`
+- ✅ Functions with parameters and recursion
+- ✅ Complete control flow (for, if, while, unless)
 
 ## Benefits of This Architecture
 
@@ -239,11 +227,24 @@ Note the correct precedence: `2 + (3 * 4)`, not `(2 + 3) * 4`.
 
 ## Development Approach
 
+### Testing Strategy
 - **TDD** - Write tests first, then implement
 - **Incremental** - Build one feature at a time
 - **High-level tests** - Avoid boxing into implementation details
 - **Strict typing** - No `any` types, `exactOptionalPropertyTypes: true`
 - **Async generators** - Streaming throughout the pipeline
+
+### Milestone Testing Pattern
+After completing each major milestone, create a dedicated test file:
+- `Examples.test.ts` - Integration tests for complete programs
+- `DataStructures.test.ts` - Comprehensive data structure usage
+- Future: `Methods.test.ts`, `Classes.test.ts`, etc.
+
+These milestone tests:
+1. Demonstrate realistic usage of the complete feature
+2. Serve as regression tests for complex interactions
+3. Act as documentation for what the parser can handle
+4. Test nested and combined features working together
 
 ## License
 

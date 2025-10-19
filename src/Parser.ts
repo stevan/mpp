@@ -16,7 +16,12 @@ import {
     CallNode,
     ReturnNode,
     SubNode,
-    ParameterNode
+    ParameterNode,
+    ArrayLiteralNode,
+    HashLiteralNode,
+    ListNode,
+    ArrayAccessNode,
+    HashAccessNode
 } from './AST.js';
 
 interface OperatorInfo {
@@ -300,6 +305,11 @@ export class Parser {
         let left = leftResult.node;
         let currentPos = leftResult.nextPos;
 
+        // Handle postfix operators (array/hash access)
+        const postfixResult = this.parsePostfixOperators(lexemes, left, currentPos);
+        left = postfixResult.node;
+        currentPos = postfixResult.nextPos;
+
         // Process operators
         while (currentPos < lexemes.length) {
             const current = lexemes[currentPos];
@@ -470,7 +480,140 @@ export class Parser {
             }
         }
 
-        // Parenthesized expressions
+        // Array literals [...]
+        if (lexeme.category === 'LBRACKET') {
+            // Find matching RBRACKET
+            let depth = 1;
+            let endPos = pos + 1;
+            while (endPos < lexemes.length && depth > 0) {
+                if (lexemes[endPos].category === 'LBRACKET') depth++;
+                if (lexemes[endPos].category === 'RBRACKET') depth--;
+                endPos++;
+            }
+
+            // Parse elements (comma-separated expressions)
+            const elementLexemes = lexemes.slice(pos + 1, endPos - 1);
+            const elements: ASTNode[] = [];
+
+            if (elementLexemes.length > 0) {
+                // Split by commas at depth 0
+                let elemStart = 0;
+                let bracketDepth = 0;
+                let braceDepth = 0;
+                let parenDepth = 0;
+
+                for (let i = 0; i < elementLexemes.length; i++) {
+                    if (elementLexemes[i].category === 'LBRACKET') bracketDepth++;
+                    if (elementLexemes[i].category === 'RBRACKET') bracketDepth--;
+                    if (elementLexemes[i].category === 'LBRACE') braceDepth++;
+                    if (elementLexemes[i].category === 'RBRACE') braceDepth--;
+                    if (elementLexemes[i].category === 'LPAREN') parenDepth++;
+                    if (elementLexemes[i].category === 'RPAREN') parenDepth--;
+
+                    if (elementLexemes[i].category === 'COMMA' &&
+                        bracketDepth === 0 && braceDepth === 0 && parenDepth === 0) {
+                        // Found an element boundary
+                        const elemTokens = elementLexemes.slice(elemStart, i);
+                        if (elemTokens.length > 0) {
+                            const elem = this.parseExpression(elemTokens, 0);
+                            if (elem) {
+                                elements.push(elem);
+                            }
+                        }
+                        elemStart = i + 1; // Skip the comma
+                    }
+                }
+
+                // Don't forget the last element
+                const lastElemTokens = elementLexemes.slice(elemStart);
+                if (lastElemTokens.length > 0) {
+                    const elem = this.parseExpression(lastElemTokens, 0);
+                    if (elem) {
+                        elements.push(elem);
+                    }
+                }
+            }
+
+            const arrayNode: ArrayLiteralNode = {
+                type: 'ArrayLiteral',
+                elements: elements
+            };
+
+            return {
+                node: arrayNode,
+                nextPos: endPos
+            };
+        }
+
+        // Hash literals +{...}
+        if ((lexeme.category === 'BINOP' || lexeme.category === 'OPERATOR') && lexeme.token.value === '+') {
+            // Check if next token is LBRACE
+            if (pos + 1 < lexemes.length && lexemes[pos + 1].category === 'LBRACE') {
+                // Find matching RBRACE
+                let depth = 1;
+                let endPos = pos + 2;
+                while (endPos < lexemes.length && depth > 0) {
+                    if (lexemes[endPos].category === 'LBRACE') depth++;
+                    if (lexemes[endPos].category === 'RBRACE') depth--;
+                    endPos++;
+                }
+
+                // Parse pairs (comma-separated key => value)
+                const pairLexemes = lexemes.slice(pos + 2, endPos - 1);
+                const pairs: Array<{ key: ASTNode; value: ASTNode }> = [];
+
+                if (pairLexemes.length > 0) {
+                    // Split by commas at depth 0
+                    let pairStart = 0;
+                    let bracketDepth = 0;
+                    let braceDepth = 0;
+                    let parenDepth = 0;
+
+                    for (let i = 0; i < pairLexemes.length; i++) {
+                        if (pairLexemes[i].category === 'LBRACKET') bracketDepth++;
+                        if (pairLexemes[i].category === 'RBRACKET') bracketDepth--;
+                        if (pairLexemes[i].category === 'LBRACE') braceDepth++;
+                        if (pairLexemes[i].category === 'RBRACE') braceDepth--;
+                        if (pairLexemes[i].category === 'LPAREN') parenDepth++;
+                        if (pairLexemes[i].category === 'RPAREN') parenDepth--;
+
+                        if (pairLexemes[i].category === 'COMMA' &&
+                            bracketDepth === 0 && braceDepth === 0 && parenDepth === 0) {
+                            // Found a pair boundary
+                            const pairTokens = pairLexemes.slice(pairStart, i);
+                            if (pairTokens.length > 0) {
+                                const pair = this.parseHashPair(pairTokens);
+                                if (pair) {
+                                    pairs.push(pair);
+                                }
+                            }
+                            pairStart = i + 1; // Skip the comma
+                        }
+                    }
+
+                    // Don't forget the last pair
+                    const lastPairTokens = pairLexemes.slice(pairStart);
+                    if (lastPairTokens.length > 0) {
+                        const pair = this.parseHashPair(lastPairTokens);
+                        if (pair) {
+                            pairs.push(pair);
+                        }
+                    }
+                }
+
+                const hashNode: HashLiteralNode = {
+                    type: 'HashLiteral',
+                    pairs: pairs
+                };
+
+                return {
+                    node: hashNode,
+                    nextPos: endPos
+                };
+            }
+        }
+
+        // Parenthesized expressions or lists
         if (lexeme.category === 'LPAREN') {
             // Find matching RPAREN
             let depth = 1;
@@ -481,16 +624,205 @@ export class Parser {
                 endPos++;
             }
 
-            // Parse the expression inside parentheses
+            // Check if there's a comma at depth 0 (indicates a list)
             const innerLexemes = lexemes.slice(pos + 1, endPos - 1);
-            const innerNode = this.parseExpression(innerLexemes, 0);
+            let hasComma = false;
+            let parenDepth = 0;
+            let bracketDepth = 0;
+            let braceDepth = 0;
 
-            if (innerNode) {
-                return { node: innerNode, nextPos: endPos };
+            for (let i = 0; i < innerLexemes.length; i++) {
+                if (innerLexemes[i].category === 'LPAREN') parenDepth++;
+                if (innerLexemes[i].category === 'RPAREN') parenDepth--;
+                if (innerLexemes[i].category === 'LBRACKET') bracketDepth++;
+                if (innerLexemes[i].category === 'RBRACKET') bracketDepth--;
+                if (innerLexemes[i].category === 'LBRACE') braceDepth++;
+                if (innerLexemes[i].category === 'RBRACE') braceDepth--;
+
+                if (innerLexemes[i].category === 'COMMA' &&
+                    parenDepth === 0 && bracketDepth === 0 && braceDepth === 0) {
+                    hasComma = true;
+                    break;
+                }
+            }
+
+            if (hasComma) {
+                // This is a list literal
+                const elements: ASTNode[] = [];
+                let elemStart = 0;
+                parenDepth = 0;
+                bracketDepth = 0;
+                braceDepth = 0;
+
+                for (let i = 0; i < innerLexemes.length; i++) {
+                    if (innerLexemes[i].category === 'LPAREN') parenDepth++;
+                    if (innerLexemes[i].category === 'RPAREN') parenDepth--;
+                    if (innerLexemes[i].category === 'LBRACKET') bracketDepth++;
+                    if (innerLexemes[i].category === 'RBRACKET') bracketDepth--;
+                    if (innerLexemes[i].category === 'LBRACE') braceDepth++;
+                    if (innerLexemes[i].category === 'RBRACE') braceDepth--;
+
+                    if (innerLexemes[i].category === 'COMMA' &&
+                        parenDepth === 0 && bracketDepth === 0 && braceDepth === 0) {
+                        // Found an element boundary
+                        const elemTokens = innerLexemes.slice(elemStart, i);
+                        if (elemTokens.length > 0) {
+                            const elem = this.parseExpression(elemTokens, 0);
+                            if (elem) {
+                                elements.push(elem);
+                            }
+                        }
+                        elemStart = i + 1; // Skip the comma
+                    }
+                }
+
+                // Don't forget the last element
+                const lastElemTokens = innerLexemes.slice(elemStart);
+                if (lastElemTokens.length > 0) {
+                    const elem = this.parseExpression(lastElemTokens, 0);
+                    if (elem) {
+                        elements.push(elem);
+                    }
+                }
+
+                const listNode: ListNode = {
+                    type: 'List',
+                    elements: elements
+                };
+
+                return { node: listNode, nextPos: endPos };
+            } else {
+                // This is a parenthesized expression
+                const innerNode = this.parseExpression(innerLexemes, 0);
+
+                if (innerNode) {
+                    return { node: innerNode, nextPos: endPos };
+                }
             }
         }
 
         return null;
+    }
+
+    private parseHashPair(lexemes: Lexeme[]): { key: ASTNode; value: ASTNode } | null {
+        // Find the => operator at depth 0
+        let depth = 0;
+        let arrowPos = -1;
+
+        for (let i = 0; i < lexemes.length; i++) {
+            if (lexemes[i].category === 'LPAREN' || lexemes[i].category === 'LBRACKET' || lexemes[i].category === 'LBRACE') {
+                depth++;
+            }
+            if (lexemes[i].category === 'RPAREN' || lexemes[i].category === 'RBRACKET' || lexemes[i].category === 'RBRACE') {
+                depth--;
+            }
+
+            if (depth === 0 && (lexemes[i].category === 'BINOP' || lexemes[i].category === 'OPERATOR') && lexemes[i].token.value === '=>') {
+                arrowPos = i;
+                break;
+            }
+        }
+
+        if (arrowPos === -1) {
+            return null;
+        }
+
+        // Parse key and value
+        const keyLexemes = lexemes.slice(0, arrowPos);
+        const valueLexemes = lexemes.slice(arrowPos + 1);
+
+        const key = this.parseExpression(keyLexemes, 0);
+        const value = this.parseExpression(valueLexemes, 0);
+
+        if (key && value) {
+            return { key, value };
+        }
+
+        return null;
+    }
+
+    private parsePostfixOperators(
+        lexemes: Lexeme[],
+        base: ASTNode,
+        startPos: number
+    ): { node: ASTNode; nextPos: number } {
+        let node = base;
+        let pos = startPos;
+
+        // Loop to handle chained access like $data->[0]{"key"}[1]
+        while (pos < lexemes.length) {
+            const current = lexemes[pos];
+
+            // Check for dereference operator ->
+            if (current.category === 'BINOP' && current.token.value === '->') {
+                pos++; // Consume ->
+                if (pos >= lexemes.length) {
+                    break;
+                }
+                // Continue to check for [ or { after ->
+            }
+
+            // Check for array access [
+            if (current.category === 'LBRACKET' || lexemes[pos].category === 'LBRACKET') {
+                // Find matching RBRACKET
+                let depth = 1;
+                let endPos = pos + 1;
+                while (endPos < lexemes.length && depth > 0) {
+                    if (lexemes[endPos].category === 'LBRACKET') depth++;
+                    if (lexemes[endPos].category === 'RBRACKET') depth--;
+                    endPos++;
+                }
+
+                // Parse index expression
+                const indexLexemes = lexemes.slice(pos + 1, endPos - 1);
+                const index = this.parseExpression(indexLexemes, 0);
+
+                if (index) {
+                    const arrayAccess: ArrayAccessNode = {
+                        type: 'ArrayAccess',
+                        base: node,
+                        index: index
+                    };
+                    node = arrayAccess;
+                    pos = endPos;
+                    continue;
+                }
+                break;
+            }
+
+            // Check for hash access {
+            if (current.category === 'LBRACE' || lexemes[pos].category === 'LBRACE') {
+                // Find matching RBRACE
+                let depth = 1;
+                let endPos = pos + 1;
+                while (endPos < lexemes.length && depth > 0) {
+                    if (lexemes[endPos].category === 'LBRACE') depth++;
+                    if (lexemes[endPos].category === 'RBRACE') depth--;
+                    endPos++;
+                }
+
+                // Parse key expression
+                const keyLexemes = lexemes.slice(pos + 1, endPos - 1);
+                const key = this.parseExpression(keyLexemes, 0);
+
+                if (key) {
+                    const hashAccess: HashAccessNode = {
+                        type: 'HashAccess',
+                        base: node,
+                        key: key
+                    };
+                    node = hashAccess;
+                    pos = endPos;
+                    continue;
+                }
+                break;
+            }
+
+            // No more postfix operators
+            break;
+        }
+
+        return { node, nextPos: pos };
     }
 
     private getOperatorInfo(operator: string): OperatorInfo | null {

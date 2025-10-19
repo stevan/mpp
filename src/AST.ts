@@ -107,3 +107,30 @@ export interface SubNode extends ASTNode {
     parameters: ParameterNode[];
     body: ASTNode[];
 }
+
+export interface ArrayLiteralNode extends ASTNode {
+    type: 'ArrayLiteral';
+    elements: ASTNode[];
+}
+
+export interface HashLiteralNode extends ASTNode {
+    type: 'HashLiteral';
+    pairs: Array<{ key: ASTNode; value: ASTNode }>;
+}
+
+export interface ListNode extends ASTNode {
+    type: 'List';
+    elements: ASTNode[];
+}
+
+export interface ArrayAccessNode extends ASTNode {
+    type: 'ArrayAccess';
+    base: ASTNode;  // The array variable or expression
+    index: ASTNode; // The index expression
+}
+
+export interface HashAccessNode extends ASTNode {
+    type: 'HashAccess';
+    base: ASTNode;  // The hash variable or expression
+    key: ASTNode;   // The key expression
+}

@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { Tokenizer } from '../src/Tokenizer.js';
 import { Lexer } from '../src/Lexer.js';
 import { Parser } from '../src/Parser.js';
-import { BinaryOpNode, DeclarationNode, NumberNode, VariableNode, StringNode, IfNode, UnlessNode, WhileNode, UntilNode, ForeachNode, BlockNode, CallNode, ReturnNode, SubNode, ParameterNode } from '../src/AST.js';
+import { BinaryOpNode, DeclarationNode, NumberNode, VariableNode, StringNode, IfNode, UnlessNode, WhileNode, UntilNode, ForeachNode, BlockNode, CallNode, ReturnNode, SubNode, ParameterNode, ArrayLiteralNode, HashLiteralNode, ListNode, ArrayAccessNode, HashAccessNode } from '../src/AST.js';
 
 // Helper to parse source code into AST
 async function parse(source: string) {
@@ -615,5 +615,387 @@ describe('Parser', () => {
         assert.strictEqual(subStmt.parameters[1].defaultValue?.type, 'Number');
         assert.strictEqual(subStmt.parameters[2].variable.name, '$c');
         assert.strictEqual(subStmt.parameters[2].defaultValue?.type, 'Number');
+    });
+
+    // Array Literal Tests
+    test('parses simple array literal', async () => {
+        const stmts = await parse('[1, 2, 3];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArrayLiteralNode;
+        assert.strictEqual(stmt.type, 'ArrayLiteral');
+        assert.strictEqual(stmt.elements.length, 3);
+        assert.strictEqual(stmt.elements[0].type, 'Number');
+        assert.strictEqual((stmt.elements[0] as NumberNode).value, '1');
+        assert.strictEqual(stmt.elements[1].type, 'Number');
+        assert.strictEqual((stmt.elements[1] as NumberNode).value, '2');
+        assert.strictEqual(stmt.elements[2].type, 'Number');
+        assert.strictEqual((stmt.elements[2] as NumberNode).value, '3');
+    });
+
+    test('parses empty array literal', async () => {
+        const stmts = await parse('[];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArrayLiteralNode;
+        assert.strictEqual(stmt.type, 'ArrayLiteral');
+        assert.strictEqual(stmt.elements.length, 0);
+    });
+
+    test('parses array literal with mixed types', async () => {
+        const stmts = await parse('[1, "hello", $x];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArrayLiteralNode;
+        assert.strictEqual(stmt.type, 'ArrayLiteral');
+        assert.strictEqual(stmt.elements.length, 3);
+        assert.strictEqual(stmt.elements[0].type, 'Number');
+        assert.strictEqual(stmt.elements[1].type, 'String');
+        assert.strictEqual(stmt.elements[2].type, 'Variable');
+    });
+
+    test('parses nested array literals', async () => {
+        const stmts = await parse('[1, [2, 3], 4];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArrayLiteralNode;
+        assert.strictEqual(stmt.type, 'ArrayLiteral');
+        assert.strictEqual(stmt.elements.length, 3);
+        assert.strictEqual(stmt.elements[0].type, 'Number');
+        assert.strictEqual(stmt.elements[1].type, 'ArrayLiteral');
+        const nested = stmt.elements[1] as ArrayLiteralNode;
+        assert.strictEqual(nested.elements.length, 2);
+        assert.strictEqual((nested.elements[0] as NumberNode).value, '2');
+        assert.strictEqual((nested.elements[1] as NumberNode).value, '3');
+        assert.strictEqual(stmt.elements[2].type, 'Number');
+    });
+
+    test('parses array literal in variable declaration', async () => {
+        const stmts = await parse('my $aref = [1, 2, 3];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.type, 'Declaration');
+        assert.strictEqual(stmt.variable.name, '$aref');
+        assert.strictEqual(stmt.initializer?.type, 'ArrayLiteral');
+        const arrayLit = stmt.initializer as ArrayLiteralNode;
+        assert.strictEqual(arrayLit.elements.length, 3);
+    });
+
+    test('parses array literal with expressions', async () => {
+        const stmts = await parse('[1 + 2, 3 * 4, $x + $y];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArrayLiteralNode;
+        assert.strictEqual(stmt.type, 'ArrayLiteral');
+        assert.strictEqual(stmt.elements.length, 3);
+        assert.strictEqual(stmt.elements[0].type, 'BinaryOp');
+        assert.strictEqual(stmt.elements[1].type, 'BinaryOp');
+        assert.strictEqual(stmt.elements[2].type, 'BinaryOp');
+    });
+
+    // Hash Literal Tests
+    test('parses simple hash literal with fat comma', async () => {
+        const stmts = await parse('+{ "a" => 1, "b" => 2 };');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashLiteralNode;
+        assert.strictEqual(stmt.type, 'HashLiteral');
+        assert.strictEqual(stmt.pairs.length, 2);
+        assert.strictEqual(stmt.pairs[0].key.type, 'String');
+        assert.strictEqual((stmt.pairs[0].key as StringNode).value, '"a"');
+        assert.strictEqual(stmt.pairs[0].value.type, 'Number');
+        assert.strictEqual((stmt.pairs[0].value as NumberNode).value, '1');
+        assert.strictEqual(stmt.pairs[1].key.type, 'String');
+        assert.strictEqual((stmt.pairs[1].key as StringNode).value, '"b"');
+        assert.strictEqual(stmt.pairs[1].value.type, 'Number');
+        assert.strictEqual((stmt.pairs[1].value as NumberNode).value, '2');
+    });
+
+    test('parses empty hash literal', async () => {
+        const stmts = await parse('+{};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashLiteralNode;
+        assert.strictEqual(stmt.type, 'HashLiteral');
+        assert.strictEqual(stmt.pairs.length, 0);
+    });
+
+    test('parses hash literal in variable declaration', async () => {
+        const stmts = await parse('my $href = +{ "name" => "Alice", "age" => 30 };');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.type, 'Declaration');
+        assert.strictEqual(stmt.variable.name, '$href');
+        assert.strictEqual(stmt.initializer?.type, 'HashLiteral');
+        const hashLit = stmt.initializer as HashLiteralNode;
+        assert.strictEqual(hashLit.pairs.length, 2);
+    });
+
+    test('parses nested hash literals', async () => {
+        const stmts = await parse('+{ "outer" => +{ "inner" => 42 } };');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashLiteralNode;
+        assert.strictEqual(stmt.type, 'HashLiteral');
+        assert.strictEqual(stmt.pairs.length, 1);
+        assert.strictEqual(stmt.pairs[0].key.type, 'String');
+        assert.strictEqual(stmt.pairs[0].value.type, 'HashLiteral');
+        const nested = stmt.pairs[0].value as HashLiteralNode;
+        assert.strictEqual(nested.pairs.length, 1);
+        assert.strictEqual((nested.pairs[0].value as NumberNode).value, '42');
+    });
+
+    test('parses hash literal with expression values', async () => {
+        const stmts = await parse('+{ "sum" => 1 + 2, "product" => 3 * 4 };');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashLiteralNode;
+        assert.strictEqual(stmt.type, 'HashLiteral');
+        assert.strictEqual(stmt.pairs.length, 2);
+        assert.strictEqual(stmt.pairs[0].value.type, 'BinaryOp');
+        assert.strictEqual(stmt.pairs[1].value.type, 'BinaryOp');
+    });
+
+    // List Literal Tests
+    test('parses list literal with comma', async () => {
+        const stmts = await parse('(1, 2, 3);');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ListNode;
+        assert.strictEqual(stmt.type, 'List');
+        assert.strictEqual(stmt.elements.length, 3);
+        assert.strictEqual((stmt.elements[0] as NumberNode).value, '1');
+        assert.strictEqual((stmt.elements[1] as NumberNode).value, '2');
+        assert.strictEqual((stmt.elements[2] as NumberNode).value, '3');
+    });
+
+    test('parses list in array variable declaration', async () => {
+        const stmts = await parse('my @array = (1, 2, 3);');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.type, 'Declaration');
+        assert.strictEqual(stmt.variable.name, '@array');
+        assert.strictEqual(stmt.initializer?.type, 'List');
+        const list = stmt.initializer as ListNode;
+        assert.strictEqual(list.elements.length, 3);
+    });
+
+    test('disambiguates list from parenthesized expression', async () => {
+        const stmts = await parse('(1 + 2);');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as BinaryOpNode;
+        assert.strictEqual(stmt.type, 'BinaryOp');
+        assert.strictEqual(stmt.operator, '+');
+    });
+
+    // Mixed/Nested Data Structure Tests
+    test('parses array containing hash literal', async () => {
+        const stmts = await parse('[1, +{ "key" => "value" }, 3];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArrayLiteralNode;
+        assert.strictEqual(stmt.type, 'ArrayLiteral');
+        assert.strictEqual(stmt.elements.length, 3);
+        assert.strictEqual(stmt.elements[0].type, 'Number');
+        assert.strictEqual(stmt.elements[1].type, 'HashLiteral');
+        assert.strictEqual(stmt.elements[2].type, 'Number');
+    });
+
+    test('parses hash containing array literal', async () => {
+        const stmts = await parse('+{ "numbers" => [1, 2, 3] };');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashLiteralNode;
+        assert.strictEqual(stmt.type, 'HashLiteral');
+        assert.strictEqual(stmt.pairs.length, 1);
+        assert.strictEqual(stmt.pairs[0].value.type, 'ArrayLiteral');
+        const arrayVal = stmt.pairs[0].value as ArrayLiteralNode;
+        assert.strictEqual(arrayVal.elements.length, 3);
+    });
+
+    test('parses complex nested data structure', async () => {
+        const stmts = await parse('my $data = [1, +{ "nested" => [2, 3] }, 4];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.type, 'Declaration');
+        const arrayLit = stmt.initializer as ArrayLiteralNode;
+        assert.strictEqual(arrayLit.type, 'ArrayLiteral');
+        assert.strictEqual(arrayLit.elements.length, 3);
+        assert.strictEqual(arrayLit.elements[1].type, 'HashLiteral');
+        const hashLit = arrayLit.elements[1] as HashLiteralNode;
+        assert.strictEqual(hashLit.pairs[0].value.type, 'ArrayLiteral');
+    });
+
+    // Array Access Tests
+    test('parses simple array element access', async () => {
+        const stmts = await parse('$array[0];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArrayAccessNode;
+        assert.strictEqual(stmt.type, 'ArrayAccess');
+        assert.strictEqual(stmt.base.type, 'Variable');
+        assert.strictEqual((stmt.base as VariableNode).name, '$array');
+        assert.strictEqual(stmt.index.type, 'Number');
+        assert.strictEqual((stmt.index as NumberNode).value, '0');
+    });
+
+    test('parses array access with expression index', async () => {
+        const stmts = await parse('$array[$i + 1];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArrayAccessNode;
+        assert.strictEqual(stmt.type, 'ArrayAccess');
+        assert.strictEqual(stmt.index.type, 'BinaryOp');
+    });
+
+    test('parses array access in assignment', async () => {
+        const stmts = await parse('my $x = $array[5];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.initializer?.type, 'ArrayAccess');
+        const access = stmt.initializer as ArrayAccessNode;
+        assert.strictEqual((access.base as VariableNode).name, '$array');
+        assert.strictEqual((access.index as NumberNode).value, '5');
+    });
+
+    test('parses array reference dereference', async () => {
+        const stmts = await parse('$aref->[0];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArrayAccessNode;
+        assert.strictEqual(stmt.type, 'ArrayAccess');
+        assert.strictEqual(stmt.base.type, 'Variable');
+        assert.strictEqual((stmt.base as VariableNode).name, '$aref');
+        assert.strictEqual(stmt.index.type, 'Number');
+    });
+
+    test('parses array dereference with expression base', async () => {
+        const stmts = await parse('get_array()->[0];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArrayAccessNode;
+        assert.strictEqual(stmt.type, 'ArrayAccess');
+        assert.strictEqual(stmt.base.type, 'Call');
+    });
+
+    // Hash Access Tests
+    test('parses simple hash value access', async () => {
+        const stmts = await parse('$hash{"key"};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashAccessNode;
+        assert.strictEqual(stmt.type, 'HashAccess');
+        assert.strictEqual(stmt.base.type, 'Variable');
+        assert.strictEqual((stmt.base as VariableNode).name, '$hash');
+        assert.strictEqual(stmt.key.type, 'String');
+        assert.strictEqual((stmt.key as StringNode).value, '"key"');
+    });
+
+    test('parses hash access with variable key', async () => {
+        const stmts = await parse('$hash{$key};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashAccessNode;
+        assert.strictEqual(stmt.type, 'HashAccess');
+        assert.strictEqual(stmt.key.type, 'Variable');
+    });
+
+    test('parses hash access in assignment', async () => {
+        const stmts = await parse('my $value = $hash{"name"};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.initializer?.type, 'HashAccess');
+        const access = stmt.initializer as HashAccessNode;
+        assert.strictEqual((access.base as VariableNode).name, '$hash');
+        assert.strictEqual((access.key as StringNode).value, '"name"');
+    });
+
+    test('parses hash reference dereference', async () => {
+        const stmts = await parse('$href->{"key"};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashAccessNode;
+        assert.strictEqual(stmt.type, 'HashAccess');
+        assert.strictEqual(stmt.base.type, 'Variable');
+        assert.strictEqual((stmt.base as VariableNode).name, '$href');
+        assert.strictEqual(stmt.key.type, 'String');
+    });
+
+    test('parses hash dereference with expression base', async () => {
+        const stmts = await parse('get_hash()->{"key"};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashAccessNode;
+        assert.strictEqual(stmt.type, 'HashAccess');
+        assert.strictEqual(stmt.base.type, 'Call');
+    });
+
+    // Chained Access Tests
+    test('parses chained array then hash access', async () => {
+        const stmts = await parse('$data->[0]{"key"};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashAccessNode;
+        assert.strictEqual(stmt.type, 'HashAccess');
+        assert.strictEqual(stmt.base.type, 'ArrayAccess');
+        const arrayAccess = stmt.base as ArrayAccessNode;
+        assert.strictEqual(arrayAccess.base.type, 'Variable');
+        assert.strictEqual((arrayAccess.base as VariableNode).name, '$data');
+    });
+
+    test('parses chained hash then array access', async () => {
+        const stmts = await parse('$data->{"key"}[0];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as ArrayAccessNode;
+        assert.strictEqual(stmt.type, 'ArrayAccess');
+        assert.strictEqual(stmt.base.type, 'HashAccess');
+        const hashAccess = stmt.base as HashAccessNode;
+        assert.strictEqual(hashAccess.base.type, 'Variable');
+    });
+
+    test('parses deeply chained access', async () => {
+        const stmts = await parse('$data->[0]{"users"}[1]{"name"};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as HashAccessNode;
+        assert.strictEqual(stmt.type, 'HashAccess');
+        assert.strictEqual(stmt.key.type, 'String');
+
+        // Should be nested: HashAccess -> ArrayAccess -> HashAccess -> ArrayAccess -> Variable
+        assert.strictEqual(stmt.base.type, 'ArrayAccess');
+        const arr1 = stmt.base as ArrayAccessNode;
+        assert.strictEqual(arr1.base.type, 'HashAccess');
+        const hash1 = arr1.base as HashAccessNode;
+        assert.strictEqual(hash1.base.type, 'ArrayAccess');
+    });
+
+    test('parses array access in expression', async () => {
+        const stmts = await parse('my $sum = $array[0] + $array[1];');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.initializer?.type, 'BinaryOp');
+        const binop = stmt.initializer as BinaryOpNode;
+        assert.strictEqual(binop.left.type, 'ArrayAccess');
+        assert.strictEqual(binop.right.type, 'ArrayAccess');
+    });
+
+    test('parses hash access in expression', async () => {
+        const stmts = await parse('my $full = $person{"first"} . $person{"last"};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.initializer?.type, 'BinaryOp');
+        const binop = stmt.initializer as BinaryOpNode;
+        assert.strictEqual(binop.left.type, 'HashAccess');
+        assert.strictEqual(binop.right.type, 'HashAccess');
     });
 });

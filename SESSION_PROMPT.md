@@ -1,16 +1,16 @@
-# Session Prompt: Session 3 - Sub Definitions
+# Session Prompt: Session 4 - Data Structures
 
-Use this prompt to start Session 3:
+Use this prompt to start Session 4:
 
 ---
 
 I'm continuing development on the **MPP (Modern Perl Parser)** project. This is a parser framework built using async generators with a streaming pipeline architecture.
 
-## Current State (After Session 2)
+## Current State (After Session 3)
 
 The project is in `/Users/stevan/Projects/typescript/100-Opal/mpp/`
 
-### ✅ Completed Features (63 tests passing)
+### ✅ Completed Features (74 tests passing)
 
 **Core Expression Parsing**:
 - Literals (numbers, strings)
@@ -24,57 +24,61 @@ The project is in `/Users/stevan/Projects/typescript/100-Opal/mpp/`
 - Unless (prefix and postfix forms)
 - While/until loops
 - Foreach/for loops with ranges (`for my $i (1..10)`)
-- Postfix conditionals (`say "x" if $y`, `$count++ while $running`)
+- Postfix conditionals (all statement types: `return 0 if $x`)
 - Block statements for lexical scoping (`{ my $x = 5; }`)
 
-**Functions (Partial)**:
+**Complete Function Support**:
+- ✅ Function definitions with parameters (`sub add($x, $y) { ... }`)
+- ✅ Anonymous subs (`my $fn = sub ($x) { return $x * 2; };`)
+- ✅ Default parameter values (`sub greet($name = "World") { ... }`)
 - ✅ Function calls with arguments (`add(5, 10)`)
 - ✅ Return statements (`return $x + $y;`)
-- 🔲 Function definitions (NOT YET IMPLEMENTED)
+- ✅ Recursive function calls
 
 ### Parser Can Currently Handle
 
 ```perl
-# Complex control flow with function calls and returns
-if ($x > 10) {
-    for my $i (1..$x) {
-        my $result = calculate($i, $x);
-        return $result if $result > 100;
-        process($result) unless $error;
-    }
-} elsif ($x > 0) {
-    {
-        my $temp = $x * 2;
-        print($temp);
-    }
+# Complete, self-contained programs with recursion!
+sub fibonacci($n) {
+    return 0 if $n == 0;
+    return 1 if $n == 1;
+    return fibonacci($n - 1) + fibonacci($n - 2);
+}
+
+for my $i (1..10) {
+    my $result = fibonacci($i);
+    print($result);
 }
 ```
+
+**Achievement**: Basic language completeness! Parser handles complete programs with functions, control flow, and recursion.
 
 ## What I Want to Build This Session
 
-I want to add **sub (function) definitions**, specifically:
+I want to add **array and hash literals**, specifically:
 
 ```perl
-# Named sub with parameters
-sub add($x, $y) {
-    return $x + $y;
-}
+# Array reference literals (anonymous arrays)
+my $aref = [1, 2, 3, 4, 5];
+my $nested = [1, [2, 3], 4];
 
-# Sub with default parameters
-sub greet($name = "World") {
-    print("Hello, $name!");
-}
+# Hash reference literals (anonymous hashes)
+my $href = +{ a => 1, b => 2 };  # + prefix required!
+my $nested_hash = +{
+    name => "Alice",
+    age => 30,
+    address => +{ city => "NYC", zip => 10001 }
+};
 
-# Anonymous sub
-my $double = sub ($x) { return $x * 2 };
+# List literals (in assignment context)
+my @array = (1, 2, 3, 4, 5);
+my %hash = (a => 1, b => 2, c => 3);
 
-# Sub with no parameters
-sub hello() {
-    print("Hello, world!");
-}
+# Mixed expressions
+my $data = [1, 2, +{ key => "value" }, 4];
 ```
 
-This will complete the function support (we already have calls and returns)!
+This will give the language real data structure support!
 
 ## Implementation Plan
 
@@ -83,40 +87,96 @@ This will complete the function support (we already have calls and returns)!
 Add to `src/AST.ts`:
 
 ```typescript
-export interface ParameterNode extends ASTNode {
-    type: 'Parameter';
-    variable: VariableNode;
-    defaultValue?: ASTNode;
+export interface ArrayLiteralNode extends ASTNode {
+    type: 'ArrayLiteral';
+    elements: ASTNode[];
 }
 
-export interface SubNode extends ASTNode {
-    type: 'Sub';
-    name?: string;  // Optional for anonymous subs
-    parameters: ParameterNode[];
-    body: ASTNode[];
+export interface HashLiteralNode extends ASTNode {
+    type: 'HashLiteral';
+    pairs: Array<{ key: ASTNode; value: ASTNode }>;
+}
+
+export interface ListNode extends ASTNode {
+    type: 'List';
+    elements: ASTNode[];
 }
 ```
 
 ### 2. Test Cases to Write
 
 In `tests/Parser.test.ts`:
-- Named sub with parameters
-- Named sub with no parameters
-- Sub with default parameter values
-- Anonymous sub (sub expression)
-- Sub with return statement
-- Sub calling another sub
+- Array reference literal: `[1, 2, 3]`
+- Empty array: `[]`
+- Nested arrays: `[1, [2, 3], 4]`
+- Hash reference literal: `+{ a => 1, b => 2 }`
+- Empty hash: `+{}`
+- Nested hashes: `+{ x => +{ y => 1 } }`
+- List in assignment: `my @a = (1, 2, 3);`
+- Mixed data structures: `[1, +{ key => 2 }, 3]`
+- Fat comma operator: `+{ key => "value" }`
 
 ### 3. Parser Implementation
 
 In `src/Parser.ts`:
-- Detect `sub` keyword in `parseStatement()` (for named subs)
-- Detect `sub` keyword in `parsePrimary()` (for anonymous subs)
-- Implement `parseSubDeclaration()`:
-  - Parse optional name (identifier)
-  - Parse parameter list `($param1, $param2 = default)`
-  - Parse block body (reuse existing `parseBlock()` helper)
-  - Return `SubNode`
+
+#### Parse Array Literals
+- Detect `[` in `parsePrimary()`
+- Find matching `]`
+- Split contents by comma at depth 0
+- Parse each element as expression
+- Return `ArrayLiteralNode`
+
+#### Parse Hash Literals
+- Detect `+{` sequence in `parsePrimary()`
+- Find matching `}`
+- Split contents by comma at depth 0
+- Parse key/value pairs (split by `=>` or implicit pairing)
+- Return `HashLiteralNode`
+
+#### Parse Lists
+- Detect `(` in `parsePrimary()`
+- Disambiguate from parenthesized expression:
+  - If contains comma at depth 0 → List
+  - Otherwise → Parenthesized expression
+- Split by comma and parse elements
+- Return `ListNode`
+
+#### Handle Fat Comma (`=>`)
+- Add `=>` as a special binary operator
+- In hash context, treat as key-value separator
+- Left side can be bareword (auto-quoted)
+
+### 4. Key Challenges
+
+**Challenge 1: Disambiguation**
+- `(1)` → Parenthesized expression
+- `(1, 2)` → List
+- `{ }` → Block
+- `+{ }` → Hash literal
+
+**Solution**:
+- Use `+` prefix for hash literals (explicit)
+- Check for comma to distinguish list from parens
+- Existing block detection works
+
+**Challenge 2: Nested Structures**
+```perl
+my $complex = [
+    1,
+    +{ key => [2, 3] },
+    4
+];
+```
+
+**Solution**: Recursively call `parseExpression()` for each element
+
+**Challenge 3: Fat Comma Context**
+```perl
++{ key => "value", foo => 42 }
+```
+
+**Solution**: Parse `=>` as operator with special handling in hash context
 
 ## Development Approach
 
@@ -131,64 +191,82 @@ Please continue using **strict TDD**:
 ## Key Design Decisions (Don't Change)
 
 - No barewords (functions require parens, strings require quotes)
-- `+{ }` syntax for hash literals (blocks use bare `{ }`)
+- **`+{ }` syntax for hash literals** (blocks use bare `{ }`)
 - No regex literals yet (deferred for later)
 - No C-style for loops (using foreach with ranges instead)
 - Parentheses required for all function calls
 - `$_` is a keyword
 - No HEREDOCs
 - Pure syntax-directed parsing (no symbol table feedback)
+- **Fat comma `=>` auto-quotes left side in hash context**
+
+## Critical Lessons from Session 3
+
+### Bug 1: Postfix Statement Context
+- **Issue**: Postfix conditionals failed with return statements
+- **Fix**: Use recursive `parseStatement()` instead of `parseExpression()`
+- **Lesson**: Statement modifiers can apply to any statement type
+
+### Bug 2: Multi-Statement Programs
+- **Issue**: Sub definitions weren't yielded, blocking subsequent statements
+- **Fix**: Added sub yielding in `run()` at closing brace
+- **Lesson**: Block-based declarations need immediate yielding
+
+### Bug 3: Depth Tracking
+- **Issue**: Postfix detection triggered inside nested structures
+- **Fix**: Track depth, only detect at depth 0
+- **Lesson**: Always track depth for nested contexts
+
+**Apply these lessons to data structure parsing!**
 
 ## Files to Reference
 
 - `README.md` - Project documentation
-- `DEVELOPMENT_LOG.md` - Session 2 notes with all implementation details
-- `NEXT_STEPS.md` - Detailed plan for sub definitions
-- `src/Parser.ts` - Current parser (~850 lines)
-- `src/AST.ts` - AST node definitions
-- `tests/Parser.test.ts` - 63 existing tests
+- `DEVELOPMENT_LOG.md` - Session 3 notes with bug fixes
+- `NEXT_STEPS.md` - Detailed plan for data structures
+- `src/Parser.ts` - Current parser (~1000 lines)
+- `src/AST.ts` - AST node definitions (~110 lines)
+- `tests/Parser.test.ts` - 69 unit tests
+- `tests/Examples.test.ts` - 5 integration tests
 
 ## Success Criteria for This Session
 
 By the end:
-- ✅ Can parse named subs with parameters
-- ✅ Can parse anonymous subs
-- ✅ Can parse default parameter values
-- ✅ Can parse subs with return statements
-- ✅ ~70-75 tests passing
+- ✅ Can parse array literals `[1, 2, 3]`
+- ✅ Can parse hash literals `+{ a => 1, b => 2 }`
+- ✅ Can parse list literals `(1, 2, 3)`
+- ✅ Can parse nested data structures
+- ✅ Can parse fat comma operator `=>`
+- ✅ ~80-85 tests passing
 - ✅ All existing tests still pass
 
 ## After This Session
 
-Once sub definitions are complete, the parser will be able to handle complete, self-contained programs like:
+Once data structure literals are complete, the next step will be **array/hash access**:
 
 ```perl
-sub fibonacci($n) {
-    return 0 if $n == 0;
-    return 1 if $n == 1;
-    return fibonacci($n - 1) + fibonacci($n - 2);
-}
-
-for my $i (1..10) {
-    print(fibonacci($i));
-}
+# Session 5 preview
+$array[0]           # Array element access
+$hash{key}          # Hash value access
+$aref->[0]          # Array reference dereference
+$href->{key}        # Hash reference dereference
 ```
 
-This represents **basic language completeness** - everything needed to write real programs!
+This will give complete data structure support!
 
 ## Let's Get Started!
 
 Please begin by:
-1. Adding `ParameterNode` and `SubNode` to AST.ts
-2. Writing comprehensive tests for sub definitions
-3. Implementing the parsing logic
+1. Adding `ArrayLiteralNode`, `HashLiteralNode`, and `ListNode` to AST.ts
+2. Writing comprehensive tests for data structure literals
+3. Implementing the parsing logic (start with arrays, simplest case)
 4. Running tests to verify
 
-Ready to complete function support! 🚀
+Ready to add data structures! 🚀
 
 ---
 
 **Optional Context Requests**:
-- "Show me the current parseBlock() implementation first" (if you want to understand how to reuse it)
-- "Show me how function calls are parsed" (for context on similar patterns)
-- "Let's review the test structure" (to match existing test style)
+- "Show me how function call argument parsing works" (similar pattern for elements)
+- "Show me the precedence table" (to understand where => fits)
+- "Let's review how blocks are detected" (for +{} disambiguation)

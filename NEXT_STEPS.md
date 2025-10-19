@@ -1,8 +1,8 @@
 # Next Steps for MPP Development
 
-## Current State (After Session 2)
+## Current State (After Session 3)
 
-**63 tests passing** - All green! ✅
+**74 tests passing** - All green! ✅
 
 ### Fully Implemented Features
 
@@ -18,36 +18,42 @@
 - Unless (prefix and postfix forms)
 - While/until loops
 - Foreach/for loops with ranges (`for my $i (1..10)`)
-- Postfix conditionals (`say "x" if $y`)
+- Postfix conditionals (all statement types: `return 0 if $x`)
 - Block statements for lexical scoping
 
-✅ **Functions**
+✅ **Functions (COMPLETE!)**
+- Function definitions with parameters (`sub add($x, $y) { ... }`)
+- Anonymous subs (`my $fn = sub { ... };`)
+- Default parameter values (`sub greet($name = "World") { ... }`)
 - Function calls with arguments (`add(5, 10)`)
 - Return statements (`return $x + $y;`)
+- Recursive function calls
 
 ### Parser Capabilities
 
 ```perl
-# The parser can now handle complex code like this:
-if ($x > 10) {
-    for my $i (1..$x) {
-        my $result = calculate($i, $x);
-        return $result if $result > 100;
-        process($result) unless $error;
-    }
-} elsif ($x > 0) {
-    {
-        my $temp = $x * 2;
-        print($temp);
-    }
+# The parser can now handle complete, self-contained programs:
+sub fibonacci($n) {
+    return 0 if $n == 0;
+    return 1 if $n == 1;
+    return fibonacci($n - 1) + fibonacci($n - 2);
+}
+
+sub factorial($n, $acc = 1) {
+    return $acc if $n <= 1;
+    return factorial($n - 1, $n * $acc);
+}
+
+for my $i (1..10) {
+    my $fib = fibonacci($i);
+    my $fact = factorial($i);
+    print("fib($i) = $fib, fact($i) = $fact");
 }
 ```
 
-## Next Phase: Function Definitions
+## ✅ Completed in Session 3: Sub Declarations
 
-### Priority 1: Sub Declarations ⭐
-
-**Goal**: Parse function definitions with signatures
+**COMPLETE!** Sub definitions with signatures now fully working:
 
 ```perl
 sub add($x, $y) {
@@ -62,48 +68,24 @@ sub greet($name = "World") {
 my $double = sub ($x) { return $x * 2 };
 ```
 
-**AST Nodes Needed**:
-```typescript
-interface ParameterNode extends ASTNode {
-    type: 'Parameter';
-    variable: VariableNode;
-    defaultValue?: ASTNode;
-}
+**Implementation Summary**:
+- ✅ Added `SubNode` and `ParameterNode` to AST.ts
+- ✅ 6 unit tests in Parser.test.ts
+- ✅ 5 integration tests in Examples.test.ts (complete programs)
+- ✅ Implemented `parseSubDeclaration()` and `parseParameter()`
+- ✅ Anonymous sub support in `parsePrimary()`
+- ✅ 74 tests passing (was 63, +11 new tests)
 
-interface SubNode extends ASTNode {
-    type: 'Sub';
-    name?: string;  // Optional for anonymous subs
-    parameters: ParameterNode[];
-    body: ASTNode[];
-}
-```
+**Critical Bugs Fixed**:
+1. **Postfix conditionals with return statements**: Changed from `parseExpression()` to recursive `parseStatement()` call so `return 0 if $x` works correctly
+2. **Multi-statement programs**: Added sub definition yielding in `run()` method at closing brace
+3. **Postfix depth tracking**: Only detect postfix conditionals at depth 0, not inside nested structures
 
-**Implementation Tasks**:
-1. Add `SubNode` and `ParameterNode` to AST.ts
-2. Write tests:
-   - Named sub with parameters
-   - Named sub with no parameters
-   - Sub with default parameter values
-   - Anonymous sub (sub expression)
-   - Sub returning value
-3. Implement `parseSubDeclaration()`:
-   - Detect `sub` keyword
-   - Parse optional name (identifier)
-   - Parse parameter list `($x, $y = default)`
-   - Parse block body (reuse `parseBlock()`)
-   - Handle anonymous subs in expressions
+**Result**: Parser now handles complete, self-contained, recursive programs! Basic language completeness achieved! 🎉
 
-**Estimated time**: 1-2 hours
+## Next Phase: Data Structures
 
-**Why this is Priority 1**:
-- Pairs perfectly with return statements ✅
-- Pairs perfectly with function calls ✅
-- Enables complete programs to be written
-- Natural complement to control flow
-
-## Phase 2: Data Structures
-
-### Priority 2: Array and Hash Literals
+### Priority 1: Array and Hash Literals ⭐
 
 ```perl
 # Array literals
@@ -144,7 +126,7 @@ interface ListNode extends ASTNode {
 
 **Note**: The `+{ }` syntax is crucial - it disambiguates hash literals from blocks!
 
-### Priority 3: Array/Hash Access
+### Priority 2: Array/Hash Access
 
 ```perl
 # Indexing
@@ -186,7 +168,7 @@ interface DerefNode extends ASTNode {
 
 ## Phase 3: Advanced Features
 
-### Priority 4: Ternary Operator
+### Priority 3: Ternary Operator
 
 ```perl
 my $max = $a > $b ? $a : $b;
@@ -207,7 +189,7 @@ interface TernaryNode extends ASTNode {
 
 **Estimated time**: 30 minutes - 1 hour
 
-### Priority 5: Unary Operators
+### Priority 4: Unary Operators
 
 ```perl
 !$x
@@ -230,7 +212,7 @@ interface UnaryOpNode extends ASTNode {
 
 **Estimated time**: 1 hour
 
-### Priority 6: Classes (Perl 7 Style)
+### Priority 5: Classes (Perl 7 Style)
 
 ```perl
 class Point {
@@ -288,19 +270,20 @@ interface MethodCallNode extends ASTNode {
 
 ### Recommended Order
 
-1. **Sub definitions** (Session 3) - Complete function support
-2. **Array/hash literals** - Basic data structures
-3. **Array/hash access** - Data structure manipulation
+1. ✅ **Sub definitions** (Session 3 - COMPLETE!) - Complete function support
+2. **Array/hash literals** (Session 4) - Basic data structures
+3. **Array/hash access** (Session 5) - Data structure manipulation
 4. **Ternary operator** - Expression completeness
 5. **Unary operators** - Expression completeness
 6. **Classes** - Object-oriented programming
 
 ### Why This Order?
 
-1. **Subs first** because:
-   - We already have calls and returns
+1. ✅ **Subs first** (DONE!) because:
+   - We already had calls and returns
    - Makes the language immediately useful
    - Clean, self-contained feature
+   - **Result**: Basic language completeness achieved!
 
 2. **Data structures next** because:
    - Needed for real programs
@@ -367,12 +350,19 @@ src/
 
 ## Success Metrics
 
-### Session 3 Goal
+### Session 3 Goal (ACHIEVED! ✅)
 - ✅ Sub definitions working
 - ✅ Anonymous subs working
 - ✅ Default parameters working
 - ✅ Can write complete functions
-- ✅ ~70-75 tests passing
+- ✅ 74 tests passing (exceeded goal!)
+
+### Session 4 Goal
+- 🎯 Array and hash literals working
+- 🎯 List context handling
+- 🎯 Fat comma operator (=>)
+- 🎯 Nested data structures
+- 🎯 ~80-85 tests passing
 
 ### Language Completeness Goals
 
@@ -443,17 +433,24 @@ print($s->pop());  # 3
 
 ## Development Velocity
 
-Based on Sessions 1-2:
+Based on Sessions 1-3:
 
 - Session 1: ~700 lines code, 32 tests (foundation)
 - Session 2: ~550 lines code, +31 tests (control flow + functions)
-- Average: ~600 lines/session, ~30 tests/session
+- Session 3: ~150 lines code, +11 tests (sub definitions)
+- Average: ~460 lines/session, ~25 tests/session
+
+**Session 3 velocity increase reasons**:
+- Reused existing helpers (parseBlock, parameter pattern)
+- Solid infrastructure already in place
+- TDD well-established
+- Clean, focused feature
 
 **Estimated remaining**:
-- Sub definitions: 1 session
 - Data structures: 1-2 sessions
 - Classes: 1-2 sessions
-- **Total to completion: 3-5 more sessions**
+- Polish/cleanup: 1 session
+- **Total to full completion: 3-5 more sessions**
 
 ## Resources
 
@@ -466,14 +463,17 @@ Based on Sessions 1-2:
 
 ## Next Session Checklist
 
-Before starting Session 3:
+Before starting Session 4:
 
-1. ✅ Review current test suite (63 tests)
-2. ✅ Read DEVELOPMENT_LOG.md for context
-3. ✅ Understand sub syntax from examples
-4. ✅ Plan AST nodes for subs and parameters
-5. ✅ Start with tests (TDD!)
+1. ✅ Review current test suite (74 tests)
+2. ✅ Read DEVELOPMENT_LOG.md Session 3 notes
+3. 🎯 Understand array/hash literal syntax from examples
+4. 🎯 Plan AST nodes for data structures
+5. 🎯 Understand +{} disambiguation for hash literals
+6. 🎯 Start with tests (TDD!)
 
 ---
 
-**Status**: Ready for Session 3 - Sub Definitions! 🚀
+**Status**: Session 3 Complete! Ready for Session 4 - Data Structures! 🚀
+
+**Achievement Unlocked**: Basic Language Completeness - Parser can handle complete, self-contained programs with functions, control flow, and recursion!
