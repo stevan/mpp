@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { Tokenizer } from '../src/Tokenizer.js';
 import { Lexer } from '../src/Lexer.js';
 import { Parser } from '../src/Parser.js';
-import { BinaryOpNode, DeclarationNode, NumberNode, VariableNode, StringNode, IfNode, UnlessNode, WhileNode, UntilNode, ForeachNode, BlockNode, CallNode, ReturnNode, SubNode, ParameterNode, ArrayLiteralNode, HashLiteralNode, ListNode, ArrayAccessNode, HashAccessNode, UnaryOpNode } from '../src/AST.js';
+import { BinaryOpNode, DeclarationNode, NumberNode, VariableNode, StringNode, IfNode, UnlessNode, WhileNode, UntilNode, ForeachNode, BlockNode, CallNode, ReturnNode, SubNode, ParameterNode, ArrayLiteralNode, HashLiteralNode, ListNode, ArrayAccessNode, HashAccessNode, UnaryOpNode, TernaryNode, MethodCallNode } from '../src/AST.js';
 
 // Helper to parse source code into AST
 async function parse(source: string) {
@@ -1126,5 +1126,232 @@ describe('Parser', () => {
         const stmt = stmts[0] as DeclarationNode;
         assert.strictEqual(stmt.type, 'Declaration');
         assert.strictEqual(stmt.initializer?.type, 'HashLiteral');
+    });
+
+    // Ternary Operator Tests
+    test('parses simple ternary operator', async () => {
+        const stmts = await parse('my $result = $x > 5 ? 10 : 20;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.type, 'Declaration');
+        assert.strictEqual(stmt.initializer?.type, 'Ternary');
+        const ternary = stmt.initializer as TernaryNode;
+        assert.strictEqual(ternary.condition.type, 'BinaryOp');
+        assert.strictEqual(ternary.trueExpr.type, 'Number');
+        assert.strictEqual(ternary.falseExpr.type, 'Number');
+    });
+
+    test('parses ternary with variable expressions', async () => {
+        const stmts = await parse('my $value = $condition ? $a : $b;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.initializer?.type, 'Ternary');
+        const ternary = stmt.initializer as TernaryNode;
+        assert.strictEqual(ternary.condition.type, 'Variable');
+        assert.strictEqual((ternary.condition as VariableNode).name, '$condition');
+        assert.strictEqual(ternary.trueExpr.type, 'Variable');
+        assert.strictEqual((ternary.trueExpr as VariableNode).name, '$a');
+        assert.strictEqual(ternary.falseExpr.type, 'Variable');
+        assert.strictEqual((ternary.falseExpr as VariableNode).name, '$b');
+    });
+
+    test('parses ternary with complex expressions', async () => {
+        const stmts = await parse('my $result = $x > 10 ? $x * 2 : $x + 1;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.initializer?.type, 'Ternary');
+        const ternary = stmt.initializer as TernaryNode;
+        assert.strictEqual(ternary.trueExpr.type, 'BinaryOp');
+        assert.strictEqual((ternary.trueExpr as BinaryOpNode).operator, '*');
+        assert.strictEqual(ternary.falseExpr.type, 'BinaryOp');
+        assert.strictEqual((ternary.falseExpr as BinaryOpNode).operator, '+');
+    });
+
+    test('parses nested ternary operators (right associative)', async () => {
+        const stmts = await parse('my $value = $a ? $b : $c ? $d : $e;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.initializer?.type, 'Ternary');
+        const ternary = stmt.initializer as TernaryNode;
+        assert.strictEqual(ternary.condition.type, 'Variable');
+        assert.strictEqual((ternary.condition as VariableNode).name, '$a');
+        assert.strictEqual(ternary.trueExpr.type, 'Variable');
+        assert.strictEqual((ternary.trueExpr as VariableNode).name, '$b');
+        // False expression should be another ternary
+        assert.strictEqual(ternary.falseExpr.type, 'Ternary');
+        const nestedTernary = ternary.falseExpr as TernaryNode;
+        assert.strictEqual((nestedTernary.condition as VariableNode).name, '$c');
+        assert.strictEqual((nestedTernary.trueExpr as VariableNode).name, '$d');
+        assert.strictEqual((nestedTernary.falseExpr as VariableNode).name, '$e');
+    });
+
+    test('parses ternary in function call', async () => {
+        const stmts = await parse('print($x > 5 ? "big" : "small");');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as CallNode;
+        assert.strictEqual(stmt.type, 'Call');
+        assert.strictEqual(stmt.arguments.length, 1);
+        assert.strictEqual(stmt.arguments[0].type, 'Ternary');
+    });
+
+    test('parses ternary with function calls', async () => {
+        const stmts = await parse('my $result = $flag ? get_a() : get_b();');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.initializer?.type, 'Ternary');
+        const ternary = stmt.initializer as TernaryNode;
+        assert.strictEqual(ternary.trueExpr.type, 'Call');
+        assert.strictEqual((ternary.trueExpr as CallNode).name, 'get_a');
+        assert.strictEqual(ternary.falseExpr.type, 'Call');
+        assert.strictEqual((ternary.falseExpr as CallNode).name, 'get_b');
+    });
+
+    test('parses ternary operator standalone', async () => {
+        const stmts = await parse('$x ? $a : $b;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as TernaryNode;
+        assert.strictEqual(stmt.type, 'Ternary');
+    });
+
+    test('parses ternary with unary operators', async () => {
+        const stmts = await parse('my $result = !$flag ? -10 : +20;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0] as DeclarationNode;
+        assert.strictEqual(stmt.initializer?.type, 'Ternary');
+        const ternary = stmt.initializer as TernaryNode;
+        assert.strictEqual(ternary.condition.type, 'UnaryOp');
+        assert.strictEqual(ternary.trueExpr.type, 'UnaryOp');
+        assert.strictEqual((ternary.trueExpr as UnaryOpNode).operator, '-');
+        assert.strictEqual(ternary.falseExpr.type, 'UnaryOp');
+        assert.strictEqual((ternary.falseExpr as UnaryOpNode).operator, '+');
+    });
+
+    // Method Call Tests
+    test('parses simple method call with no arguments', async () => {
+        const stmts = await parse('$obj->get_value();');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'MethodCall');
+    });
+
+    test('parses method call with one argument', async () => {
+        const stmts = await parse('$obj->set($value);');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'MethodCall');
+    });
+
+    test('parses method call with multiple arguments', async () => {
+        const stmts = await parse('$obj->calculate($a, $b, $c);');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'MethodCall');
+    });
+
+    test('parses class method call (static method)', async () => {
+        const stmts = await parse('Point->new();');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'MethodCall');
+    });
+
+    test('parses class method call with arguments', async () => {
+        const stmts = await parse('Math->sqrt(16);');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'MethodCall');
+    });
+
+    test('parses chained method calls', async () => {
+        const stmts = await parse('$obj->method1()->method2()->method3();');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'MethodCall');
+    });
+
+    test('parses method call after array access', async () => {
+        const stmts = await parse('$array->[0]->get_name();');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'MethodCall');
+    });
+
+    test('parses method call after hash access', async () => {
+        const stmts = await parse('$hash{"key"}->get_value();');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'MethodCall');
+    });
+
+    test('parses mixed chain: array access, method, hash access', async () => {
+        const stmts = await parse('$data->[0]->get_profile()->{"name"};');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'HashAccess');
+    });
+
+    test('parses method call in expression', async () => {
+        const stmts = await parse('my $result = $obj->calculate() + 10;');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Declaration');
+    });
+
+    test('parses method call with expression arguments', async () => {
+        const stmts = await parse('$obj->process($a + 1, $b * 2);');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'MethodCall');
+    });
+
+    test('parses method call in assignment', async () => {
+        const stmts = await parse('my $name = $person->get_name();');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Declaration');
+    });
+
+    test('parses method call in return statement', async () => {
+        const stmts = await parse('return $obj->compute();');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'Return');
+    });
+
+    test('parses method call with nested method call in argument', async () => {
+        const stmts = await parse('$outer->process($inner->get_value());');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'MethodCall');
+    });
+
+    test('parses method call on function call result', async () => {
+        const stmts = await parse('get_object()->do_something();');
+
+        assert.strictEqual(stmts.length, 1);
+        const stmt = stmts[0];
+        assert.strictEqual(stmt.type, 'MethodCall');
     });
 });

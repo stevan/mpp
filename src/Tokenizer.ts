@@ -227,7 +227,7 @@ export class Tokenizer {
     }
 
     private isOperatorChar(char: string): boolean {
-        return '+-*/%=<>!&|^~.'.includes(char);
+        return '+-*/%=<>!&|^~.?:'.includes(char);
     }
 
     private isMultiCharOperator(op: string): boolean {

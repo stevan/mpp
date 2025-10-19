@@ -1,19 +1,21 @@
 # Next Steps for MPP Development
 
-## Current State (After Session 3)
+## Current State (After Session 6)
 
-**74 tests passing** - All green! ✅
+**144 tests passing** - All green! ✅
 
 ### Fully Implemented Features
 
-✅ **Core Expression Parsing**
+✅ **Core Expression Parsing** (COMPLETE!)
 - Literals (numbers, strings)
 - Variables with sigils ($scalar, @array, %hash)
 - Binary operators (20 precedence levels with correct associativity)
+- **Unary operators** (`-`, `+`, `!`)
+- **Ternary operator** (`? :`)
 - Parenthesized expressions
 - Variable declarations (`my $x = 10;`)
 
-✅ **Control Flow (COMPLETE!)**
+✅ **Control Flow** (COMPLETE!)
 - If/elsif/else chains with multiple branches
 - Unless (prefix and postfix forms)
 - While/until loops
@@ -21,198 +23,234 @@
 - Postfix conditionals (all statement types: `return 0 if $x`)
 - Block statements for lexical scoping
 
-✅ **Functions (COMPLETE!)**
+✅ **Functions** (COMPLETE!)
 - Function definitions with parameters (`sub add($x, $y) { ... }`)
-- Anonymous subs (`my $fn = sub { ... };`)
+- Anonymous subs (`my $fn = sub ($x) { return $x * 2; };`)
 - Default parameter values (`sub greet($name = "World") { ... }`)
 - Function calls with arguments (`add(5, 10)`)
 - Return statements (`return $x + $y;`)
 - Recursive function calls
 
+✅ **Data Structures** (COMPLETE!)
+- Array literals: `[1, 2, 3]`
+- Hash literals: `+{ "key" => "value" }`
+- List literals: `(1, 2, 3)`
+- Nested structures: `[1, +{ "x" => [2, 3] }]`
+- Array access: `$array[0]`, `$aref->[0]`
+- Hash access: `$hash{"key"}`, `$href->{"key"}`
+- Chained access: `$data->[0]{"key"}[1]`
+- Dereference operator: `->`
+
+✅ **Developer Tools**
+- Interactive REPL (`npm run repl`)
+- Comprehensive test suite (144 tests)
+- TDD methodology established
+
 ### Parser Capabilities
 
 ```perl
-# The parser can now handle complete, self-contained programs:
-sub fibonacci($n) {
-    return 0 if $n == 0;
-    return 1 if $n == 1;
-    return fibonacci($n - 1) + fibonacci($n - 2);
+# The parser can now handle sophisticated programs with:
+# - Functions with recursion
+# - Data structures with nesting
+# - Complex expressions with unary/ternary operators
+# - Chained data access
+
+my $users = [
+    +{ "name" => "Alice", "scores" => [95, 87, 92], "active" => 1 },
+    +{ "name" => "Bob", "scores" => [88, 91, 85], "active" => 0 }
+];
+
+sub average_score($person) {
+    my $scores = $person->{"scores"};
+    my $sum = $scores->[0] + $scores->[1] + $scores->[2];
+    return $sum / 3;
 }
 
-sub factorial($n, $acc = 1) {
-    return $acc if $n <= 1;
-    return factorial($n - 1, $n * $acc);
+sub get_status($person) {
+    return $person->{"active"} ? "active" : "inactive";
 }
 
-for my $i (1..10) {
-    my $fib = fibonacci($i);
-    my $fact = factorial($i);
-    print("fib($i) = $fib, fact($i) = $fact");
+for my $i (0..1) {
+    my $user = $users->[$i];
+    my $name = $user->{"name"};
+    my $avg = average_score($user);
+    my $status = get_status($user);
+
+    my $grade = $avg >= 90 ? "A" : $avg >= 80 ? "B" : "C";
+
+    print($name);
+    print($grade);
+    print($status);
 }
 ```
 
-## ✅ Completed in Session 3: Sub Declarations
+## Next Phase: Enhanced Expressions & OOP
 
-**COMPLETE!** Sub definitions with signatures now fully working:
+### Priority 1: Method Calls ⭐ (RECOMMENDED NEXT)
 
 ```perl
-sub add($x, $y) {
-    return $x + $y;
-}
+# Object method calls
+$obj->method($arg);
+$person->get_name();
+$config->set("timeout", 30);
 
-sub greet($name = "World") {
-    print("Hello, $name!");
-}
+# Class method calls
+Point->new(x => 5, y => 10);
+Math->sqrt(16);
 
-# Anonymous sub
-my $double = sub ($x) { return $x * 2 };
+# Chained method calls
+$obj->method1()->method2()->method3();
+$db->connect()->query("SELECT * FROM users")->fetch();
 ```
 
-**Implementation Summary**:
-- ✅ Added `SubNode` and `ParameterNode` to AST.ts
-- ✅ 6 unit tests in Parser.test.ts
-- ✅ 5 integration tests in Examples.test.ts (complete programs)
-- ✅ Implemented `parseSubDeclaration()` and `parseParameter()`
-- ✅ Anonymous sub support in `parsePrimary()`
-- ✅ 74 tests passing (was 63, +11 new tests)
-
-**Critical Bugs Fixed**:
-1. **Postfix conditionals with return statements**: Changed from `parseExpression()` to recursive `parseStatement()` call so `return 0 if $x` works correctly
-2. **Multi-statement programs**: Added sub definition yielding in `run()` method at closing brace
-3. **Postfix depth tracking**: Only detect postfix conditionals at depth 0, not inside nested structures
-
-**Result**: Parser now handles complete, self-contained, recursive programs! Basic language completeness achieved! 🎉
-
-## Next Phase: Data Structures
-
-### Priority 1: Array and Hash Literals ⭐
-
-```perl
-# Array literals
-my @array = (1, 2, 3, 4, 5);
-my $aref = [1, 2, 3];  # Anonymous array
-
-# Hash literals
-my %hash = (a => 1, b => 2);
-my $href = +{ a => 1, b => 2 };  # Anonymous hash (+ prefix required!)
-```
-
-**AST Nodes Needed**:
+**AST Node Needed**:
 ```typescript
-interface ArrayLiteralNode extends ASTNode {
-    type: 'ArrayLiteral';
-    elements: ASTNode[];
-}
-
-interface HashLiteralNode extends ASTNode {
-    type: 'HashLiteral';
-    pairs: { key: ASTNode; value: ASTNode }[];
-}
-
-interface ListNode extends ASTNode {
-    type: 'List';
-    elements: ASTNode[];
+interface MethodCallNode extends ASTNode {
+    type: 'MethodCall';
+    object: ASTNode;      // $obj, ClassName, or expression
+    method: string;       // method name
+    arguments: ASTNode[]; // argument list
 }
 ```
 
 **Implementation Tasks**:
-1. Parse `[...]` as array reference literals
-2. Parse `+{...}` as hash reference literals
-3. Parse `(...)` as list or parenthesized expression (context-dependent)
-4. Handle `=>` fat comma operator
-5. Tests for nested structures
+1. Detect `->` followed by identifier (not `[` or `{`)
+2. Parse method name as identifier
+3. Parse argument list (reuse function call parsing)
+4. Handle in postfix operator chain
+5. Support chained method calls
 
-**Estimated time**: 2-3 hours
+**Why This is High Priority**:
+- Enables object-oriented programming
+- Reuses `->` operator (already tokenized)
+- Builds on function call parsing (already implemented)
+- Common pattern in real Perl code
+- Foundation for classes (next major feature)
 
-**Note**: The `+{ }` syntax is crucial - it disambiguates hash literals from blocks!
+**Estimated time**: 1-2 hours
 
-### Priority 2: Array/Hash Access
+**Tests to Write**:
+- Simple method call: `$obj->method()`
+- Method with arguments: `$obj->method($a, $b)`
+- Class method call: `Class->new()`
+- Chained method calls: `$obj->m1()->m2()`
+- Method call on expression: `get_obj()->method()`
+- Method calls in expressions
+
+### Priority 2: Range Operator as Expression
 
 ```perl
-# Indexing
-$array[0]           # Array element
-$hash{key}          # Hash value
-@array[0..2]        # Array slice
-@hash{qw(a b)}      # Hash slice
+# Currently works in foreach:
+for my $i (1..10) { ... }
 
-# Dereferencing
-$aref->[0]          # Array ref element
-$href->{key}        # Hash ref value
-$aref->[1]->[2]     # Nested access
+# Should also work as expression:
+my @range = (1..10);
+my $slice = @array[0..5];
+
+# More complex:
+my @subset = @data[$start..$end];
 ```
 
-**AST Nodes Needed**:
-```typescript
-interface IndexNode extends ASTNode {
-    type: 'Index';
-    object: ASTNode;
-    index: ASTNode;
-    sigil: string;  // $ @ % for context
-}
-
-interface DerefNode extends ASTNode {
-    type: 'Deref';
-    object: ASTNode;
-    accessor: ASTNode;  // IndexNode or similar
-}
-```
+**AST Node**: Already exists as BinaryOpNode with operator `..`
 
 **Implementation Tasks**:
-1. Parse `[...]` after variable
-2. Parse `{...}` after variable
-3. Parse `->` arrow operator
-4. Handle sigil context (@, $, %)
-5. Support chained access
-
-**Estimated time**: 2-3 hours
-
-## Phase 3: Advanced Features
-
-### Priority 3: Ternary Operator
-
-```perl
-my $max = $a > $b ? $a : $b;
-my $result = $error ? handle_error() : process_data();
-```
-
-**AST Node**:
-```typescript
-interface TernaryNode extends ASTNode {
-    type: 'Ternary';
-    condition: ASTNode;
-    thenExpr: ASTNode;
-    elseExpr: ASTNode;
-}
-```
-
-**Implementation**: Add to precedence table at level 16 (between range and assignment)
+1. Range already parses in expressions
+2. May need context handling for list vs scalar
+3. Verify works in all expression contexts
 
 **Estimated time**: 30 minutes - 1 hour
 
-### Priority 4: Unary Operators
+### Priority 3: Assignment to Array/Hash Elements
 
 ```perl
-!$x
--$y
-+$z
-not $condition
-defined $var
+# Array element assignment
+$array[0] = 5;
+$array[$i] = $value;
+
+# Hash element assignment
+$hash{"key"} = "value";
+$hash{$key} = $data;
+
+# Dereference assignment
+$aref->[0] = 10;
+$href->{"name"} = "Alice";
+
+# Chained access assignment
+$data->[0]{"key"} = $value;
 ```
 
-**AST Node** (already defined!):
+**AST Changes**:
+- Left side of `=` can now be ArrayAccessNode or HashAccessNode
+- Current BinaryOpNode with `=` operator still works
+
+**Implementation Tasks**:
+1. Modify assignment parsing to accept access nodes as lvalue
+2. Verify ArrayAccessNode and HashAccessNode can be left side
+3. Handle chained access assignment
+4. Tests for all combinations
+
+**Estimated time**: 1-2 hours
+
+## Phase 3: Advanced Features
+
+### Priority 4: String Interpolation
+
+```perl
+# Simple interpolation
+my $name = "Alice";
+print("Hello, $name!");  # "Hello, Alice!"
+
+# Complex interpolation
+my $msg = "User: $user->{"name"}, Score: $scores->[0]";
+
+# Escape sequences
+my $str = "Line 1\nLine 2\tTabbed";
+```
+
+**Implementation Tasks**:
+1. Parse string contents in Tokenizer
+2. Identify interpolated variables
+3. Build string concatenation in AST
+4. Handle escape sequences
+5. Support `${expr}` for complex expressions
+
+**Estimated time**: 2-3 hours
+
+**Note**: This is a Tokenizer/Lexer change, not just Parser
+
+### Priority 5: Regular Expressions
+
+```perl
+# Match operator
+if ($str =~ m/pattern/) { ... }
+
+# Substitution
+$str =~ s/old/new/;
+$str =~ s/old/new/g;  # Global flag
+
+# Pattern binding
+my $result = $str =~ m/(\d+)/;
+```
+
+**AST Nodes Needed**:
 ```typescript
-interface UnaryOpNode extends ASTNode {
-    type: 'UnaryOp';
-    operator: string;
-    operand: ASTNode;
+interface RegexNode extends ASTNode {
+    type: 'Regex';
+    pattern: string;
+    flags: string;  // i, g, m, s, x
+}
+
+interface RegexOpNode extends ASTNode {
+    type: 'RegexOp';
+    operator: string;  // =~, !~
+    left: ASTNode;     // String expression
+    right: RegexNode;  // Regex literal
 }
 ```
 
-**Implementation**: Parse in `parsePrimary()` before other primaries
+**Estimated time**: 3-4 hours
 
-**Estimated time**: 1 hour
-
-### Priority 5: Classes (Perl 7 Style)
+### Priority 6: Classes (Perl 7 Style)
 
 ```perl
 class Point {
@@ -225,12 +263,13 @@ class Point {
     }
 
     method distance() {
-        return sqrt($x * $x + $y * $y);
+        return sqrt($x ** 2 + $y ** 2);
     }
 }
 
 my $p = Point->new(x => 5, y => 10);
 $p->move(2, 3);
+my $d = $p->distance();
 ```
 
 **AST Nodes Needed**:
@@ -255,62 +294,72 @@ interface MethodNode extends ASTNode {
     parameters: ParameterNode[];
     body: ASTNode[];
 }
-
-interface MethodCallNode extends ASTNode {
-    type: 'MethodCall';
-    object: ASTNode;
-    method: string;
-    arguments: ASTNode[];
-}
 ```
+
+**Dependencies**:
+- Requires method calls (Priority 1)
+- Uses existing sub definition parsing
+- Field attributes are new
 
 **Estimated time**: 3-4 hours
 
 ## Implementation Strategy
 
-### Recommended Order
+### Recommended Order for Session 7+
 
-1. ✅ **Sub definitions** (Session 3 - COMPLETE!) - Complete function support
-2. **Array/hash literals** (Session 4) - Basic data structures
-3. **Array/hash access** (Session 5) - Data structure manipulation
-4. **Ternary operator** - Expression completeness
-5. **Unary operators** - Expression completeness
-6. **Classes** - Object-oriented programming
+1. **Method calls** (Session 7) - Enables OOP, foundation for classes
+2. **Assignment to elements** - Mutable data structures
+3. **Range as expression** - Quick win, complete range operator
+4. **String interpolation** - Common feature, user-facing
+5. **Regular expressions** - Pattern matching capability
+6. **Classes** - Full OOP support (requires method calls)
 
 ### Why This Order?
 
-1. ✅ **Subs first** (DONE!) because:
-   - We already had calls and returns
-   - Makes the language immediately useful
-   - Clean, self-contained feature
-   - **Result**: Basic language completeness achieved!
-
-2. **Data structures next** because:
-   - Needed for real programs
+1. **Method calls first** because:
+   - Enables object-oriented programming
    - Foundation for classes
-   - Well-defined scope
+   - Relatively simple (builds on existing patterns)
+   - High user value
 
-3. **Ternary/unary** because:
-   - Quick wins
-   - Expression completeness
+2. **Assignment to elements** because:
+   - Makes data structures mutable
+   - Needed for real programs
+   - Clean, well-defined scope
+
+3. **Range as expression** because:
+   - Quick win
+   - Completes existing feature
    - Low complexity
 
-4. **Classes last** because:
+4. **String interpolation** because:
+   - High user value
+   - Different layer (Tokenizer)
+   - Valuable even without OOP
+
+5. **Regular expressions** because:
+   - Distinct feature
+   - Powerful capability
+   - Can be deferred if needed
+
+6. **Classes last** because:
    - Most complex feature
-   - Depends on everything else
+   - Depends on method calls
    - Can use all prior features
+   - Natural culmination
 
-## Testing Strategy (Continued)
+## Testing Strategy (Proven Effective)
 
-Continue the TDD approach that's working well:
+Continue the strict TDD approach:
 
 ### For Each Feature
 
-1. **Write tests first** ✅
+1. **Write tests first** ✅ (15-20 tests per feature)
 2. **Add AST nodes** ✅
 3. **Implement parsing** ✅
 4. **Run all tests** (check regressions) ✅
-5. **Keep tests high-level** ✅
+5. **Use REPL to explore** ✅
+6. **Keep tests high-level** ✅
 
 ### Test Template
 
@@ -321,13 +370,14 @@ test('parses [feature name]', async () => {
     assert.strictEqual(stmts.length, 1);
     const node = stmts[0] as [NodeType];
     assert.strictEqual(node.type, '[Type]');
-    // ... check key properties
+    // Check key properties
+    // Don't over-specify internal structure
 });
 ```
 
 ## File Organization
 
-Parser.ts is now ~850 lines. Consider splitting after session 3:
+Current status (~1500 lines in Parser.ts). Consider splitting after Session 7-8:
 
 ```
 src/
@@ -337,70 +387,89 @@ src/
 │   ├── StatementParser.ts    # parseStatement dispatcher
 │   ├── ControlParser.ts      # If/while/for/foreach/unless
 │   ├── FunctionParser.ts     # Sub definitions, calls, returns
-│   ├── DataParser.ts          # Arrays, hashes, access
-│   └── ClassParser.ts        # Class definitions (future)
+│   ├── DataParser.ts         # Arrays, hashes, access
+│   ├── OOPParser.ts          # Methods, classes (future)
+│   └── PostfixParser.ts      # Array/hash access, method calls
 ├── AST/
 │   ├── index.ts              # Re-exports all
 │   ├── Expressions.ts        # Literals, variables, operations
 │   ├── Statements.ts         # Control flow, declarations
-│   └── Declarations.ts       # Subs, classes, fields
+│   ├── DataStructures.ts     # Arrays, hashes, access
+│   └── OOP.ts                # Classes, methods, fields
 ```
 
-**Recommendation**: Wait until ~1000-1200 lines before splitting. Current organization is still manageable.
+**Recommendation**: Wait until ~1800-2000 lines before splitting. Current organization is still manageable.
 
 ## Success Metrics
 
-### Session 3 Goal (ACHIEVED! ✅)
-- ✅ Sub definitions working
-- ✅ Anonymous subs working
-- ✅ Default parameters working
-- ✅ Can write complete functions
-- ✅ 74 tests passing (exceeded goal!)
+### Session 6 Achievement (COMPLETE! ✅)
+- ✅ Unary operators working
+- ✅ Ternary operator working
+- ✅ Interactive REPL created
+- ✅ 144 tests passing (exceeded goal!)
 
-### Session 4 Goal
-- 🎯 Array and hash literals working
-- 🎯 List context handling
-- 🎯 Fat comma operator (=>)
-- 🎯 Nested data structures
-- 🎯 ~80-85 tests passing
+### Session 7 Goal
+- 🎯 Method calls working
+- 🎯 Chained method calls
+- 🎯 Class method calls (Class->new())
+- 🎯 Assignment to array/hash elements
+- 🎯 ~155-165 tests passing
 
 ### Language Completeness Goals
 
-**Basic completeness** (can write real programs):
+**Expression completeness** (ACHIEVED! ✅):
 - ✅ Variables and operators
-- ✅ Control flow
-- ✅ Functions (calls + definitions + returns)
-- 🔲 Data structures (arrays/hashes)
-- 🔲 Data structure access
+- ✅ Unary operators
+- ✅ Binary operators
+- ✅ Ternary operator
+- ✅ Function calls
 
-**Full completeness** (production ready):
-- Everything above, plus:
-- 🔲 Ternary operator
-- 🔲 Unary operators
-- 🔲 Classes and methods
+**Statement completeness** (ACHIEVED! ✅):
+- ✅ Control flow (if/while/for/foreach/unless)
+- ✅ Variable declarations
+- ✅ Function definitions
+- ✅ Return statements
+- ✅ Block statements
+
+**Data structure completeness** (ACHIEVED! ✅):
+- ✅ Array/hash/list literals
+- ✅ Nested structures
+- ✅ Array/hash access
+- ✅ Chained access
+- ✅ Dereference operator
+
+**OOP completeness** (In Progress):
 - 🔲 Method calls
+- 🔲 Class definitions
+- 🔲 Field declarations
+- 🔲 Method definitions
+- 🔲 Attributes (:reader, :writer)
+
+**Full language completeness**:
+- Everything above, plus:
+- 🔲 Assignment to elements
+- 🔲 String interpolation
+- 🔲 Regular expressions
+- 🔲 Range as expression
 
 ## Example Target Code
 
-After implementing sub definitions (Session 3), the parser should handle:
+After Session 7 (method calls), the parser should handle:
 
 ```perl
-sub fibonacci($n) {
-    return 0 if $n == 0;
-    return 1 if $n == 1;
-    return fibonacci($n - 1) + fibonacci($n - 2);
-}
+# Object creation and method calls
+my $point = Point->new(x => 5, y => 10);
+$point->move(2, 3);
+my $distance = $point->distance();
 
-sub factorial($n, $acc = 1) {
-    return $acc if $n <= 1;
-    return factorial($n - 1, $n * $acc);
-}
+# Chained method calls
+my $result = $db->connect()
+                ->query("SELECT * FROM users")
+                ->fetch()
+                ->process();
 
-for my $i (1..10) {
-    my $fib = fibonacci($i);
-    my $fact = factorial($i);
-    print("fib($i) = $fib, fact($i) = $fact");
-}
+# Method calls with data structures
+my $user = $users->[0]->get_profile()->get_name();
 ```
 
 After full completion, should handle:
@@ -411,6 +480,7 @@ class Stack {
 
     method push($item) {
         @items = (@items, $item);
+        return $self;  # Method chaining
     }
 
     method pop() {
@@ -419,61 +489,84 @@ class Stack {
         return $last;
     }
 
+    method peek() {
+        return @items[-1];
+    }
+
     method size() {
         return scalar(@items);
     }
+
+    method is_empty() {
+        return $self->size() == 0;
+    }
 }
 
-my $s = Stack->new();
-$s->push(1);
-$s->push(2);
-$s->push(3);
-print($s->pop());  # 3
+my $stack = Stack->new();
+$stack->push(1)->push(2)->push(3);  # Chained
+
+print("Top: " . $stack->peek());    # String interpolation
+print("Size: " . $stack->size());
+
+while (!$stack->is_empty()) {
+    print($stack->pop());
+}
 ```
 
 ## Development Velocity
 
-Based on Sessions 1-3:
+Based on Sessions 1-6:
 
-- Session 1: ~700 lines code, 32 tests (foundation)
-- Session 2: ~550 lines code, +31 tests (control flow + functions)
-- Session 3: ~150 lines code, +11 tests (sub definitions)
-- Average: ~460 lines/session, ~25 tests/session
+- Session 1: Foundation (Tokenizer, Lexer, basic Parser)
+- Session 2: Control flow + function calls
+- Session 3: Sub definitions
+- Session 4: Data structure literals
+- Session 5: Data structure access
+- Session 6: Unary/ternary operators + REPL
+- Average: ~450 lines/session, ~20 tests/session
 
-**Session 3 velocity increase reasons**:
-- Reused existing helpers (parseBlock, parameter pattern)
-- Solid infrastructure already in place
-- TDD well-established
-- Clean, focused feature
+**Velocity is accelerating because**:
+- Solid infrastructure in place
+- Reusable patterns established
+- TDD process streamlined
+- REPL enables faster experimentation
 
 **Estimated remaining**:
-- Data structures: 1-2 sessions
+- Method calls: 1 session
+- Assignment to elements: 1 session
+- String interpolation: 1 session
 - Classes: 1-2 sessions
 - Polish/cleanup: 1 session
-- **Total to full completion: 3-5 more sessions**
+- **Total to full completion: 5-6 more sessions**
 
 ## Resources
 
-- ✅ **Precedence table**: Implemented and tested
-- ✅ **TDD pattern**: Proven effective
+- ✅ **Precedence table**: Complete with unary/ternary
+- ✅ **TDD pattern**: Proven highly effective
 - ✅ **Async generators**: Working perfectly
-- ✅ **Block parsing**: Reusable helper
+- ✅ **REPL tool**: Accelerates development
+- ✅ **Helper functions**: Reusable patterns
 - 📖 **PERL_SYNTAX_SPEC.md**: Reference for features
-- 📖 **DEVELOPMENT_LOG.md**: Session notes and decisions
+- 📖 **DEVELOPMENT_LOG.md**: 6 sessions of insights
 
 ## Next Session Checklist
 
-Before starting Session 4:
+Before starting Session 7:
 
-1. ✅ Review current test suite (74 tests)
-2. ✅ Read DEVELOPMENT_LOG.md Session 3 notes
-3. 🎯 Understand array/hash literal syntax from examples
-4. 🎯 Plan AST nodes for data structures
-5. 🎯 Understand +{} disambiguation for hash literals
-6. 🎯 Start with tests (TDD!)
+1. ✅ Review current test suite (144 tests)
+2. ✅ Read DEVELOPMENT_LOG.md Session 6 notes
+3. 🎯 Understand method call syntax: `$obj->method($args)`
+4. 🎯 Review postfix operator pattern from Session 5
+5. 🎯 Plan how method calls integrate with access chain
+6. 🎯 Use REPL to experiment with `->` operator
+7. 🎯 Start with tests (TDD!)
 
 ---
 
-**Status**: Session 3 Complete! Ready for Session 4 - Data Structures! 🚀
+**Status**: Session 6 Complete! Ready for Session 7 - Method Calls! 🚀
 
-**Achievement Unlocked**: Basic Language Completeness - Parser can handle complete, self-contained programs with functions, control flow, and recursion!
+**Achievement Unlocked**:
+- ✅ Complete expression support (unary, binary, ternary)
+- ✅ Complete data structures with access
+- ✅ Interactive development tools (REPL)
+- 🎯 Next: Object-Oriented Programming (method calls → classes)

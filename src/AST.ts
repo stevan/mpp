@@ -32,6 +32,13 @@ export interface UnaryOpNode extends ASTNode {
     operand: ASTNode;
 }
 
+export interface TernaryNode extends ASTNode {
+    type: 'Ternary';
+    condition: ASTNode;
+    trueExpr: ASTNode;
+    falseExpr: ASTNode;
+}
+
 export interface DeclarationNode extends ASTNode {
     type: 'Declaration';
     declarator: string; // 'my', 'our', 'state', 'const'
@@ -133,4 +140,11 @@ export interface HashAccessNode extends ASTNode {
     type: 'HashAccess';
     base: ASTNode;  // The hash variable or expression
     key: ASTNode;   // The key expression
+}
+
+export interface MethodCallNode extends ASTNode {
+    type: 'MethodCall';
+    object: ASTNode;      // The object/class expression ($obj, ClassName, or any expression)
+    method: string;       // Method name (identifier)
+    arguments: ASTNode[]; // Argument list (can be empty)
 }

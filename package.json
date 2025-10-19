@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc",
     "test": "npm run build && node --test js/tests/**/*.test.js",
-    "test:watch": "node --test --watch js/tests/**/*.test.js"
+    "test:watch": "node --test --watch js/tests/**/*.test.js",
+    "repl": "npm run build && node bin/repl.js"
   },
   "keywords": ["parser", "perl", "async", "generator", "pipeline"],
   "author": "",

@@ -1,5 +1,256 @@
 # Development Log - MPP Parser
 
+## Session 6 Summary
+
+**Date**: Session 6 of MPP development
+**Duration**: ~2 hours
+**Methodology**: Strict Test-Driven Development (TDD)
+**Result**: Unary operators, ternary operator, and interactive REPL!
+
+### Starting Point
+- 122 tests passing
+- Complete data structures with access operations
+- Binary operators only
+
+### Ending Point
+- **144 tests passing** (+22 new tests)
+- Unary operators: `-`, `+`, `!` (with proper precedence)
+- Ternary operator: `? :` (right-associative)
+- Interactive REPL tool for exploring AST
+- Updated precedence table with levels 4 and 16
+
+## What We Built This Session
+
+### 1. Unary Operators (src/Parser.ts, src/AST.ts)
+
+**Features**:
+- Unary minus: `-5`, `-$x`, `-($a + $b)`
+- Unary plus: `+10`
+- Logical not: `!$flag`, `!($x > 5)`
+- Multiple unary operators: `!!$value`, `-+$x`
+- Proper precedence: `-$x + 10` → `(-$x) + 10`
+- Disambiguation from hash literals: `+{ }` still works
+
+**AST Node**:
+```typescript
+interface UnaryOpNode extends ASTNode {
+    type: 'UnaryOp';
+    operator: string;  // '-', '+', or '!'
+    operand: ASTNode;
+}
+```
+
+**Implementation Details**:
+- Added to `parsePrimary()` at lines 368-393
+- Checks for `BINOP`, `OPERATOR`, and `UNOP` categories
+- Special handling: `+` followed by `{` → hash literal, not unary plus
+- Recursive parsing enables multiple unary operators
+- Precedence level 4 (tighter than binary operators)
+
+**Tests Added**: 14 tests (122 → 136)
+- Simple unary with literals and variables
+- Unary in complex expressions
+- Double negation (`!!`)
+- Multiple unary (`-+$x`)
+- Precedence verification
+- Hash literal regression test
+
+### 2. Ternary Operator (src/Parser.ts, src/AST.ts, src/Tokenizer.ts)
+
+**Features**:
+- Simple ternary: `$x > 5 ? 10 : 20`
+- Variable expressions: `$condition ? $a : $b`
+- Complex expressions: `$x > 10 ? $x * 2 : $x + 1`
+- Nested ternary (right-associative): `$a ? $b : $c ? $d : $e`
+- In function calls: `print($x > 5 ? "big" : "small")`
+- With function calls: `$flag ? get_a() : get_b()`
+- With unary operators: `!$flag ? -10 : +20`
+
+**AST Node**:
+```typescript
+interface TernaryNode extends ASTNode {
+    type: 'Ternary';
+    condition: ASTNode;
+    trueExpr: ASTNode;
+    falseExpr: ASTNode;
+}
+```
+
+**Implementation Details**:
+- Added `?` and `:` to `Tokenizer.isOperatorChar()` at line 230
+- Added `?` to precedence table at level 16 (between range and assignment)
+- Special handling in `precedenceClimb()` at lines 319-380:
+  - Finds matching `:` at correct nesting depth
+  - Handles nested ternary operators correctly
+  - Right-associative: `a ? b : c ? d : e` → `a ? b : (c ? d : e)`
+  - Depth tracking accounts for parentheses, brackets, braces, and nested `?:`
+
+**Tests Added**: 8 tests (136 → 144)
+- Simple ternary with literals and variables
+- Complex expressions in branches
+- Nested ternary (right associativity)
+- Ternary in function calls
+- Function calls in branches
+- Standalone ternary
+- With unary operators
+
+### 3. Interactive REPL Tool (bin/repl.js)
+
+**Features**:
+- Interactive AST exploration
+- Pretty-printed JSON output
+- Multi-statement support
+- Built-in commands: `.help`, `.exit`, `.quit`
+- Error handling
+
+**Usage**:
+```bash
+npm run repl
+```
+
+**Example Session**:
+```
+mpp> my $x = 10;
+{
+  "type": "Declaration",
+  "declarator": "my",
+  "variable": { "type": "Variable", "name": "$x" },
+  "initializer": { "type": "Number", "value": "10" }
+}
+
+mpp> $x > 5 ? "big" : "small";
+{
+  "type": "Ternary",
+  "condition": { ... },
+  "trueExpr": { ... },
+  "falseExpr": { ... }
+}
+```
+
+**Benefits**:
+- Quick experimentation with syntax
+- Visual AST structure understanding
+- Testing edge cases
+- Learning tool for new contributors
+
+## Examples That Now Work
+
+```perl
+# Unary operators
+my $negative = -5;
+my $opposite = -$x;
+my $inverted = !$flag;
+my $result = -$x + 10;  # (-$x) + 10
+my $double = !!$value;
+
+# Ternary operator
+my $label = $x > 5 ? "big" : "small";
+my $value = $condition ? $a : $b;
+my $result = $x > 10 ? $x * 2 : $x + 1;
+
+# Nested ternary (right-associative)
+my $grade = $score >= 90 ? "A" : $score >= 80 ? "B" : "C";
+# Parsed as: $score >= 90 ? "A" : ($score >= 80 ? "B" : "C")
+
+# Complex combinations
+my $result = !$flag ? -10 : +20;
+my $output = $valid ? get_value() : get_default();
+print($x > 0 ? "positive" : $x < 0 ? "negative" : "zero");
+```
+
+## Architectural Insights
+
+### Unary Operator Placement
+Unary operators are handled in `parsePrimary()` because:
+1. **High precedence** - They bind tighter than all binary operators
+2. **Prefix position** - They appear before the primary expression
+3. **Recursive handling** - Multiple unary ops (`!!$x`) work naturally
+4. **Disambiguation** - Can check lookahead for `+{` hash literal
+
+### Ternary Operator Complexity
+Ternary required special handling because:
+1. **Three operands** - Doesn't fit binary operator pattern
+2. **Two operators** - `?` and `:` must be paired
+3. **Nesting depth** - Finding matching `:` requires depth tracking
+4. **Right-associative** - `a ? b : c ? d : e` groups right: `a ? b : (c ? d : e)`
+
+The depth tracking algorithm:
+```typescript
+// Track nesting of:
+// - Parentheses, brackets, braces
+// - Nested ternary operators
+// Find `:` at depth 0
+for (let i = currentPos; i < lexemes.length; i++) {
+    if (lexemes[i] is '(' or '[' or '{') depth++;
+    else if (lexemes[i] is ')' or ']' or '}') depth--;
+    else if (depth === 0 && lexemes[i] === '?') depth++;
+    else if (depth === 1 && lexemes[i] === ':') depth--;
+    else if (depth === 0 && lexemes[i] === ':') {
+        colonPos = i;
+        break;
+    }
+}
+```
+
+### REPL Design
+The REPL is simple but effective:
+- Uses readline for interactive input
+- Parses each line independently
+- No state between lines (stateless)
+- JSON.stringify for AST display (simple but clear)
+
+## What's Next: Session 7
+
+Natural progressions:
+1. **Method calls** - `$obj->method($arg)` - OOP support
+2. **Range operator as expression** - `(1..10)` not just in foreach
+3. **Assignment to elements** - `$array[0] = 5;` - Mutable data structures
+4. **String interpolation** - `"Value: $x"` - String features
+5. **Regex literals** - `m/pattern/` - Pattern matching
+
+The most impactful next step would be **method calls** since:
+- Enables object-oriented programming
+- Reuses `->` operator (already tokenized)
+- Builds on function call parsing (already implemented)
+- Common pattern in real Perl code
+
+## Lessons Learned
+
+1. **Check lexer categories** - The `!` operator was initially missed because it was categorized as `UNOP` not `BINOP`. Always verify lexer output!
+
+2. **Tokenizer additions need testing** - Adding `?` and `:` to `isOperatorChar()` was simple but required rebuild to take effect.
+
+3. **Precedence matters** - Ternary at level 16 (between range and assignment) matches Perl's precedence, enabling natural expressions like `$x = $a ? $b : $c`.
+
+4. **Right-associativity is key** - Ternary must be right-associative for nested ternary to work correctly: `a ? b : c ? d : e`.
+
+5. **REPL is invaluable** - Having an interactive tool makes experimentation much faster. Should have built this earlier!
+
+6. **TDD catches regressions** - The hash literal test (`+{ }`) verified unary `+` didn't break existing functionality.
+
+7. **Depth tracking is reusable** - The same pattern works for ternary `:` matching, hash pair `=>` finding, and data structure parsing.
+
+## Files Modified
+
+**Session 6 Changes**:
+1. **src/AST.ts** - Added `UnaryOpNode` and `TernaryNode` interfaces
+2. **src/Tokenizer.ts** - Added `?` and `:` as operator characters
+3. **src/Parser.ts** - Added unary parsing in `parsePrimary()`, ternary in `precedenceClimb()`
+4. **tests/Parser.test.ts** - Added 22 new tests (14 unary + 8 ternary)
+5. **bin/repl.js** - Created interactive REPL tool (NEW FILE)
+6. **package.json** - Added `npm run repl` script
+7. **README.md** - Added REPL documentation and updated precedence table
+
+**Cumulative Stats**:
+- Tokenizer: ~332 lines (added `?` and `:`)
+- Lexer: ~100 lines (unchanged)
+- Parser: ~1500 lines (added unary and ternary support)
+- AST: ~142 lines (added 2 node types)
+- Tests: ~1240 lines (added 22 tests)
+- REPL: ~97 lines (NEW)
+- **Total: ~3400 lines**
+- **Tests: 144 passing**
+
 ## Session 5 Summary
 
 **Date**: Session 5 of MPP development

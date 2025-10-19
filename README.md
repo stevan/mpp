@@ -160,13 +160,58 @@ mpp/
 npm install
 npm test              # Build and run all tests
 npm run build         # Compile TypeScript
+npm run repl          # Start interactive REPL
 ```
+
+## Interactive REPL
+
+Explore the parser interactively with the built-in REPL:
+
+```bash
+npm run repl
+```
+
+Example session:
+```
+MPP AST Explorer
+Type Perl code to see its AST. Type .exit or .quit to quit.
+
+mpp> my $x = 10;
+{
+  "type": "Declaration",
+  "declarator": "my",
+  "variable": {
+    "type": "Variable",
+    "name": "$x"
+  },
+  "initializer": {
+    "type": "Number",
+    "value": "10"
+  }
+}
+
+mpp> $x > 5 ? "big" : "small";
+{
+  "type": "Ternary",
+  "condition": { ... },
+  "trueExpr": { ... },
+  "falseExpr": { ... }
+}
+
+mpp> .exit
+Goodbye!
+```
+
+Commands:
+- `.help` - Show help
+- `.exit` / `.quit` - Exit the REPL
 
 ## Operator Precedence Table
 
 | Level | Operators | Associativity | Description |
 |-------|-----------|---------------|-------------|
 | 3 | `**` | RIGHT | Exponentiation |
+| 4 | `!`, `-`, `+` (unary) | RIGHT | Unary negation, logical not |
 | 6 | `*`, `/`, `%`, `x` | LEFT | Multiplicative |
 | 7 | `+`, `-`, `.` | LEFT | Additive, concatenation |
 | 8 | `<<`, `>>` | LEFT | Bit shift |
@@ -177,6 +222,7 @@ npm run build         # Compile TypeScript
 | 13 | `&&` | LEFT | Logical AND |
 | 14 | `||`, `//` | LEFT | Logical OR, defined-or |
 | 15 | `..` | NONE | Range |
+| 16 | `?:` | RIGHT | Ternary conditional |
 | 17 | `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `**=`, `.=`, `x=`, `||=`, `//=`, `&&=`, `&=`, `|=`, `^=`, `<<=`, `>>=` | RIGHT | Assignment |
 | 18 | `,`, `=>` | LEFT | Comma, fat comma |
 | 20 | `and` | LEFT | Low-precedence AND |

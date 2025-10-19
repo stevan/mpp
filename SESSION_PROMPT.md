@@ -1,21 +1,19 @@
-# Session Prompt: Session 6 - Unary Operators
-
-Use this prompt to start Session 6:
-
----
+# Session 7: Method Calls
 
 I'm continuing development on the **MPP (Modern Perl Parser)** project. This is a parser framework built using async generators with a streaming pipeline architecture.
 
-## Current State (After Session 5)
+## Current State (After Session 6)
 
 The project is in `/Users/stevan/Projects/typescript/100-Opal/mpp/`
 
-### ✅ Completed Features (122 tests passing)
+### ✅ Completed Features (144 tests passing)
 
-**Core Expression Parsing**:
+**Complete Expression Parsing**:
 - Literals (numbers, strings)
 - Variables with sigils ($scalar, @array, %hash)
 - Binary operators (20 precedence levels with correct associativity)
+- **Unary operators** (`-`, `+`, `!`) - NEW IN SESSION 6!
+- **Ternary operator** (`? :`) - NEW IN SESSION 6!
 - Parenthesized expressions
 - Variable declarations (`my $x = 10;`)
 
@@ -45,13 +43,18 @@ The project is in `/Users/stevan/Projects/typescript/100-Opal/mpp/`
 - Chained access: `$data->[0]{"key"}[1]`
 - Dereference operator: `->`
 
+**Developer Tools**:
+- **Interactive REPL** (`npm run repl`) - NEW IN SESSION 6!
+- Comprehensive test suite (144 tests)
+- Strict TDD methodology
+
 ### Parser Can Currently Handle
 
 ```perl
-# Complete programs with data structures and access!
+# Complete programs with expressions and data structures!
 my $users = [
-    +{ "name" => "Alice", "scores" => [95, 87, 92] },
-    +{ "name" => "Bob", "scores" => [88, 91, 85] }
+    +{ "name" => "Alice", "scores" => [95, 87, 92], "active" => 1 },
+    +{ "name" => "Bob", "scores" => [88, 91, 85], "active" => 0 }
 ];
 
 sub average_score($person) {
@@ -60,252 +63,267 @@ sub average_score($person) {
     return $sum / 3;
 }
 
-my $first = $users->[0];
-my $avg = average_score($first);
-print($first->{"name"});
-print($avg);
+sub get_status($person) {
+    return $person->{"active"} ? "active" : "inactive";
+}
+
+for my $i (0..1) {
+    my $user = $users->[$i];
+    my $name = $user->{"name"};
+    my $avg = average_score($user);
+    my $status = get_status($user);
+
+    my $grade = $avg >= 90 ? "A" : $avg >= 80 ? "B" : "C";
+
+    print($name);
+    print($grade);
+    print($status);
+}
 ```
 
-**Achievement**: Complete data structure support! Parser handles creation, nesting, and access at arbitrary depth.
+**Achievement**: Complete expression support! Parser handles unary (`-$x`), binary (`$a + $b`), and ternary (`$x ? $a : $b`) operators with correct precedence and associativity.
 
 ## What I Want to Build This Session
 
-I want to add **unary operators**, specifically:
+I want to add **method calls**, the foundation for object-oriented programming:
 
 ```perl
-# Unary minus (negation)
-my $negative = -5;
-my $opposite = -$x;
-my $result = -($a + $b);
+# Object method calls
+$obj->method($arg);
+$person->get_name();
+$config->set("timeout", 30);
 
-# Unary plus (explicit positive)
-my $positive = +10;
+# Class method calls (static methods)
+Point->new(x => 5, y => 10);
+Math->sqrt(16);
 
-# Logical not
-my $inverted = !$flag;
-my $result = !($x > 5);
+# Chained method calls
+$obj->method1()->method2()->method3();
+$db->connect()->query("SELECT * FROM users")->fetch();
 
-# Low-precedence not
-my $value = not $condition;
+# Method calls with data structure access
+my $name = $users->[0]->get_profile()->get_name();
+$data->{"config"}->validate()->save();
 
-# In expressions
-my $result = -$x + 10;
-my $check = !$valid && $ready;
+# Method calls in expressions
+my $result = $obj->calculate() * 2 + 10;
+my $total = $cart->get_total() + $tax->calculate($cart);
 ```
 
 This will enable:
-- Negative numbers and negation
-- Boolean negation for conditionals
-- Unary operators in complex expressions
+- Object-oriented programming
+- Method chaining patterns
+- Foundation for class definitions (future session)
+- Integration with existing data structure access
 
 ## Implementation Plan
 
 ### 1. AST Node Type
 
-The node type already exists in `src/AST.ts`:
+Add to `src/AST.ts`:
 
 ```typescript
-export interface UnaryOpNode extends ASTNode {
-    type: 'UnaryOp';
-    operator: string;
-    operand: ASTNode;
+export interface MethodCallNode extends ASTNode {
+    type: 'MethodCall';
+    object: ASTNode;      // $obj, ClassName (identifier), or any expression
+    method: string;       // method name (identifier)
+    arguments: ASTNode[]; // argument list (can be empty)
 }
 ```
-
-Just need to import and use it!
 
 ### 2. Test Cases to Write
 
 In `tests/Parser.test.ts`:
-- Unary minus with literal: `-5`
-- Unary minus with variable: `-$x`
-- Unary minus with expression: `-($a + $b)`
-- Unary plus: `+10`
-- Logical not: `!$flag`
-- Low-precedence not: `not $x`
-- Unary in expression: `-$x + 10`
-- Double negation: `!!$value`
-- Multiple unary ops: `-+$x`
-- Unary in complex expressions: `!$valid && $ready`
+- Simple method call: `$obj->method()`
+- Method with arguments: `$obj->method($a, $b)`
+- Method with no arguments: `$obj->get_value()`
+- Class method call: `Class->new()`
+- Chained method calls: `$obj->m1()->m2()->m3()`
+- Method call on expression: `get_obj()->method()`
+- Method after array access: `$array->[0]->method()`
+- Method after hash access: `$hash{"key"}->method()`
+- Complex chain: `$data->[0]->method()->{"key"}`
+- Method in expression: `$obj->value() + 10`
 
 ### 3. Parser Implementation
 
-In `src/Parser.ts`:
+In `src/Parser.ts`, modify `parsePostfixOperators()`:
 
-#### Parse Unary Operators
-Add unary operator handling at the start of `parsePrimary()`:
+The key is to detect when `->` is followed by an identifier and `(`, indicating a method call (not array/hash dereference).
 
 ```typescript
-// Check for unary operators
-if (lexeme.category === 'BINOP' || lexeme.category === 'UNOP') {
-    const op = lexeme.token.value;
-    if (op === '-' || op === '+' || op === '!') {
-        // Parse operand recursively
-        const operandResult = this.parsePrimary(lexemes, pos + 1);
-        if (operandResult) {
-            const unaryOp: UnaryOpNode = {
-                type: 'UnaryOp',
-                operator: op,
-                operand: operandResult.node
-            };
-            return {
-                node: unaryOp,
-                nextPos: operandResult.nextPos
-            };
+// Inside parsePostfixOperators() while loop:
+
+// Dereference: -> followed by [ or {
+else if ((lexeme.category === 'BINOP' || lexeme.category === 'OPERATOR')
+         && lexeme.token.value === '->') {
+
+    // Check what follows the ->
+    if (pos + 1 >= lexemes.length) break;
+
+    const next = lexemes[pos + 1];
+
+    // Method call: -> followed by identifier and (
+    if (next.category === 'IDENTIFIER') {
+        // Check if followed by (
+        if (pos + 2 < lexemes.length && lexemes[pos + 2].category === 'LPAREN') {
+            const methodName = next.token.value;
+
+            // Parse arguments (similar to function call parsing)
+            // Build MethodCallNode
+            // Update current and pos
+            // Continue to allow chaining
         }
     }
-}
 
-// Handle 'not' keyword
-if (lexeme.category === 'CONTROL' && lexeme.token.value === 'not') {
-    // Similar to above
+    // Array/hash dereference: -> followed by [ or {
+    else if (next.category === 'LBRACKET' || next.category === 'LBRACE') {
+        // ... existing dereference code ...
+    }
 }
 ```
-
-#### Handle Precedence
-- Unary `-`, `+`, `!` bind very tightly (precedence ~4)
-- Handled in `parsePrimary()` means they bind before binary operators
-- `not` is low-precedence - may need special handling
 
 ### 4. Key Challenges
 
-**Challenge 1: Binary vs Unary Context**
-- `-` can be binary (subtraction) or unary (negation)
-- `+` can be binary (addition) or unary (positive)
+**Challenge 1: Distinguishing Method Calls from Dereference**
+- `$obj->[0]` is array dereference
+- `$obj->{"key"}` is hash dereference
+- `$obj->method()` is method call
 
 **Solution**:
-- In `parsePrimary()`, we're at the start of an expression
-- So `-` and `+` here are always unary
-- Binary operators are handled in `precedenceClimb()`
+- Check the token after `->`
+- If identifier followed by `(` → method call
+- If `[` → array dereference
+- If `{` → hash dereference
 
-**Challenge 2: Hash Literal Conflict**
-- `+{ }` is a hash literal
-- `+` can also be unary plus
+**Challenge 2: Class Method Calls**
+```perl
+Point->new(x => 5, y => 10);  # Point is an identifier, not a variable
+```
 
 **Solution**:
-- Check if `+` is followed by `{`
-- If yes → hash literal (existing code handles this)
-- If no → unary plus
+- When parsing `->`, the base can be:
+  - A variable (`$obj`)
+  - An identifier (`ClassName`)
+  - Any expression (`get_obj()`)
+- parsePostfixOperators already handles this - base is ASTNode
 
-**Challenge 3: Precedence**
+**Challenge 3: Method Chaining**
 ```perl
-my $x = -5 + 10;      # Should be: (-5) + 10
-my $y = !$a && $b;    # Should be: (!$a) && $b
+$obj->m1()->m2()->m3();
 ```
 
-**Solution**: Unary operators bind tightly - handled in `parsePrimary()` before binary operator processing.
+**Solution**: The while loop in parsePostfixOperators naturally handles this:
+1. Parse `$obj->m1()` → MethodCallNode
+2. Current = MethodCallNode
+3. Continue loop, see `->m2()`
+4. Parse with current as base → nested MethodCallNode
+5. Repeat for `->m3()`
 
-**Challenge 4: Multiple Unary Operators**
+**Challenge 4: Mixing Methods and Access**
 ```perl
-my $x = !!$flag;      # Double negation
-my $y = -+$value;     # Minus of positive
+$users->[0]->get_name();
+$obj->method()->{"result"}[0];
 ```
 
-**Solution**: Recursive call to `parsePrimary()` naturally handles this.
+**Solution**: The postfix loop already handles array/hash access. Methods are just another postfix operator in the same loop.
 
-**Challenge 5: Low-Precedence `not`**
-```perl
-my $x = not $a && $b;  # Should be: not ($a && $b)
-```
+**Challenge 5: Parsing Arguments**
+Method arguments use the same syntax as function calls. Need to:
+1. Find matching `)`
+2. Split arguments by `,` at depth 0
+3. Parse each argument expression
+4. Reuse existing function call argument parsing logic
 
-**Solution**: Start with high-precedence operators (`-`, `+`, `!`). Handle `not` separately or defer if complex.
+### 5. Integration Points
+
+**With Existing Features**:
+- **Data structure access** (Session 5): Methods integrate into same postfix chain
+- **Function calls** (Session 2): Reuse argument parsing logic
+- **Dereference operator** (Session 5): `->` already tokenized and handled
+
+**Precedence**:
+- Methods bind as postfix operators (highest precedence)
+- Handled in `parsePostfixOperators()` after `parsePrimary()`
+- Before binary operators in `precedenceClimb()`
 
 ## Development Approach
 
 Please continue using **strict TDD**:
-1. Write tests first for each operator type
-2. Add parsing logic to `parsePrimary()`
-3. Handle hash literal conflict for `+`
-4. Run tests frequently
-5. Keep tests high-level (not overly specific)
-6. Maintain 100% type safety (no `any` types)
+1. Write comprehensive tests first (15-20 tests)
+2. Add `MethodCallNode` to AST
+3. Import `MethodCallNode` in Parser
+4. Extend `parsePostfixOperators()` logic
+5. Reuse argument parsing from function calls
+6. Run tests frequently
+7. Use REPL to experiment
+8. Keep tests high-level (not overly specific)
+9. Maintain 100% type safety (no `any` types)
 
 ## Key Design Decisions (Don't Change)
 
-- No barewords (functions require parens, strings require quotes)
+- No barewords (method names require explicit `->` syntax)
 - `+{ }` syntax for hash literals (blocks use bare `{ }`)
 - No regex literals yet (deferred for later)
 - Pure syntax-directed parsing (no symbol table feedback)
-- Parentheses required for all function calls
+- Parentheses required for all method calls (even with no args)
 - `$_` is a keyword
 
 ## Critical Lessons from Previous Sessions
 
-### Session 4: Lexeme Category Matters
-- **Lesson**: Always check what category the Lexer assigns (e.g., `+` is BINOP)
-- **Application**: Check for both BINOP and UNOP when detecting unary operators
+### Session 5: Postfix Operator Chain Pattern
+- **Lesson**: Postfix operators (array/hash access) handled in loop after primary
+- **Application**: Methods fit into same pattern - just check for `->identifier(`
 
-### Session 4: Disambiguation Patterns
-- **Lesson**: Use lookahead to disambiguate similar syntax
-- **Application**: Check if `+` is followed by `{` to distinguish unary from hash literal
+### Session 6: Operator Category Checking
+- **Lesson**: Always check lexer categories (BINOP, UNOP, OPERATOR, etc.)
+- **Application**: `->` is BINOP, need to check category when detecting it
 
-### Session 5: Postfix Operator Binding
-- **Lesson**: Postfix operators bind tightly after primary expressions
-- **Application**: Unary operators bind tightly *before* primary expressions - also in `parsePrimary()`
+### Session 6: Lookahead for Disambiguation
+- **Lesson**: Check next token to disambiguate similar syntax
+- **Application**: After `->`, check if next is identifier+`(` vs `[` or `{`
 
 ## Files to Reference
 
-- `README.md` - Project documentation
-- `DEVELOPMENT_LOG.md` - Session 5 notes with postfix operator details
-- `src/Parser.ts` - Current parser (~800 lines)
-- `src/AST.ts` - AST node definitions (~137 lines)
-- `tests/Parser.test.ts` - 90 unit tests
-- `tests/DataStructures.test.ts` - 16 milestone tests
-- `tests/Examples.test.ts` - 5 integration tests
+- `README.md` - Project documentation with REPL usage
+- `DEVELOPMENT_LOG.md` - Sessions 1-6 notes, especially Session 5 postfix operators
+- `NEXT_STEPS.md` - Updated plan for Session 7+
+- `src/Parser.ts` - Current parser (~1500 lines)
+  - See `parsePostfixOperators()` around line 741
+  - See function call parsing for argument pattern
+- `src/AST.ts` - AST node definitions (~142 lines)
+- `tests/Parser.test.ts` - 144 unit tests
+- `bin/repl.js` - Interactive REPL for experimentation
 
 ## Success Criteria for This Session
 
 By the end:
-- ✅ Can parse unary minus: `-$x`, `-5`
-- ✅ Can parse unary plus: `+10`
-- ✅ Can parse logical not: `!$flag`
-- ✅ Can parse low-precedence not: `not $x` (optional)
-- ✅ Unary operators work in expressions
-- ✅ Multiple unary operators chain correctly
-- ✅ Hash literals still work (no regression)
-- ✅ ~130-135 tests passing
-- ✅ All existing tests still pass
+- ✅ Can parse simple method calls: `$obj->method()`
+- ✅ Can parse method calls with arguments: `$obj->method($a, $b)`
+- ✅ Can parse class method calls: `Class->new()`
+- ✅ Can parse chained method calls: `$obj->m1()->m2()->m3()`
+- ✅ Can parse methods mixed with data access: `$arr->[0]->method()`
+- ✅ Method calls work in expressions
+- ✅ All existing tests still pass (no regressions)
+- ✅ ~155-165 tests passing (144 + 11-21 new tests)
 
 ## After This Session
 
-Once unary operators are complete, natural next steps:
-1. **Ternary operator** (`$x ? $y : $z`) - Conditional expressions
-2. **Method calls** (`$obj->method($arg)`) - OOP support
-3. **Range operator** (`1..10`) - As expression not just in foreach
-4. **Assignment to elements** (`$array[0] = 5`) - Mutable data structures
-
-## Precedence Table Reference
-
-Current precedence levels (lower number = tighter binding):
-
-| Level | Operators | Assoc | Notes |
-|-------|-----------|-------|-------|
-| 3 | `**` | RIGHT | Exponentiation |
-| **4** | **`!`, `-`, `+` (unary)** | **RIGHT** | **To be added** |
-| 6 | `*`, `/`, `%`, `x` | LEFT | Multiplicative |
-| 7 | `+`, `-`, `.` | LEFT | Additive (binary) |
-| 9 | `<`, `>`, `<=`, `>=` | LEFT | Comparison |
-| 10 | `==`, `!=`, `<=>` | LEFT | Equality |
-| 13 | `&&` | LEFT | Logical AND |
-| 14 | `||`, `//` | LEFT | Logical OR |
-| 17 | `=`, `+=`, etc. | RIGHT | Assignment |
-| **20** | **`not`** | **LEFT** | **Low-precedence NOT** |
-| 21 | `and`, `or`, `xor` | LEFT | Low-precedence logical |
+Once method calls are complete, natural next steps:
+1. **Assignment to elements** (`$array[0] = 5;`) - Mutable data structures
+2. **Range as expression** (`my @nums = (1..10);`) - Complete range operator
+3. **String interpolation** (`"Hello, $name!"`) - Enhanced strings
+4. **Class definitions** (`class Point { ... }`) - Full OOP (requires methods)
 
 ## Let's Get Started!
 
 Please begin by:
-1. Writing comprehensive tests for unary operators in `tests/Parser.test.ts`
-2. Adding unary operator detection in `parsePrimary()` (check for `-`, `+`, `!`)
-3. Ensuring `+{` still works for hash literals (lookahead check)
-4. Handling recursive operand parsing
-5. Testing with existing tests to ensure no regressions
+1. Use the REPL to explore current `->` behavior with arrays/hashes
+2. Write comprehensive tests for method calls in `tests/Parser.test.ts`
+3. Add `MethodCallNode` to `src/AST.ts`
+4. Import `MethodCallNode` in `src/Parser.ts`
+5. Extend `parsePostfixOperators()` to detect `->identifier(`
+6. Reuse argument parsing logic from function calls
+7. Test with existing tests to ensure no regressions
 
-Ready to add unary operators! 🚀
-
----
-
-**Optional Context Requests**:
-- "Show me the current parsePrimary() implementation" (to see where to add unary logic)
-- "Show me how hash literals are detected" (for the `+{` conflict)
-- "Let's review postfix operators" (similar pattern for tight binding)
+Ready to add method calls and enable OOP! 🚀

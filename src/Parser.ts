@@ -6,6 +6,7 @@ import {
     VariableNode,
     BinaryOpNode,
     UnaryOpNode,
+    TernaryNode,
     DeclarationNode,
     IfNode,
     UnlessNode,
@@ -22,7 +23,8 @@ import {
     HashLiteralNode,
     ListNode,
     ArrayAccessNode,
-    HashAccessNode
+    HashAccessNode,
+    MethodCallNode
 } from './AST.js';
 
 interface OperatorInfo {
@@ -315,6 +317,69 @@ export class Parser {
         while (currentPos < lexemes.length) {
             const current = lexemes[currentPos];
 
+            // Special handling for ternary operator
+            if ((current.category === 'BINOP' || current.category === 'OPERATOR') && current.token.value === '?') {
+                const opInfo = this.getOperatorInfo('?');
+                if (!opInfo || opInfo.precedence > minPrecedence) {
+                    break;
+                }
+
+                currentPos++; // Consume '?'
+
+                // Parse true expression (up to ':')
+                // Find the ':' at the correct depth
+                let colonPos = -1;
+                let depth = 0;
+                for (let i = currentPos; i < lexemes.length; i++) {
+                    if (lexemes[i].category === 'LPAREN' || lexemes[i].category === 'LBRACKET' || lexemes[i].category === 'LBRACE') {
+                        depth++;
+                    } else if (lexemes[i].category === 'RPAREN' || lexemes[i].category === 'RBRACKET' || lexemes[i].category === 'RBRACE') {
+                        depth--;
+                    } else if (depth === 0 && lexemes[i].token.value === '?') {
+                        // Nested ternary
+                        depth++;
+                    } else if (depth === 1 && lexemes[i].token.value === ':') {
+                        // This ':' belongs to the nested ternary
+                        depth--;
+                    } else if (depth === 0 && (lexemes[i].category === 'BINOP' || lexemes[i].category === 'OPERATOR') && lexemes[i].token.value === ':') {
+                        colonPos = i;
+                        break;
+                    }
+                }
+
+                if (colonPos === -1) {
+                    break; // Error: missing ':'
+                }
+
+                // Parse true expression
+                const trueLexemes = lexemes.slice(currentPos, colonPos);
+                const trueResult = this.parseExpression(trueLexemes, 0);
+                if (!trueResult) {
+                    break;
+                }
+
+                // Skip the ':'
+                currentPos = colonPos + 1;
+
+                // Parse false expression with right associativity
+                const nextMinPrec = opInfo.precedence; // RIGHT associative
+                const falseResult = this.precedenceClimb(lexemes, currentPos, nextMinPrec);
+                if (!falseResult) {
+                    break;
+                }
+
+                // Build ternary node
+                const ternary: TernaryNode = {
+                    type: 'Ternary',
+                    condition: left,
+                    trueExpr: trueResult,
+                    falseExpr: falseResult.node
+                };
+                left = ternary;
+                currentPos = falseResult.nextPos;
+                continue;
+            }
+
             // Check if it's a binary operator
             if (current.category !== 'BINOP' && current.category !== 'ASSIGNOP') {
                 break;
@@ -442,7 +507,7 @@ export class Parser {
             }
         }
 
-        // Function calls (identifier followed by LPAREN)
+        // Function calls and identifiers
         if (lexeme.category === 'IDENTIFIER') {
             // Check if next token is LPAREN
             if (pos + 1 < lexemes.length && lexemes[pos + 1].category === 'LPAREN') {
@@ -504,6 +569,21 @@ export class Parser {
                 return {
                     node: callNode,
                     nextPos: endPos
+                };
+            }
+            // Check if next token is -> (for class method calls like Point->new())
+            else if (pos + 1 < lexemes.length &&
+                     lexemes[pos + 1].category === 'BINOP' &&
+                     lexemes[pos + 1].token.value === '->') {
+                // This is an identifier followed by ->, treat it as a Variable-like node
+                // The -> will be handled by parsePostfixOperators
+                const identNode: VariableNode = {
+                    type: 'Variable',
+                    name: lexeme.token.value
+                };
+                return {
+                    node: identNode,
+                    nextPos: pos + 1
                 };
             }
         }
@@ -786,6 +866,79 @@ export class Parser {
                 pos++; // Consume ->
                 if (pos >= lexemes.length) {
                     break;
+                }
+
+                // Check for method call: -> followed by identifier and (
+                if (lexemes[pos].category === 'IDENTIFIER' &&
+                    pos + 1 < lexemes.length &&
+                    lexemes[pos + 1].category === 'LPAREN') {
+
+                    const methodName = lexemes[pos].token.value;
+                    pos++; // Consume method name
+                    pos++; // Consume LPAREN
+
+                    // Find matching RPAREN
+                    let depth = 1;
+                    let endPos = pos;
+                    while (endPos < lexemes.length && depth > 0) {
+                        if (lexemes[endPos].category === 'LPAREN') depth++;
+                        if (lexemes[endPos].category === 'RPAREN') depth--;
+                        endPos++;
+                    }
+
+                    // Parse arguments (comma-separated expressions)
+                    const argLexemes = lexemes.slice(pos, endPos - 1);
+                    const args: ASTNode[] = [];
+
+                    if (argLexemes.length > 0) {
+                        // Split by commas at depth 0
+                        let argStart = 0;
+                        let parenDepth = 0;
+                        let bracketDepth = 0;
+                        let braceDepth = 0;
+
+                        for (let i = 0; i < argLexemes.length; i++) {
+                            if (argLexemes[i].category === 'LPAREN') parenDepth++;
+                            if (argLexemes[i].category === 'RPAREN') parenDepth--;
+                            if (argLexemes[i].category === 'LBRACKET') bracketDepth++;
+                            if (argLexemes[i].category === 'RBRACKET') bracketDepth--;
+                            if (argLexemes[i].category === 'LBRACE') braceDepth++;
+                            if (argLexemes[i].category === 'RBRACE') braceDepth--;
+
+                            if (argLexemes[i].category === 'COMMA' &&
+                                parenDepth === 0 && bracketDepth === 0 && braceDepth === 0) {
+                                // Found an argument boundary
+                                const argTokens = argLexemes.slice(argStart, i);
+                                if (argTokens.length > 0) {
+                                    const arg = this.parseExpression(argTokens, 0);
+                                    if (arg) {
+                                        args.push(arg);
+                                    }
+                                }
+                                argStart = i + 1; // Skip the comma
+                            }
+                        }
+
+                        // Don't forget the last argument
+                        const lastArgTokens = argLexemes.slice(argStart);
+                        if (lastArgTokens.length > 0) {
+                            const arg = this.parseExpression(lastArgTokens, 0);
+                            if (arg) {
+                                args.push(arg);
+                            }
+                        }
+                    }
+
+                    const methodCall: MethodCallNode = {
+                        type: 'MethodCall',
+                        object: node,
+                        method: methodName,
+                        arguments: args
+                    };
+
+                    node = methodCall;
+                    pos = endPos;
+                    continue;
                 }
                 // Continue to check for [ or { after ->
             }
@@ -1476,6 +1629,9 @@ export class Parser {
 
         // Level 15: Range (NONE)
         table.set('..', { precedence: 15, associativity: 'NONE' });
+
+        // Level 16: Ternary conditional (RIGHT associative)
+        table.set('?', { precedence: 16, associativity: 'RIGHT' });
 
         // Level 17: Assignment (RIGHT associative)
         ['=', '+=', '-=', '*=', '/=', '%=', '**=', '.=', 'x=',
