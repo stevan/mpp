@@ -1,0 +1,110 @@
+[
+  {
+    "type": "Sub",
+    "name": "fibonacci",
+    "parameters": [
+      {
+        "type": "Parameter",
+        "variable": {
+          "type": "Variable",
+          "name": "$n"
+        }
+      }
+    ],
+    "body": [
+      {
+        "type": "If",
+        "condition": {
+          "type": "BinaryOp",
+          "operator": "==",
+          "left": {
+            "type": "Variable",
+            "name": "$n"
+          },
+          "right": {
+            "type": "Number",
+            "value": "0"
+          }
+        },
+        "thenBlock": [
+          {
+            "type": "Return",
+            "value": {
+              "type": "Number",
+              "value": "0"
+            }
+          }
+        ],
+        "elseIfClauses": []
+      },
+      {
+        "type": "If",
+        "condition": {
+          "type": "BinaryOp",
+          "operator": "==",
+          "left": {
+            "type": "Variable",
+            "name": "$n"
+          },
+          "right": {
+            "type": "Number",
+            "value": "1"
+          }
+        },
+        "thenBlock": [
+          {
+            "type": "Return",
+            "value": {
+              "type": "Number",
+              "value": "1"
+            }
+          }
+        ],
+        "elseIfClauses": []
+      },
+      {
+        "type": "Return",
+        "value": {
+          "type": "BinaryOp",
+          "operator": "+",
+          "left": {
+            "type": "Call",
+            "name": "fibonacci",
+            "arguments": [
+              {
+                "type": "BinaryOp",
+                "operator": "-",
+                "left": {
+                  "type": "Variable",
+                  "name": "$n"
+                },
+                "right": {
+                  "type": "Number",
+                  "value": "1"
+                }
+              }
+            ]
+          },
+          "right": {
+            "type": "Call",
+            "name": "fibonacci",
+            "arguments": [
+              {
+                "type": "BinaryOp",
+                "operator": "-",
+                "left": {
+                  "type": "Variable",
+                  "name": "$n"
+                },
+                "right": {
+                  "type": "Number",
+                  "value": "2"
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+]

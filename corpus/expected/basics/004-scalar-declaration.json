@@ -1,0 +1,14 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$x"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "10"
+    }
+  }
+]

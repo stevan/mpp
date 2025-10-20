@@ -1,0 +1,25 @@
+[
+  {
+    "type": "Ternary",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": ">",
+      "left": {
+        "type": "Variable",
+        "name": "$x"
+      },
+      "right": {
+        "type": "Number",
+        "value": "5"
+      }
+    },
+    "trueExpr": {
+      "type": "String",
+      "value": "\"big\""
+    },
+    "falseExpr": {
+      "type": "String",
+      "value": "\"small\""
+    }
+  }
+]

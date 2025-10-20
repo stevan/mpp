@@ -1,0 +1,34 @@
+[
+  {
+    "type": "Foreach",
+    "variable": {
+      "type": "Variable",
+      "name": "$i"
+    },
+    "declarator": "my",
+    "listExpr": {
+      "type": "BinaryOp",
+      "operator": "..",
+      "left": {
+        "type": "Number",
+        "value": "1"
+      },
+      "right": {
+        "type": "Number",
+        "value": "10"
+      }
+    },
+    "block": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "Variable",
+            "name": "$i"
+          }
+        ]
+      }
+    ]
+  }
+]

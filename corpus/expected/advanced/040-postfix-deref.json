@@ -1,0 +1,10 @@
+[
+  {
+    "type": "PostfixDeref",
+    "base": {
+      "type": "Variable",
+      "name": "$aref"
+    },
+    "derefType": "@"
+  }
+]

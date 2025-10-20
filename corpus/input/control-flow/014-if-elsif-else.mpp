@@ -1,0 +1,7 @@
+if ($x > 10) {
+    print("big");
+} elsif ($x > 5) {
+    print("medium");
+} else {
+    print("small");
+}

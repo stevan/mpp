@@ -1,0 +1,24 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$sum"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "add",
+      "arguments": [
+        {
+          "type": "Number",
+          "value": "5"
+        },
+        {
+          "type": "Number",
+          "value": "10"
+        }
+      ]
+    }
+  }
+]

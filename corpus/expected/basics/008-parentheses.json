@@ -1,0 +1,22 @@
+[
+  {
+    "type": "BinaryOp",
+    "operator": "*",
+    "left": {
+      "type": "BinaryOp",
+      "operator": "+",
+      "left": {
+        "type": "Number",
+        "value": "2"
+      },
+      "right": {
+        "type": "Number",
+        "value": "3"
+      }
+    },
+    "right": {
+      "type": "Number",
+      "value": "4"
+    }
+  }
+]

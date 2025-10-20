@@ -1,0 +1,4 @@
+OUTER: for my $i (1..10) {
+    last OUTER if $i > 5;
+    next if $i == 3;
+}

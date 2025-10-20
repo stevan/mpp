@@ -1,0 +1,24 @@
+[
+  {
+    "type": "If",
+    "condition": {
+      "type": "Variable",
+      "name": "$condition"
+    },
+    "thenBlock": [
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$x"
+        },
+        "operator": "=",
+        "right": {
+          "type": "Number",
+          "value": "5"
+        }
+      }
+    ],
+    "elseIfClauses": []
+  }
+]

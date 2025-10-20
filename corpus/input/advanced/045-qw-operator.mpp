@@ -1,0 +1,1 @@
+my @words = qw(foo bar baz);

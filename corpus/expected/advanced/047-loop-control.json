@@ -1,0 +1,68 @@
+[
+  {
+    "type": "Foreach",
+    "variable": {
+      "type": "Variable",
+      "name": "$i"
+    },
+    "declarator": "my",
+    "listExpr": {
+      "type": "BinaryOp",
+      "operator": "..",
+      "left": {
+        "type": "Number",
+        "value": "1"
+      },
+      "right": {
+        "type": "Number",
+        "value": "10"
+      }
+    },
+    "block": [
+      {
+        "type": "If",
+        "condition": {
+          "type": "BinaryOp",
+          "operator": ">",
+          "left": {
+            "type": "Variable",
+            "name": "$i"
+          },
+          "right": {
+            "type": "Number",
+            "value": "5"
+          }
+        },
+        "thenBlock": [
+          {
+            "type": "Last",
+            "label": "OUTER"
+          }
+        ],
+        "elseIfClauses": []
+      },
+      {
+        "type": "If",
+        "condition": {
+          "type": "BinaryOp",
+          "operator": "==",
+          "left": {
+            "type": "Variable",
+            "name": "$i"
+          },
+          "right": {
+            "type": "Number",
+            "value": "3"
+          }
+        },
+        "thenBlock": [
+          {
+            "type": "Next"
+          }
+        ],
+        "elseIfClauses": []
+      }
+    ],
+    "label": "OUTER"
+  }
+]

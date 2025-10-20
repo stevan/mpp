@@ -1,0 +1,19 @@
+[
+  {
+    "type": "Use",
+    "module": "List::Util",
+    "imports": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "String",
+          "value": "max"
+        },
+        {
+          "type": "String",
+          "value": "min"
+        }
+      ]
+    }
+  }
+]

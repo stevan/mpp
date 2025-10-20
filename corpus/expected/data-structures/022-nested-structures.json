@@ -1,0 +1,43 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$data"
+    },
+    "initializer": {
+      "type": "ArrayLiteral",
+      "elements": [
+        {
+          "type": "Number",
+          "value": "1"
+        },
+        {
+          "type": "HashLiteral",
+          "pairs": [
+            {
+              "key": {
+                "type": "String",
+                "value": "\"x\""
+              },
+              "value": {
+                "type": "ArrayLiteral",
+                "elements": [
+                  {
+                    "type": "Number",
+                    "value": "2"
+                  },
+                  {
+                    "type": "Number",
+                    "value": "3"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

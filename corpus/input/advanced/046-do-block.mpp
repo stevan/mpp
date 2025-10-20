@@ -1,0 +1,5 @@
+my $result = do {
+    my $x = 10;
+    my $y = 20;
+    $x + $y;
+};

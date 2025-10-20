@@ -1,0 +1,26 @@
+[
+  {
+    "type": "HashSlice",
+    "base": {
+      "type": "Variable",
+      "name": "@hash"
+    },
+    "keys": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "String",
+          "value": "a"
+        },
+        {
+          "type": "String",
+          "value": "b"
+        },
+        {
+          "type": "String",
+          "value": "c"
+        }
+      ]
+    }
+  }
+]

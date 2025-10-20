@@ -1,0 +1,42 @@
+[
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": ">",
+      "left": {
+        "type": "Variable",
+        "name": "$x"
+      },
+      "right": {
+        "type": "Number",
+        "value": "10"
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"big\""
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": [],
+    "elseBlock": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"small\""
+          }
+        ]
+      }
+    ]
+  }
+]

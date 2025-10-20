@@ -1,0 +1,18 @@
+package Calculator;
+use strict;
+
+sub add($x, $y) {
+    return $x + $y;
+}
+
+sub multiply($x, $y) {
+    return $x * $y;
+}
+
+my $a = 5;
+my $b = 10;
+my $sum = add($a, $b);
+my $product = multiply($a, $b);
+
+print($sum);
+print($product);

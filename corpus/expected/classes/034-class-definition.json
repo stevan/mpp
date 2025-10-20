@@ -1,0 +1,90 @@
+[
+  {
+    "type": "Class",
+    "name": "Point",
+    "body": [
+      {
+        "type": "Field",
+        "variable": {
+          "type": "Variable",
+          "name": "$x"
+        },
+        "attributes": [
+          "param"
+        ]
+      },
+      {
+        "type": "Field",
+        "variable": {
+          "type": "Variable",
+          "name": "$y"
+        },
+        "attributes": [
+          "param"
+        ]
+      },
+      {
+        "type": "Method",
+        "name": "move",
+        "parameters": [
+          {
+            "type": "Parameter",
+            "variable": {
+              "type": "Variable",
+              "name": "$dx"
+            }
+          },
+          {
+            "type": "Parameter",
+            "variable": {
+              "type": "Variable",
+              "name": "$dy"
+            }
+          }
+        ],
+        "body": [
+          {
+            "type": "Assignment",
+            "left": {
+              "type": "Variable",
+              "name": "$x"
+            },
+            "operator": "=",
+            "right": {
+              "type": "BinaryOp",
+              "operator": "+",
+              "left": {
+                "type": "Variable",
+                "name": "$x"
+              },
+              "right": {
+                "type": "Variable",
+                "name": "$dx"
+              }
+            }
+          },
+          {
+            "type": "Assignment",
+            "left": {
+              "type": "Variable",
+              "name": "$y"
+            },
+            "operator": "=",
+            "right": {
+              "type": "BinaryOp",
+              "operator": "+",
+              "left": {
+                "type": "Variable",
+                "name": "$y"
+              },
+              "right": {
+                "type": "Variable",
+                "name": "$dy"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

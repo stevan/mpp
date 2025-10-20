@@ -1,0 +1,27 @@
+[
+  {
+    "type": "ArrayAccess",
+    "base": {
+      "type": "HashAccess",
+      "base": {
+        "type": "ArrayAccess",
+        "base": {
+          "type": "Variable",
+          "name": "$data"
+        },
+        "index": {
+          "type": "Number",
+          "value": "0"
+        }
+      },
+      "key": {
+        "type": "String",
+        "value": "\"key\""
+      }
+    },
+    "index": {
+      "type": "Number",
+      "value": "1"
+    }
+  }
+]

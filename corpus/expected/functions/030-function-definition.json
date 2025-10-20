@@ -1,0 +1,39 @@
+[
+  {
+    "type": "Sub",
+    "name": "add",
+    "parameters": [
+      {
+        "type": "Parameter",
+        "variable": {
+          "type": "Variable",
+          "name": "$x"
+        }
+      },
+      {
+        "type": "Parameter",
+        "variable": {
+          "type": "Variable",
+          "name": "$y"
+        }
+      }
+    ],
+    "body": [
+      {
+        "type": "Return",
+        "value": {
+          "type": "BinaryOp",
+          "operator": "+",
+          "left": {
+            "type": "Variable",
+            "name": "$x"
+          },
+          "right": {
+            "type": "Variable",
+            "name": "$y"
+          }
+        }
+      }
+    ]
+  }
+]

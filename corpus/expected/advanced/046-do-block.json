@@ -1,0 +1,51 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$result"
+    },
+    "initializer": {
+      "type": "DoBlock",
+      "statements": [
+        {
+          "type": "Declaration",
+          "declarator": "my",
+          "variable": {
+            "type": "Variable",
+            "name": "$x"
+          },
+          "initializer": {
+            "type": "Number",
+            "value": "10"
+          }
+        },
+        {
+          "type": "Declaration",
+          "declarator": "my",
+          "variable": {
+            "type": "Variable",
+            "name": "$y"
+          },
+          "initializer": {
+            "type": "Number",
+            "value": "20"
+          }
+        },
+        {
+          "type": "BinaryOp",
+          "operator": "+",
+          "left": {
+            "type": "Variable",
+            "name": "$x"
+          },
+          "right": {
+            "type": "Variable",
+            "name": "$y"
+          }
+        }
+      ]
+    }
+  }
+]

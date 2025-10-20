@@ -1,0 +1,26 @@
+[
+  {
+    "type": "Foreach",
+    "variable": {
+      "type": "Variable",
+      "name": "$arg"
+    },
+    "declarator": "my",
+    "listExpr": {
+      "type": "Variable",
+      "name": "@ARGV"
+    },
+    "block": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "Variable",
+            "name": "$arg"
+          }
+        ]
+      }
+    ]
+  }
+]

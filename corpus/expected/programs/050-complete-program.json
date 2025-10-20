@@ -1,0 +1,172 @@
+[
+  {
+    "type": "Package",
+    "name": "Calculator"
+  },
+  {
+    "type": "Use",
+    "module": "strict"
+  },
+  {
+    "type": "Sub",
+    "name": "add",
+    "parameters": [
+      {
+        "type": "Parameter",
+        "variable": {
+          "type": "Variable",
+          "name": "$x"
+        }
+      },
+      {
+        "type": "Parameter",
+        "variable": {
+          "type": "Variable",
+          "name": "$y"
+        }
+      }
+    ],
+    "body": [
+      {
+        "type": "Return",
+        "value": {
+          "type": "BinaryOp",
+          "operator": "+",
+          "left": {
+            "type": "Variable",
+            "name": "$x"
+          },
+          "right": {
+            "type": "Variable",
+            "name": "$y"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "type": "Sub",
+    "name": "multiply",
+    "parameters": [
+      {
+        "type": "Parameter",
+        "variable": {
+          "type": "Variable",
+          "name": "$x"
+        }
+      },
+      {
+        "type": "Parameter",
+        "variable": {
+          "type": "Variable",
+          "name": "$y"
+        }
+      }
+    ],
+    "body": [
+      {
+        "type": "Return",
+        "value": {
+          "type": "BinaryOp",
+          "operator": "*",
+          "left": {
+            "type": "Variable",
+            "name": "$x"
+          },
+          "right": {
+            "type": "Variable",
+            "name": "$y"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$a"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "5"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$b"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "10"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$sum"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "add",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$a"
+        },
+        {
+          "type": "Variable",
+          "name": "$b"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$product"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "multiply",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$a"
+        },
+        {
+          "type": "Variable",
+          "name": "$b"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Call",
+    "name": "print",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "$sum"
+      }
+    ]
+  },
+  {
+    "type": "Call",
+    "name": "print",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "$product"
+      }
+    ]
+  }
+]

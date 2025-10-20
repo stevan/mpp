@@ -1,0 +1,16 @@
+[
+  {
+    "type": "Warn",
+    "message": {
+      "type": "String",
+      "value": "\"Warning\""
+    }
+  },
+  {
+    "type": "Die",
+    "message": {
+      "type": "String",
+      "value": "\"Fatal error\""
+    }
+  }
+]

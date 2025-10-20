@@ -1,0 +1,14 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$version"
+    },
+    "initializer": {
+      "type": "Variable",
+      "name": "$Config::VERSION"
+    }
+  }
+]

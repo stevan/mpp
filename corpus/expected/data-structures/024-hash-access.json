@@ -1,0 +1,13 @@
+[
+  {
+    "type": "HashAccess",
+    "base": {
+      "type": "Variable",
+      "name": "$hash"
+    },
+    "key": {
+      "type": "String",
+      "value": "\"key\""
+    }
+  }
+]

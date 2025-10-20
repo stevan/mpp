@@ -1,0 +1,58 @@
+[
+  {
+    "type": "Class",
+    "name": "Circle",
+    "body": [
+      {
+        "type": "Field",
+        "variable": {
+          "type": "Variable",
+          "name": "$radius"
+        },
+        "attributes": [
+          "param",
+          "reader",
+          "writer"
+        ]
+      },
+      {
+        "type": "Method",
+        "name": "area",
+        "parameters": [],
+        "body": [
+          {
+            "type": "Return",
+            "value": {
+              "type": "BinaryOp",
+              "operator": ".",
+              "left": {
+                "type": "Number",
+                "value": "3"
+              },
+              "right": {
+                "type": "BinaryOp",
+                "operator": "*",
+                "left": {
+                  "type": "BinaryOp",
+                  "operator": "*",
+                  "left": {
+                    "type": "Number",
+                    "value": "14159"
+                  },
+                  "right": {
+                    "type": "Variable",
+                    "name": "$radius"
+                  }
+                },
+                "right": {
+                  "type": "Variable",
+                  "name": "$radius"
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

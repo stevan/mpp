@@ -1,0 +1,13 @@
+[
+  {
+    "type": "ArrayAccess",
+    "base": {
+      "type": "Variable",
+      "name": "$array"
+    },
+    "index": {
+      "type": "Number",
+      "value": "0"
+    }
+  }
+]

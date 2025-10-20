@@ -1,0 +1,12 @@
+[
+  {
+    "type": "Call",
+    "name": "print",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "$_"
+      }
+    ]
+  }
+]

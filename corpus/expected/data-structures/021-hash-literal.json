@@ -1,0 +1,35 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$person"
+    },
+    "initializer": {
+      "type": "HashLiteral",
+      "pairs": [
+        {
+          "key": {
+            "type": "String",
+            "value": "\"name\""
+          },
+          "value": {
+            "type": "String",
+            "value": "\"Alice\""
+          }
+        },
+        {
+          "key": {
+            "type": "String",
+            "value": "\"age\""
+          },
+          "value": {
+            "type": "Number",
+            "value": "30"
+          }
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "type": "Call",
+    "name": "print",
+    "arguments": [
+      {
+        "type": "String",
+        "value": "\"Hello\""
+      }
+    ]
+  },
+  {
+    "type": "Call",
+    "name": "say",
+    "arguments": [
+      {
+        "type": "String",
+        "value": "\"World\""
+      }
+    ]
+  }
+]

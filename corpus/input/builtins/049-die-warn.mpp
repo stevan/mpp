@@ -1,0 +1,2 @@
+warn("Warning");
+die("Fatal error");

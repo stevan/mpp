@@ -4104,3 +4104,152 @@ Don't assume keyword categories - always verify with actual tokenization. The `h
 - ✅ Ready for Sprint 7!
 
 **Result**: Extremely successful session! Parser now supports **modern Perl OO** with full class syntax - a major milestone! 🎉
+
+---
+
+## Session 16 - Language Specification & Corpus Testing
+
+**Date**: October 20, 2025
+**Duration**: ~3 hours
+**Result**: Centralized language specification and comprehensive corpus testing system
+
+### Starting Point
+- 300 tests passing
+- Language definitions scattered across Tokenizer, Lexer, Parser
+- No golden file testing system
+
+### Ending Point
+- **350 tests passing** (+50 corpus tests)
+- Central language specification in `src/LanguageSpec.ts`
+- Comprehensive corpus testing system with 50 test cases in 9 categories
+- Reduced code duplication by ~237 lines
+
+## What We Built This Session
+
+### 1. Central Language Specification (`src/LanguageSpec.ts`)
+
+**Problem**: Keywords, operators, and language definitions were scattered, making maintenance difficult.
+
+**Solution**: Created comprehensive language specification module (367 lines):
+
+**Features**:
+- Keywords categorized by role (DECLARATION, CONTROL, MODULE, BUILTIN, WORD_OPERATOR, SPECIAL)
+- Complete operator precedence table (21 levels) with associativity
+- Multi-character operators ordered by length
+- Sigils and delimiters with type mappings
+- Utility functions for classification
+
+**Benefits**:
+- Single source of truth for language syntax
+- Easy to add new operators/keywords
+- Clear documentation of complete language
+- Type-safe exports for consistency
+
+**Code Reduction**:
+- `Tokenizer.ts`: 430 → 305 lines (-125)
+- `Lexer.ts`: 127 → 90 lines (-37)
+- `Parser.ts`: 2,880 → 2,805 lines (-75)
+- **Total removed**: ~237 lines of duplication
+
+### 2. Corpus Testing System
+
+**Problem**: Needed regression testing, documentation, and golden file tests for complete programs.
+
+**Solution**: Implemented comprehensive corpus testing system:
+
+**Structure**:
+```
+corpus/
+├── input/
+│   ├── basics/              # 11 tests
+│   ├── control-flow/        # 7 tests
+│   ├── data-structures/     # 11 tests
+│   ├── functions/           # 4 tests
+│   ├── classes/             # 3 tests
+│   ├── modules/             # 3 tests
+│   ├── advanced/            # 8 tests
+│   ├── builtins/            # 2 tests
+│   └── programs/            # 1 test
+└── expected/                # Auto-generated JSON
+```
+
+**Features**:
+- Recursive file discovery in all categories
+- `UPDATE_SNAPSHOTS=true` mode to regenerate JSON
+- Automatic directory creation for expected files
+- Clear test names including category path
+- Integrated into main test suite
+
+**Coverage**: 50 test cases covering:
+- All language features (variables, operators, control flow)
+- Data structures (arrays, hashes, access, slicing)
+- Functions (definitions, calls, defaults, recursion)
+- OO features (classes, fields, methods)
+- Module system (packages, use statements)
+- Advanced features (postfix deref, special vars)
+- Complete programs
+
+**Usage**:
+```bash
+# Run corpus tests
+npm test tests/Corpus.test.ts
+
+# Add new test
+echo 'my @array = (1, 2, 3);' > corpus/input/data-structures/051-test.mpp
+UPDATE_SNAPSHOTS=true npm test
+
+# Update after parser changes
+UPDATE_SNAPSHOTS=true npm test
+git diff corpus/expected/
+```
+
+**Benefits**:
+- Regression protection - catches unintended changes
+- Living documentation - human-readable examples
+- Easy expansion - just add `.mpp` files
+- Version controlled - track language evolution
+
+### Files Created/Modified
+
+**Created**:
+- `src/LanguageSpec.ts` - Central language specification (367 lines)
+- `tests/Corpus.test.ts` - Test runner with recursive discovery
+- `corpus/README.md` - Comprehensive documentation
+- `corpus/input/*/` - 50 `.mpp` test files across 9 categories
+- `corpus/expected/*/` - 50 `.json` AST files (auto-generated)
+
+**Modified**:
+- `src/Tokenizer.ts` - Use LanguageSpec
+- `src/Lexer.ts` - Use LanguageSpec
+- `src/Parser.ts` - Use LanguageSpec
+- `README.md` - Added corpus documentation
+- `DEVELOPMENT_LOG.md` - This entry
+
+### Test Coverage
+
+- **Total tests**: 350 (was 300, +50)
+- **Test coverage**: 93.77% lines, 100% functions
+- **All passing**: ✅
+
+### Design Decisions
+
+1. **Category Organization**: Organized corpus by feature area instead of flat structure for better scalability
+2. **Recursive Discovery**: Test runner finds all `.mpp` files in subdirectories automatically
+3. **Mirror Structure**: `expected/` mirrors `input/` directory structure
+4. **Central Spec**: All language definitions in one place with utility functions
+
+### Impact
+
+- **Maintainability**: Language changes require updates in one place
+- **Documentation**: Corpus serves as comprehensive examples
+- **Confidence**: Golden file testing catches regressions
+- **Scalability**: Easy to add tests in appropriate categories
+
+### Next Session Ideas
+
+- Add negative test cases (files that should fail)
+- Add more edge cases for each feature
+- Consider performance tracking
+- Add new categories as language grows
+
+---

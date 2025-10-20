@@ -1,0 +1,30 @@
+[
+  {
+    "type": "BinaryOp",
+    "operator": "&&",
+    "left": {
+      "type": "BinaryOp",
+      "operator": ">",
+      "left": {
+        "type": "Variable",
+        "name": "$x"
+      },
+      "right": {
+        "type": "Number",
+        "value": "5"
+      }
+    },
+    "right": {
+      "type": "BinaryOp",
+      "operator": "<",
+      "left": {
+        "type": "Variable",
+        "name": "$y"
+      },
+      "right": {
+        "type": "Number",
+        "value": "10"
+      }
+    }
+  }
+]

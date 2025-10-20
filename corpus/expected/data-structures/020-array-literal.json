@@ -1,0 +1,35 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$numbers"
+    },
+    "initializer": {
+      "type": "ArrayLiteral",
+      "elements": [
+        {
+          "type": "Number",
+          "value": "1"
+        },
+        {
+          "type": "Number",
+          "value": "2"
+        },
+        {
+          "type": "Number",
+          "value": "3"
+        },
+        {
+          "type": "Number",
+          "value": "4"
+        },
+        {
+          "type": "Number",
+          "value": "5"
+        }
+      ]
+    }
+  }
+]

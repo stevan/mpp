@@ -144,16 +144,22 @@ Result: **Pure forward-streaming parser, no feedback loops required!**
 ```
 mpp/
 ├── src/
-│   ├── Tokenizer.ts          # Boundary detection + token emission (~330 lines)
-│   ├── Lexer.ts              # Semantic classification (~120 lines)
-│   ├── Parser.ts             # Precedence climbing parser (~2,900 lines)
-│   └── AST.ts                # AST node type definitions (~250 lines)
+│   ├── Tokenizer.ts          # Boundary detection + token emission (~305 lines)
+│   ├── Lexer.ts              # Semantic classification (~90 lines)
+│   ├── Parser.ts             # Precedence climbing parser (~2,805 lines)
+│   ├── AST.ts                # AST node type definitions (~260 lines)
+│   └── LanguageSpec.ts       # Central language specification (~367 lines)
 ├── tests/
 │   ├── Tokenizer.test.ts     # 13 tokenizer tests
 │   ├── Lexer.test.ts         # 9 lexer tests
 │   ├── Parser.test.ts        # 250+ unit tests
-│   ├── Examples.test.ts      # 5 integration tests
-│   └── DataStructures.test.ts # 16 milestone tests
+│   ├── Examples.test.ts      # 11 integration tests
+│   ├── DataStructures.test.ts # 16 milestone tests
+│   └── Corpus.test.ts        # 50 corpus tests
+├── corpus/
+│   ├── input/                # 50 .mpp test files (organized by category)
+│   ├── expected/             # 50 .json AST files (auto-generated)
+│   └── README.md             # Corpus documentation
 ├── bin/
 │   └── repl.js               # Interactive REPL
 ├── tsconfig.json             # Strict TypeScript config
@@ -167,10 +173,26 @@ mpp/
 
 ```bash
 npm install
-npm test              # Build and run all tests
+npm test              # Build and run all tests (350 tests)
 npm run build         # Compile TypeScript
 npm run repl          # Start interactive REPL
 ```
+
+### Test Suite
+
+The project includes **350 tests** across multiple test suites:
+
+- **Unit tests** (300 tests) - `tests/*.test.ts`
+  - Tokenizer tests - Token generation
+  - Lexer tests - Semantic classification
+  - Parser tests - AST construction
+  - Examples tests - Complete programs
+  - DataStructures tests - Arrays, hashes, access
+
+- **Corpus tests** (50 tests) - `tests/Corpus.test.ts`
+  - Golden file testing with human-readable input
+  - Organized by feature category
+  - See `corpus/README.md` for details
 
 ## Interactive REPL
 
@@ -214,6 +236,61 @@ Goodbye!
 Commands:
 - `.help` - Show help
 - `.exit` / `.quit` - Exit the REPL
+
+## Corpus Testing System
+
+The project includes a **corpus of 50 test cases** organized by feature category for golden file testing and documentation. The corpus provides:
+
+- **Regression testing** - Catch parser behavior changes
+- **Living documentation** - Human-readable examples of all language features
+- **Easy expansion** - Add new tests by creating `.mpp` files
+
+### Corpus Structure
+
+```
+corpus/
+├── input/
+│   ├── basics/              # Variables, literals, operators (11 tests)
+│   ├── control-flow/        # Conditionals, loops (7 tests)
+│   ├── data-structures/     # Arrays, hashes, access (11 tests)
+│   ├── functions/           # Definitions, calls, recursion (4 tests)
+│   ├── classes/             # OO features (3 tests)
+│   ├── modules/             # Packages, use statements (3 tests)
+│   ├── advanced/            # Postfix deref, special vars (8 tests)
+│   ├── builtins/            # Built-in functions (2 tests)
+│   └── programs/            # Complete programs (1 test)
+└── expected/                # Auto-generated JSON AST files
+
+See corpus/README.md for full documentation.
+```
+
+### Using the Corpus
+
+**Run corpus tests:**
+```bash
+npm test tests/Corpus.test.ts
+```
+
+**Add a new test:**
+```bash
+# 1. Create .mpp file in appropriate category
+echo 'my @array = (1, 2, 3);' > corpus/input/data-structures/051-array-declaration.mpp
+
+# 2. Generate expected JSON
+UPDATE_SNAPSHOTS=true npm test
+
+# 3. Review and commit
+git add corpus/
+git commit -m "Add array declaration corpus test"
+```
+
+**Update snapshots after parser changes:**
+```bash
+UPDATE_SNAPSHOTS=true npm test
+git diff corpus/expected/  # Review changes
+```
+
+The corpus serves as both a comprehensive test suite and documentation of the parser's capabilities.
 
 ## Operator Precedence Table
 

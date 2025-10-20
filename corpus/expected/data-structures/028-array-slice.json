@@ -1,0 +1,21 @@
+[
+  {
+    "type": "ArraySlice",
+    "base": {
+      "type": "Variable",
+      "name": "@array"
+    },
+    "indices": {
+      "type": "BinaryOp",
+      "operator": "..",
+      "left": {
+        "type": "Number",
+        "value": "0"
+      },
+      "right": {
+        "type": "Number",
+        "value": "4"
+      }
+    }
+  }
+]

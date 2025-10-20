@@ -1,0 +1,27 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@words"
+    },
+    "initializer": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "String",
+          "value": "foo"
+        },
+        {
+          "type": "String",
+          "value": "bar"
+        },
+        {
+          "type": "String",
+          "value": "baz"
+        }
+      ]
+    }
+  }
+]

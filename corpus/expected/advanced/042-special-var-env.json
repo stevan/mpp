@@ -1,0 +1,21 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$path"
+    },
+    "initializer": {
+      "type": "HashAccess",
+      "base": {
+        "type": "Variable",
+        "name": "$ENV"
+      },
+      "key": {
+        "type": "String",
+        "value": "PATH"
+      }
+    }
+  }
+]

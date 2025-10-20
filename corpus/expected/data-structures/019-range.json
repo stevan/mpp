@@ -1,0 +1,22 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$range"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "..",
+      "left": {
+        "type": "Number",
+        "value": "1"
+      },
+      "right": {
+        "type": "Number",
+        "value": "10"
+      }
+    }
+  }
+]

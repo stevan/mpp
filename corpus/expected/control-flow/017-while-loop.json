@@ -1,0 +1,39 @@
+[
+  {
+    "type": "While",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "<",
+      "left": {
+        "type": "Variable",
+        "name": "$x"
+      },
+      "right": {
+        "type": "Number",
+        "value": "10"
+      }
+    },
+    "block": [
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$x"
+        },
+        "operator": "=",
+        "right": {
+          "type": "BinaryOp",
+          "operator": "+",
+          "left": {
+            "type": "Variable",
+            "name": "$x"
+          },
+          "right": {
+            "type": "Number",
+            "value": "1"
+          }
+        }
+      }
+    ]
+  }
+]

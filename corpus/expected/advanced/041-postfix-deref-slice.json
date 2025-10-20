@@ -1,0 +1,23 @@
+[
+  {
+    "type": "PostfixDerefSlice",
+    "base": {
+      "type": "Variable",
+      "name": "$aref"
+    },
+    "sliceType": "@",
+    "indices": {
+      "type": "BinaryOp",
+      "operator": "..",
+      "left": {
+        "type": "Number",
+        "value": "0"
+      },
+      "right": {
+        "type": "Number",
+        "value": "4"
+      }
+    },
+    "indexType": "["
+  }
+]

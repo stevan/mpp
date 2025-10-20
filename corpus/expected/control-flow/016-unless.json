@@ -1,0 +1,16 @@
+[
+  {
+    "type": "Unless",
+    "condition": {
+      "type": "Variable",
+      "name": "$error"
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "process",
+        "arguments": []
+      }
+    ]
+  }
+]

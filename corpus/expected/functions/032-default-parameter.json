@@ -1,0 +1,36 @@
+[
+  {
+    "type": "Sub",
+    "name": "greet",
+    "parameters": [
+      {
+        "type": "Parameter",
+        "variable": {
+          "type": "Variable",
+          "name": "$name"
+        },
+        "defaultValue": {
+          "type": "String",
+          "value": "\"World\""
+        }
+      }
+    ],
+    "body": [
+      {
+        "type": "Return",
+        "value": {
+          "type": "BinaryOp",
+          "operator": ".",
+          "left": {
+            "type": "String",
+            "value": "\"Hello, \""
+          },
+          "right": {
+            "type": "Variable",
+            "name": "$name"
+          }
+        }
+      }
+    ]
+  }
+]
