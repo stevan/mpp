@@ -1,4 +1,5 @@
 import { Token } from './Tokenizer.js';
+import * as Lang from './LanguageSpec.js';
 
 export interface Lexeme {
     category: string;
@@ -6,41 +7,6 @@ export interface Lexeme {
 }
 
 export class Lexer {
-    private declarationKeywords = new Set([
-        'my', 'our', 'state', 'const',
-        'sub', 'async', 'class', 'field', 'method'
-    ]);
-
-    private controlKeywords = new Set([
-        'if', 'elsif', 'else', 'unless',
-        'while', 'until', 'for', 'foreach',
-        'given', 'when', 'default', 'break',
-        'next', 'last', 'redo', 'continue', 'return',
-        'do', 'eval', 'try', 'catch', 'finally', 'throw', 'die', 'warn'
-    ]);
-
-    private binaryOperators = new Set([
-        '+', '-', '*', '/', '%', '**',
-        '.', 'x',
-        '==', '!=', '<', '>', '<=', '>=', '<=>',
-        'eq', 'ne', 'lt', 'gt', 'le', 'ge', 'cmp',
-        '&&', '||', '//', 'and', 'or', 'xor',
-        '&', '|', '^', '<<', '>>',
-        '->', '=>',
-        ',', '..'
-    ]);
-
-    private assignmentOperators = new Set([
-        '=', '+=', '-=', '*=', '/=', '%=', '**=',
-        '.=', 'x=',
-        '||=', '//=', '&&=',
-        '&=', '|=', '^=', '<<=', '>>='
-    ]);
-
-    private unaryOperators = new Set([
-        '!', '~', 'not'
-    ]);
-
     async *run(tokens: AsyncGenerator<Token>): AsyncGenerator<Lexeme> {
         for await (const token of tokens) {
             yield this.classify(token);
@@ -80,10 +46,10 @@ export class Lexer {
 
         // Keywords
         if (token.type === 'KEYWORD') {
-            if (this.declarationKeywords.has(token.value)) {
+            if (Lang.KEYWORDS.DECLARATION.has(token.value)) {
                 return { category: 'DECLARATION', token };
             }
-            if (this.controlKeywords.has(token.value)) {
+            if (Lang.KEYWORDS.CONTROL.has(token.value)) {
                 return { category: 'CONTROL', token };
             }
             // Other keywords
@@ -92,13 +58,13 @@ export class Lexer {
 
         // Operators
         if (token.type === 'OPERATOR') {
-            if (this.assignmentOperators.has(token.value)) {
+            if (Lang.OPERATORS.ASSIGNMENT.has(token.value)) {
                 return { category: 'ASSIGNOP', token };
             }
-            if (this.binaryOperators.has(token.value)) {
+            if (Lang.OPERATORS.BINARY.has(token.value)) {
                 return { category: 'BINOP', token };
             }
-            if (this.unaryOperators.has(token.value)) {
+            if (Lang.OPERATORS.UNARY.has(token.value)) {
                 return { category: 'UNOP', token };
             }
             // Default to binary operator

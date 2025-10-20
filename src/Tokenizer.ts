@@ -1,3 +1,5 @@
+import * as Lang from './LanguageSpec.js';
+
 export interface Token {
     type: string;
     value: string;
@@ -6,20 +8,6 @@ export interface Token {
 }
 
 export class Tokenizer {
-    private keywords = new Set([
-        'if', 'elsif', 'else', 'unless',
-        'while', 'until', 'for', 'foreach',
-        'given', 'when', 'default', 'break',
-        'next', 'last', 'redo', 'continue', 'return',
-        'my', 'our', 'state', 'const',
-        'sub', 'async', 'class', 'field', 'method', 'has',
-        'and', 'or', 'not', 'xor',
-        'cmp', 'eq', 'ne', 'lt', 'gt', 'le', 'ge',
-        'use', 'require', 'package', 'import',
-        'do', 'eval', 'try', 'catch', 'finally', 'throw', 'die', 'warn', 'print', 'say',
-        'spawn', 'send', 'recv', 'self', 'kill', 'alive',
-        'defined', 'undef', 'exists', 'delete'
-    ]);
 
     async *run(source: AsyncGenerator<string>): AsyncGenerator<Token> {
         let line = 1;
@@ -191,7 +179,7 @@ export class Tokenizer {
                         }
                     }
 
-                    const type = this.keywords.has(value) ? 'KEYWORD' : 'IDENTIFIER';
+                    const type = Lang.isKeyword(value) ? 'KEYWORD' : 'IDENTIFIER';
 
                     yield {
                         type,
@@ -224,7 +212,7 @@ export class Tokenizer {
                 // Check for multi-character operators (3-char first, then 2-char)
                 if (i + 2 < chunk.length) {
                     const threeChar = chunk.substring(i, i + 3);
-                    if (this.isMultiCharOperator(threeChar)) {
+                    if (Lang.isMultiCharOperator(threeChar)) {
                         yield {
                             type: 'OPERATOR',
                             value: threeChar,
@@ -239,7 +227,7 @@ export class Tokenizer {
 
                 if (i + 1 < chunk.length) {
                     const twoChar = chunk.substring(i, i + 2);
-                    if (this.isMultiCharOperator(twoChar)) {
+                    if (Lang.isMultiCharOperator(twoChar)) {
                         yield {
                             type: 'OPERATOR',
                             value: twoChar,
@@ -253,8 +241,8 @@ export class Tokenizer {
                 }
 
                 // Check for delimiters
-                if (this.isDelimiter(char)) {
-                    const type = this.getDelimiterType(char);
+                if (Lang.isDelimiter(char)) {
+                    const type = Lang.getDelimiterType(char);
                     yield {
                         type,
                         value: char,
@@ -267,7 +255,7 @@ export class Tokenizer {
                 }
 
                 // Check for single-character operator
-                if (this.isOperatorChar(char)) {
+                if (Lang.isOperatorChar(char)) {
                     yield {
                         type: 'OPERATOR',
                         value: char,
@@ -291,7 +279,7 @@ export class Tokenizer {
     }
 
     private isSigil(char: string): boolean {
-        return char === '$' || char === '@' || char === '%' || char === '&';
+        return Lang.isSigil(char);
     }
 
     private isDigit(char: string): boolean {
@@ -311,59 +299,8 @@ export class Tokenizer {
                char === '_';
     }
 
-    private isOperatorChar(char: string): boolean {
-        return '+-*/%=<>!&|^~.?:'.includes(char);
-    }
-
-    private isMultiCharOperator(op: string): boolean {
-        const multiChar = [
-            // Comparison
-            '==', '!=', '<=', '>=', '<=>',
-            // Logical
-            '&&', '||', '//',
-            // Arithmetic
-            '**',
-            // Bitwise
-            '<<', '>>',
-            // Assignment
-            '+=', '-=', '*=', '/=', '%=', '**=',
-            '.=', 'x=',
-            '||=', '//=', '&&=',
-            '&=', '|=', '^=', '<<=', '>>=',
-            // Special
-            '->', '=>', '..'
-        ];
-        return multiChar.includes(op);
-    }
-
-    private isDelimiter(char: string): boolean {
-        return '(){}[];,'.includes(char);
-    }
-
-    private getDelimiterType(char: string): string {
-        switch (char) {
-            case '(': return 'LPAREN';
-            case ')': return 'RPAREN';
-            case '{': return 'LBRACE';
-            case '}': return 'RBRACE';
-            case '[': return 'LBRACKET';
-            case ']': return 'RBRACKET';
-            case ';': return 'TERMINATOR';
-            case ',': return 'COMMA';
-            default: return 'UNKNOWN';
-        }
-    }
-
     private getClosingDelimiter(opening: string): string {
-        // For paired delimiters, return the closing one
-        switch (opening) {
-            case '(': return ')';
-            case '{': return '}';
-            case '[': return ']';
-            case '<': return '>';
-            // For non-paired delimiters, return the same one
-            default: return opening;
-        }
+        return Lang.getClosingDelimiter(opening);
     }
 
     private tokenizeString(

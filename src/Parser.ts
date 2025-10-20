@@ -1,4 +1,5 @@
 import { Lexeme } from './Lexer.js';
+import * as Lang from './LanguageSpec.js';
 import {
     ASTNode,
     NumberNode,
@@ -45,16 +46,11 @@ import {
     MethodNode
 } from './AST.js';
 
-interface OperatorInfo {
-    precedence: number;
-    associativity: 'LEFT' | 'RIGHT' | 'NONE';
-}
-
 export class Parser {
-    private precedenceTable: Map<string, OperatorInfo>;
+    private precedenceTable: Map<string, Lang.OperatorInfo>;
 
     constructor() {
-        this.precedenceTable = this.buildPrecedenceTable();
+        this.precedenceTable = new Map(Object.entries(Lang.OPERATOR_PRECEDENCE));
     }
 
     async *run(lexemes: AsyncGenerator<Lexeme>): AsyncGenerator<ASTNode> {
@@ -1577,7 +1573,7 @@ export class Parser {
         return { node, nextPos: pos };
     }
 
-    private getOperatorInfo(operator: string): OperatorInfo | null {
+    private getOperatorInfo(operator: string): Lang.OperatorInfo | null {
         return this.precedenceTable.get(operator) || null;
     }
 
@@ -2805,80 +2801,5 @@ export class Parser {
             parameters,
             body: blockResult.statements
         };
-    }
-
-    private buildPrecedenceTable(): Map<string, OperatorInfo> {
-        const table = new Map<string, OperatorInfo>();
-
-        // Level 3: Exponentiation (RIGHT associative)
-        table.set('**', { precedence: 3, associativity: 'RIGHT' });
-
-        // Level 6: Multiplicative (LEFT)
-        ['*', '/', '%', 'x'].forEach(op => {
-            table.set(op, { precedence: 6, associativity: 'LEFT' });
-        });
-
-        // Level 7: Additive and concatenation (LEFT)
-        ['+', '-', '.'].forEach(op => {
-            table.set(op, { precedence: 7, associativity: 'LEFT' });
-        });
-
-        // Level 8: Bit shift (LEFT)
-        ['<<', '>>'].forEach(op => {
-            table.set(op, { precedence: 8, associativity: 'LEFT' });
-        });
-
-        // Level 9: Relational comparison (LEFT)
-        ['<', '>', '<=', '>=', 'lt', 'gt', 'le', 'ge'].forEach(op => {
-            table.set(op, { precedence: 9, associativity: 'LEFT' });
-        });
-
-        // Level 10: Equality comparison (LEFT)
-        ['==', '!=', '<=>', 'eq', 'ne', 'cmp'].forEach(op => {
-            table.set(op, { precedence: 10, associativity: 'LEFT' });
-        });
-
-        // Level 11: Bitwise AND (LEFT)
-        table.set('&', { precedence: 11, associativity: 'LEFT' });
-
-        // Level 12: Bitwise OR and XOR (LEFT)
-        ['|', '^'].forEach(op => {
-            table.set(op, { precedence: 12, associativity: 'LEFT' });
-        });
-
-        // Level 13: Logical AND (LEFT)
-        table.set('&&', { precedence: 13, associativity: 'LEFT' });
-
-        // Level 14: Logical OR and defined-or (LEFT)
-        ['||', '//'].forEach(op => {
-            table.set(op, { precedence: 14, associativity: 'LEFT' });
-        });
-
-        // Level 15: Range (NONE)
-        table.set('..', { precedence: 15, associativity: 'NONE' });
-
-        // Level 16: Ternary conditional (RIGHT associative)
-        table.set('?', { precedence: 16, associativity: 'RIGHT' });
-
-        // Level 17: Assignment (RIGHT associative)
-        ['=', '+=', '-=', '*=', '/=', '%=', '**=', '.=', 'x=',
-         '||=', '//=', '&&=', '&=', '|=', '^=', '<<=', '>>='].forEach(op => {
-            table.set(op, { precedence: 17, associativity: 'RIGHT' });
-        });
-
-        // Level 18: Comma and fat comma (LEFT)
-        [',', '=>'].forEach(op => {
-            table.set(op, { precedence: 18, associativity: 'LEFT' });
-        });
-
-        // Level 20: Low-precedence AND (LEFT)
-        table.set('and', { precedence: 20, associativity: 'LEFT' });
-
-        // Level 21: Low-precedence OR and XOR (LEFT)
-        ['or', 'xor'].forEach(op => {
-            table.set(op, { precedence: 21, associativity: 'LEFT' });
-        });
-
-        return table;
     }
 }
