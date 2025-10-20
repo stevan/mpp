@@ -1,28 +1,29 @@
-# Session 15 Prompt - MPP Parser Development
+# Session 16 Prompt - MPP Parser Development
 
 ## Quick Start
 
 You are continuing development of the **MPP (Modern Perl Parser)** project. This is a TypeScript-based parser for a modern subset of Perl, built with strict TDD methodology.
 
 **Current Status:**
-- **266 tests passing** ✅
-- **~2,650 lines of parser code**
-- Last session: Implemented Sprint 5 (Package System)
-- Sprint 5 COMPLETE - Module organization done!
+- **300 tests passing** ✅ **93.77% test coverage, 100% function coverage**
+- **~2,900 lines of parser code**
+- Last session: Implemented Sprint 6 (Modern OO) + Test Coverage Improvements
+- **Version 0.1.1 Release Candidate** - Sprint 6 COMPLETE!
 
 ## Critical Files to Read First
 
 1. **FEATURE_PRIORITIES.md** ⭐ **READ THIS FIRST** ⭐
    - Replaces NEXT_STEPS.md
-   - Comprehensive roadmap of 23 features to implement
-   - Organized into 9 phases with time estimates
+   - Comprehensive roadmap with 6 of 9 phases complete
+   - Sprint 6 (Modern OO) now COMPLETE
    - Shows what to defer and what to drop
    - **ALWAYS consult this before planning work**
 
-2. **DEVELOPMENT_LOG.md** (Session 9 section at bottom)
-   - Summary of what was built in Session 9
-   - 5 features: ranges, bareword keys, list assignment, slices
+2. **DEVELOPMENT_LOG.md** (Session 15 section at bottom)
+   - Summary of Sprint 6 (Modern OO) implementation
+   - 4 features: class, field, method, has
    - Architecture insights and lessons learned
+   - Highest velocity session (640 lines, 18 tests)
 
 3. **README.md**
    - Project overview and capabilities
@@ -31,39 +32,37 @@ You are continuing development of the **MPP (Modern Perl Parser)** project. This
 
 ## Recommended Next Steps
 
-### Option 1: Sprint 6 - Class Syntax (RECOMMENDED)
-
-**Time:** 5-6 hours | **Value:** HIGH | **Complexity:** MEDIUM
-
-Implement modern OO (Perl 5.38+):
-
-1. **`class` keyword** (~120 lines)
-   - `class Point { ... }`
-   - New AST node: ClassNode
-
-2. **`field` declarations** (~80 lines)
-   - `field $x :param;`
-   - New AST node: FieldNode
-
-3. **`method` modifier** (~50 lines)
-   - `method move($dx, $dy) { ... }`
-   - Automatic `$self` parameter
-
-4. **`has` attribute syntax** (~50 lines)
-   - `has $x :reader :writer;`
-   - Alternative to `field`
-
-**Why Sprint 6:**
-- Modern OO support
-- Replaces old `bless`-based OO
-- Natural progression from package system
-- Completes module/class infrastructure
-
-### Option 2: Sprint 7 - Advanced Subs (Alternative)
+### Option 1: Sprint 7 - Advanced Subs (RECOMMENDED)
 
 **Time:** 2-3 hours | **Value:** MEDIUM | **Complexity:** LOW
 
-Enhanced function signatures (named params, slurpy, attributes)
+Enhanced function signatures:
+
+1. **Named parameters** (~80 lines)
+   - `sub foo(:$name, :$age) { ... }`
+   - Parse `:$param` syntax
+
+2. **Slurpy parameters** (~50 lines)
+   - `sub foo($first, @rest) { ... }`
+   - `sub foo($x, %opts) { ... }`
+
+3. **Subroutine attributes** (~70 lines)
+   - `sub get_value :lvalue { ... }`
+   - Attribute parsing
+
+**Why Sprint 7:**
+- Completes function signature features
+- Natural progression from methods
+- Lower complexity than BEGIN/END
+- Enhances usability
+
+### Option 2: Sprint 8 - BEGIN/END Blocks (Alternative)
+
+**Time:** 1-2 hours | **Value:** MEDIUM | **Complexity:** LOW
+
+Initialization and cleanup hooks:
+- `BEGIN { use strict; }`
+- `END { close_resources(); }`
 
 ## Development Workflow
 
@@ -233,8 +232,9 @@ test('parses die with message', async () => {
 ✅ **Special Variables**: %ENV, @ARGV, $_
 ✅ **Syntax**: Bareword hash keys, fat comma, blocks, qw// operator
 ✅ **Packages**: Package declarations, use statements, fully qualified names (Package::Name)
+✅ **Modern OO**: class keyword, field declarations, method definitions, has attributes 🎉
 
-**266 tests covering all features!**
+**300 tests covering all features with 93.77% code coverage!**
 
 ## What's Deferred
 
@@ -255,22 +255,23 @@ test('parses die with message', async () => {
 
 ## Session Goals
 
-**Primary Goal:** Implement Sprint 6 (Class Syntax)
-- 4 features: class keyword, field declarations, method modifier, has attributes
-- ~300 lines of code
-- 5-6 hours
-- Modern OO support (Perl 5.38+)
+**Primary Goal:** Implement Sprint 7 (Advanced Subs) or Sprint 8 (BEGIN/END)
+- Sprint 7: 3 features (named params, slurpy params, sub attributes) - 2-3 hours
+- Sprint 8: 1 feature (BEGIN/END blocks) - 1-2 hours
+- Continue test-driven development
 
-**Secondary Goal:** If time permits, start Sprint 7 (Advanced Subs)
+**Secondary Goal:** Improve test coverage if time permits
 
 **Documentation Goal:** Update DEVELOPMENT_LOG.md with session summary
 
+**Release Note:** Version 0.1.1 is ready for release after documentation updates!
+
 ## Getting Started Checklist
 
-- [ ] Read FEATURE_PRIORITIES.md (especially Sprint 6 section)
-- [ ] Run `npm test` to verify 266 tests pass
-- [ ] Review Session 14 summary in DEVELOPMENT_LOG.md
-- [ ] Implement Sprint 6 (Class Syntax) or Sprint 7 (Advanced Subs)
+- [ ] Read FEATURE_PRIORITIES.md (especially Sprint 7 or 8 section)
+- [ ] Run `npm test` to verify 300 tests pass
+- [ ] Review Session 15 summary in DEVELOPMENT_LOG.md
+- [ ] Choose Sprint 7 (Advanced Subs) or Sprint 8 (BEGIN/END)
 - [ ] Write tests first!
 - [ ] Implement features
 - [ ] Run all tests
@@ -280,7 +281,7 @@ test('parses die with message', async () => {
 
 ⚠️ **Always use FEATURE_PRIORITIES.md** - It's the authoritative roadmap
 ⚠️ **TDD is mandatory** - Write tests before implementation
-⚠️ **Keep tests passing** - All 247 tests must pass after changes
+⚠️ **Keep tests passing** - All 300 tests must pass after changes
 ⚠️ **No `any` types** - Maintain 100% type safety
 ⚠️ **Document sessions** - Update DEVELOPMENT_LOG.md when done
 
@@ -288,11 +289,12 @@ test('parses die with message', async () => {
 
 You have everything you need to begin:
 - Clear roadmap (FEATURE_PRIORITIES.md)
-- Proven architecture (247 passing tests)
+- Proven architecture (300 passing tests, 93.77% coverage)
 - Comprehensive documentation (DEVELOPMENT_LOG.md)
-- Strong foundation (~2,550 lines of parser code)
-- Sprints 1-4 complete! ✅
+- Strong foundation (~2,900 lines of parser code)
+- **Sprints 1-6 complete!** ✅
+- **Version 0.1.1 Ready for Release!** 🎉
 
-**Recommended first command:** Read FEATURE_PRIORITIES.md, then start Sprint 5!
+**Recommended first command:** Read FEATURE_PRIORITIES.md, then start Sprint 7 or 8!
 
 Good luck! 🚀

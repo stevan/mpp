@@ -460,6 +460,33 @@ describe('Parser', () => {
         assert.strictEqual(unlessStmt.thenBlock[0].type, 'Assignment');
     });
 
+    test('parses prefix unless statement', async () => {
+        const stmts = await parse('unless ($x > 5) { $y = 10; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const unlessStmt = stmts[0] as UnlessNode;
+        assert.strictEqual(unlessStmt.type, 'Unless');
+        assert.strictEqual(unlessStmt.condition.type, 'BinaryOp');
+        assert.strictEqual((unlessStmt.condition as BinaryOpNode).operator, '>');
+        assert.strictEqual(unlessStmt.thenBlock.length, 1);
+        assert.strictEqual(unlessStmt.thenBlock[0].type, 'Assignment');
+        assert.strictEqual(unlessStmt.elseBlock, undefined);
+    });
+
+    test('parses unless-else statement', async () => {
+        const stmts = await parse('unless ($x > 5) { $y = 10; } else { $y = 0; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const unlessStmt = stmts[0] as UnlessNode;
+        assert.strictEqual(unlessStmt.type, 'Unless');
+        assert.strictEqual(unlessStmt.condition.type, 'BinaryOp');
+        assert.strictEqual((unlessStmt.condition as BinaryOpNode).operator, '>');
+        assert.strictEqual(unlessStmt.thenBlock.length, 1);
+        assert.strictEqual(unlessStmt.thenBlock[0].type, 'Assignment');
+        assert.strictEqual(unlessStmt.elseBlock?.length, 1);
+        assert.strictEqual(unlessStmt.elseBlock?.[0].type, 'Assignment');
+    });
+
     test('parses postfix while', async () => {
         const stmts = await parse('$count = $count + 1 while $running;');
 
@@ -2727,5 +2754,145 @@ describe('Parser', () => {
         assert.strictEqual(method1.name, 'move');
         assert.strictEqual(method2.type, 'Method');
         assert.strictEqual(method2.name, 'coordinates');
+    });
+
+    // Edge case tests for improved coverage
+    test('parses empty if block', async () => {
+        const stmts = await parse('if ($x) { }');
+
+        assert.strictEqual(stmts.length, 1);
+        const ifStmt = stmts[0] as IfNode;
+        assert.strictEqual(ifStmt.type, 'If');
+        assert.strictEqual(ifStmt.thenBlock.length, 0);
+    });
+
+    test('parses empty while block', async () => {
+        const stmts = await parse('while ($running) { }');
+
+        assert.strictEqual(stmts.length, 1);
+        const whileStmt = stmts[0] as WhileNode;
+        assert.strictEqual(whileStmt.type, 'While');
+        assert.strictEqual(whileStmt.block.length, 0);
+    });
+
+    test('parses empty foreach block', async () => {
+        const stmts = await parse('for my $item (@list) { }');
+
+        assert.strictEqual(stmts.length, 1);
+        const forStmt = stmts[0] as ForeachNode;
+        assert.strictEqual(forStmt.type, 'Foreach');
+        assert.strictEqual(forStmt.block.length, 0);
+    });
+
+    test('parses until loop', async () => {
+        const stmts = await parse('until ($done) { $x = $x + 1; }');
+
+        assert.strictEqual(stmts.length, 1);
+        const untilStmt = stmts[0] as UntilNode;
+        assert.strictEqual(untilStmt.type, 'Until');
+        assert.strictEqual(untilStmt.block.length, 1);
+    });
+
+    test('parses empty method body', async () => {
+        const stmts = await parse('class Foo { method bar() { } }');
+
+        assert.strictEqual(stmts.length, 1);
+        const classNode = stmts[0] as ClassNode;
+        const method = classNode.body[0] as MethodNode;
+        assert.strictEqual(method.type, 'Method');
+        assert.strictEqual(method.body.length, 0);
+    });
+
+    test('parses deeply nested array access', async () => {
+        const stmts = await parse('$value = $data[0][1][2];');
+
+        assert.strictEqual(stmts.length, 1);
+        const assignStmt = stmts[0] as AssignmentNode;
+        assert.strictEqual(assignStmt.type, 'Assignment');
+        // Check that it's an ArrayAccess of an ArrayAccess of an ArrayAccess
+        const value = assignStmt.right as ArrayAccessNode;
+        assert.strictEqual(value.type, 'ArrayAccess');
+        assert.strictEqual((value.base as ArrayAccessNode).type, 'ArrayAccess');
+    });
+
+    test('parses deeply nested hash access', async () => {
+        const stmts = await parse('$value = $data{"a"}{"b"}{"c"};');
+
+        assert.strictEqual(stmts.length, 1);
+        const assignStmt = stmts[0] as AssignmentNode;
+        const value = assignStmt.right as HashAccessNode;
+        assert.strictEqual(value.type, 'HashAccess');
+        assert.strictEqual((value.base as HashAccessNode).type, 'HashAccess');
+    });
+
+    test('parses mixed array and hash access', async () => {
+        const stmts = await parse('$value = $data[0]{"key"}[1];');
+
+        assert.strictEqual(stmts.length, 1);
+        const assignStmt = stmts[0] as AssignmentNode;
+        const value = assignStmt.right as ArrayAccessNode;
+        assert.strictEqual(value.type, 'ArrayAccess');
+        const base = value.base as HashAccessNode;
+        assert.strictEqual(base.type, 'HashAccess');
+        assert.strictEqual((base.base as ArrayAccessNode).type, 'ArrayAccess');
+    });
+
+    test('parses array slice with single element', async () => {
+        const stmts = await parse('my @slice = @array[0];');
+
+        assert.strictEqual(stmts.length, 1);
+        const declStmt = stmts[0] as DeclarationNode;
+        const slice = declStmt.initializer as ArraySliceNode;
+        assert.strictEqual(slice.type, 'ArraySlice');
+    });
+
+    test('parses hash slice with single key', async () => {
+        const stmts = await parse('my @values = @hash{"key"};');
+
+        assert.strictEqual(stmts.length, 1);
+        const declStmt = stmts[0] as DeclarationNode;
+        const slice = declStmt.initializer as HashSliceNode;
+        assert.strictEqual(slice.type, 'HashSlice');
+    });
+
+    test('parses nested ternary expressions', async () => {
+        const stmts = await parse('my $x = $a ? $b ? $c : $d : $e;');
+
+        assert.strictEqual(stmts.length, 1);
+        const declStmt = stmts[0] as DeclarationNode;
+        const ternary = declStmt.initializer as TernaryNode;
+        assert.strictEqual(ternary.type, 'Ternary');
+        assert.strictEqual((ternary.trueExpr as TernaryNode).type, 'Ternary');
+    });
+
+    test('parses complex method call chain', async () => {
+        const stmts = await parse('$result = $obj->foo()->bar()->baz();');
+
+        assert.strictEqual(stmts.length, 1);
+        const assignStmt = stmts[0] as AssignmentNode;
+        const methodCall = assignStmt.right as MethodCallNode;
+        assert.strictEqual(methodCall.type, 'MethodCall');
+        assert.strictEqual(methodCall.method, 'baz');
+        assert.strictEqual((methodCall.object as MethodCallNode).type, 'MethodCall');
+    });
+
+    test('parses do block with multiple statements', async () => {
+        const stmts = await parse('my $result = do { my $x = 10; my $y = 20; $x + $y; };');
+
+        assert.strictEqual(stmts.length, 1);
+        const declStmt = stmts[0] as DeclarationNode;
+        const doBlock = declStmt.initializer as DoBlockNode;
+        assert.strictEqual(doBlock.type, 'DoBlock');
+        assert.strictEqual(doBlock.statements.length, 3);
+    });
+
+    test('parses empty do block', async () => {
+        const stmts = await parse('my $result = do { };');
+
+        assert.strictEqual(stmts.length, 1);
+        const declStmt = stmts[0] as DeclarationNode;
+        const doBlock = declStmt.initializer as DoBlockNode;
+        assert.strictEqual(doBlock.type, 'DoBlock');
+        assert.strictEqual(doBlock.statements.length, 0);
     });
 });

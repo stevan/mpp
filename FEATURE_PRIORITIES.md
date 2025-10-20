@@ -1,7 +1,7 @@
 # MPP Feature Priorities
 
-**Status:** 247 tests passing | ~2,550 lines of parser code
-**Last Updated:** Session 13
+**Status:** 300 tests passing | ~2,900 lines of parser code | **93.77% test coverage**
+**Last Updated:** Session 15 (Version 0.1.1)
 **Note:** This file replaces NEXT_STEPS.md - always consult this for implementation priorities
 
 ---
@@ -151,30 +151,30 @@
 
 ---
 
-## 🔴 PHASE 7: Modern OO (5-6 hours, ~300 lines)
+## 🟢 PHASE 7: Modern OO (5-6 hours, ~300 lines)
 
-**Status:** Not started
+**Status:** ✅ COMPLETE (Session 15)
 **Priority:** LOW-MEDIUM - Class syntax instead of bless
 
-### 17. `class` keyword (120 lines)
+### 17. `class` keyword ✅ (~140 lines actual)
 - Add `class` keyword to tokenizer
 - New AST node: `ClassNode { name: string, body: ASTNode[] }`
 - Parse `class Name { ... }` blocks
 - Example: `class Point { ... }`, `class Point::3D { ... }`
 
-### 18. Field declarations in classes (80 lines)
+### 18. Field declarations in classes ✅ (~100 lines actual)
 - Add `field` keyword to tokenizer
 - New AST node: `FieldNode { variable: VariableNode, attributes?: string[] }`
 - Parse `field $x;` and `field $x :param;`
 - Example: `field $x :param;`, `field @items;`
 
-### 19. Method modifier: `method` (50 lines)
+### 19. Method modifier: `method` ✅ (~120 lines actual)
 - Add `method` keyword as alternative to `sub` in classes
 - Automatically adds `$self` as first parameter
-- Extends SubNode or new MethodNode
+- New AST node: MethodNode
 - Example: `method move($dx, $dy) { ... }`
 
-### 20. `has` attribute syntax (50 lines)
+### 20. `has` attribute syntax ✅ (~40 lines actual)
 - Add `has` keyword (alternative/supplement to `field`)
 - Parse attribute modifiers (`:reader`, `:writer`, `:param`)
 - Example: `has $x :reader :writer;`
@@ -403,7 +403,7 @@ After completing these, you'll have:
 
 ---
 
-## Current Status (Session 14)
+## Current Status (Session 15 - Version 0.1.1)
 
 **Completed Sprints:**
 - ✅ Sprint 1: Essential Builtins (Session 10) - die, warn, print, say, do, require
@@ -411,7 +411,9 @@ After completing these, you'll have:
 - ✅ Sprint 3: Special Variables (Session 12) - %ENV, @ARGV, $_, qw//
 - ✅ Sprint 4: Modern Dereferencing (Session 13) - ->@*, ->%*, ->$*, ->@[...], ->@{...}
 - ✅ Sprint 5: Package System (Session 14) - package, use, fully qualified names
+- ✅ Sprint 6: Modern OO (Session 15) - class, field, method, has 🎉
 
-**Test Count:** 266 passing (+19 from Session 13)
-**Parser Size:** ~2,650 lines
-**Next Session:** Sprint 6 (Class Syntax) or Sprint 7 (Advanced Subs)
+**Test Count:** 300 passing (+16 from Session 15, +34 total from v0.1.0)
+**Parser Size:** ~2,900 lines
+**Test Coverage:** 93.77% lines, 100% functions
+**Next Session:** Sprint 7 (Advanced Subs) or Sprint 8 (BEGIN/END)

@@ -92,25 +92,30 @@ Input Chunks → Tokenizer → Lexer → Parser → AST Stream
 - [x] Chained access `$data->[0]{"key"}[1]`
 - [x] Access in expressions `$array[0] + $array[1]`
 
+### ✅ Session 6: Modern Perl OO (Class Syntax)
+- [x] `class` keyword for class declarations
+- [x] `field` declarations with attributes (`:param`, `:reader`, `:writer`)
+- [x] `method` keyword (automatic `$self` parameter)
+- [x] `has` attribute syntax (alternative to `field`)
+- [x] Complete OO infrastructure
+
 **Test Coverage**
-- **122 tests total**, all passing
-- 90 unit tests (Parser.test.ts)
-- 16 milestone tests (DataStructures.test.ts)
-- 5 integration tests (Examples.test.ts)
-- 9 lexer tests, 13 tokenizer tests
+- **300 tests total**, all passing ✅
+- **93.77% line coverage**, 100% function coverage
+- 250+ unit tests (Parser.test.ts)
+- 21 integration tests (DataStructures.test.ts + Examples.test.ts)
+- 22 lexer/tokenizer tests
 - TDD approach throughout
 - No `any` types, strict TypeScript
 
 ### ⏸️ Deferred for Later
 
 **Not Yet Implemented:**
-- [ ] Method calls (`$obj->method()`)
-- [ ] Unary operators (`!`, `-`, `not`)
-- [ ] Ternary operator (`?:`)
-- [ ] Range operator (`..`) as expression
 - [ ] Regex literals (`/pattern/`, `s/old/new/`)
-- [ ] Class definitions
-- [ ] HEREDOCs (excluded from language design)
+- [ ] String interpolation (`"$var"`)
+- [ ] Here-docs (`<<EOF`)
+- [ ] Advanced signatures (named params, slurpy)
+- [ ] BEGIN/END blocks
 
 ## Design Decisions
 
@@ -139,18 +144,22 @@ Result: **Pure forward-streaming parser, no feedback loops required!**
 ```
 mpp/
 ├── src/
-│   ├── Tokenizer.ts          # Boundary detection + token emission
-│   ├── Lexer.ts              # Semantic classification
-│   ├── Parser.ts             # Precedence climbing parser (~700 lines)
-│   └── AST.ts                # AST node type definitions
+│   ├── Tokenizer.ts          # Boundary detection + token emission (~330 lines)
+│   ├── Lexer.ts              # Semantic classification (~120 lines)
+│   ├── Parser.ts             # Precedence climbing parser (~2,900 lines)
+│   └── AST.ts                # AST node type definitions (~250 lines)
 ├── tests/
-│   ├── Tokenizer.test.ts     # 13 unit tests
-│   ├── Lexer.test.ts         # 9 unit tests
-│   ├── Parser.test.ts        # 74 unit tests
+│   ├── Tokenizer.test.ts     # 13 tokenizer tests
+│   ├── Lexer.test.ts         # 9 lexer tests
+│   ├── Parser.test.ts        # 250+ unit tests
 │   ├── Examples.test.ts      # 5 integration tests
 │   └── DataStructures.test.ts # 16 milestone tests
+├── bin/
+│   └── repl.js               # Interactive REPL
 ├── tsconfig.json             # Strict TypeScript config
 ├── package.json              # Dependencies and scripts
+├── FEATURE_PRIORITIES.md     # Implementation roadmap
+├── DEVELOPMENT_LOG.md        # Session-by-session progress
 └── README.md                 # This file
 ```
 
@@ -230,6 +239,8 @@ Commands:
 
 ## Example Usage
 
+### Data Structures and Functions
+
 ```perl
 # Complete program with data structures and access
 my $users = [
@@ -251,15 +262,80 @@ print($name);
 print($avg);
 ```
 
-The parser can handle:
+### Modern OO with Classes
+
+```perl
+# Modern Perl OO (5.38+ syntax)
+class Point {
+    field $x :param;
+    field $y :param;
+
+    method move($dx, $dy) {
+        $x += $dx;
+        $y += $dy;
+    }
+
+    method coordinates() {
+        return ($x, $y);
+    }
+
+    method distance_from_origin() {
+        return ($x ** 2 + $y ** 2) ** 0.5;
+    }
+}
+
+class Circle {
+    has $center :param :reader;
+    has $radius :param :reader :writer;
+
+    method area() {
+        return 3.14159 * $radius * $radius;
+    }
+
+    method circumference() {
+        return 2 * 3.14159 * $radius;
+    }
+}
+```
+
+### The Parser Can Handle:
+
+**Data Structures:**
 - ✅ Array literals: `[1, 2, 3]`
 - ✅ Hash literals: `+{ "key" => "value" }`
 - ✅ Nested structures: `[1, +{ "x" => [2, 3] }]`
 - ✅ Array/hash access: `$array[0]`, `$hash{"key"}`
 - ✅ Dereferencing: `$aref->[0]`, `$href->{"key"}`
 - ✅ Chained access: `$data->[0]{"key"}[1]`
-- ✅ Functions with parameters and recursion
-- ✅ Complete control flow (for, if, while, unless)
+- ✅ Array/hash slices: `@array[0..4]`, `@hash{qw(a b c)}`
+- ✅ Postfix dereferencing: `$aref->@*`, `$href->%*`
+
+**Functions & Control Flow:**
+- ✅ Functions with parameters and defaults
+- ✅ Anonymous subroutines
+- ✅ Recursion
+- ✅ Complete control flow (if/elsif/else, for, while, unless, until)
+- ✅ Loop control (last, next, redo) with labels
+- ✅ Postfix conditionals: `$x = 5 unless $error;`
+
+**Modern OO:**
+- ✅ Class declarations with namespaces
+- ✅ Field declarations with attributes (`:param`, `:reader`, `:writer`)
+- ✅ Method definitions (automatic `$self`)
+- ✅ `has` attribute syntax
+- ✅ Method calls and chaining: `$obj->foo()->bar()`
+
+**Packages & Modules:**
+- ✅ Package declarations: `package My::Module;`
+- ✅ Use statements: `use List::Util qw(max min);`
+- ✅ Fully qualified names: `Config::VERSION`
+
+**Built-ins:**
+- ✅ I/O: `print`, `say`
+- ✅ Error handling: `die`, `warn`
+- ✅ Special variables: `$_`, `%ENV`, `@ARGV`
+- ✅ Do blocks: `my $x = do { ... };`
+- ✅ Quote operators: `qw(foo bar baz)`
 
 ## Benefits of This Architecture
 

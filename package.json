@@ -1,7 +1,7 @@
 {
   "name": "mpp",
-  "version": "0.1.0",
-  "description": "Modern Perl Parser - A parser framework for imperative statement-based programming languages",
+  "version": "0.1.1",
+  "description": "Modern Perl Parser - A parser framework for imperative statement-based programming languages with modern OO support",
   "type": "module",
   "main": "js/index.js",
   "scripts": {
