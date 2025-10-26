@@ -1,7 +1,10 @@
 import * as Lang from './LanguageSpec.js';
+import { TokenType } from './Types.js';
+
+export { TokenType };
 
 export interface Token {
-    type: string;
+    type: TokenType;
     value: string;
     line: number;
     column: number;
@@ -50,7 +53,7 @@ export class Tokenizer {
                     // These are used in modern Perl postfix dereferencing: $aref->@*, $href->%*, $aref->@[0..4]
                     if (nextChar === '*' || nextChar === '[' || nextChar === '{') {
                         yield {
-                            type: 'POSTFIX_DEREF_SIGIL',
+                            type: TokenType.POSTFIX_DEREF_SIGIL,
                             value: char, // Just the sigil: @, %, or $
                             line,
                             column
@@ -73,7 +76,7 @@ export class Tokenizer {
                             i++;
                             column++;
                             yield {
-                                type: 'VARIABLE',
+                                type: TokenType.VARIABLE,
                                 value: chunk.substring(start, i),
                                 line,
                                 column: startColumn
@@ -96,7 +99,7 @@ export class Tokenizer {
                         }
 
                         yield {
-                            type: 'VARIABLE',
+                            type: TokenType.VARIABLE,
                             value: chunk.substring(start, i),
                             line,
                             column: startColumn
@@ -170,7 +173,7 @@ export class Tokenizer {
                             column++;
 
                             yield {
-                                type: 'QWLIST',
+                                type: TokenType.QWLIST,
                                 value: JSON.stringify(words), // Store as JSON array
                                 line,
                                 column: startColumn
@@ -179,7 +182,7 @@ export class Tokenizer {
                         }
                     }
 
-                    const type = Lang.isKeyword(value) ? 'KEYWORD' : 'IDENTIFIER';
+                    const type = Lang.isKeyword(value) ? TokenType.KEYWORD : TokenType.IDENTIFIER;
 
                     yield {
                         type,
@@ -201,7 +204,7 @@ export class Tokenizer {
                     }
 
                     yield {
-                        type: 'NUMBER',
+                        type: TokenType.NUMBER,
                         value: chunk.substring(start, i),
                         line,
                         column: startColumn
@@ -214,7 +217,7 @@ export class Tokenizer {
                     const threeChar = chunk.substring(i, i + 3);
                     if (Lang.isMultiCharOperator(threeChar)) {
                         yield {
-                            type: 'OPERATOR',
+                            type: TokenType.OPERATOR,
                             value: threeChar,
                             line,
                             column
@@ -229,7 +232,7 @@ export class Tokenizer {
                     const twoChar = chunk.substring(i, i + 2);
                     if (Lang.isMultiCharOperator(twoChar)) {
                         yield {
-                            type: 'OPERATOR',
+                            type: TokenType.OPERATOR,
                             value: twoChar,
                             line,
                             column
@@ -257,7 +260,7 @@ export class Tokenizer {
                 // Check for single-character operator
                 if (Lang.isOperatorChar(char)) {
                     yield {
-                        type: 'OPERATOR',
+                        type: TokenType.OPERATOR,
                         value: char,
                         line,
                         column
@@ -267,7 +270,13 @@ export class Tokenizer {
                     continue;
                 }
 
-                // Unknown character - skip for now
+                // Unknown character - emit ERROR token
+                yield {
+                    type: TokenType.ERROR,
+                    value: char,
+                    line,
+                    column
+                };
                 i++;
                 column++;
             }
@@ -337,7 +346,7 @@ export class Tokenizer {
                 column++;
                 return {
                     token: {
-                        type: 'STRING',
+                        type: TokenType.STRING,
                         value: chunk.substring(startIndex, i),
                         line,
                         column: startColumn
@@ -351,10 +360,10 @@ export class Tokenizer {
             column++;
         }
 
-        // Unclosed string - return what we have
+        // Unclosed string - return ERROR token
         return {
             token: {
-                type: 'STRING',
+                type: TokenType.ERROR,
                 value: chunk.substring(startIndex),
                 line,
                 column: startColumn

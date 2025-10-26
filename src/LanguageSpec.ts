@@ -14,6 +14,8 @@
  * - Explicit precedence hierarchy
  */
 
+import { TokenType } from './Types.js';
+
 // ============================================================================
 // KEYWORDS
 // ============================================================================
@@ -276,18 +278,18 @@ export const ALL_SIGILS = new Set([
 // ============================================================================
 
 /**
- * Delimiter characters and their names
+ * Delimiter characters and their TokenType mappings
  */
-export const DELIMITERS = {
-    '(': 'LPAREN',
-    ')': 'RPAREN',
-    '{': 'LBRACE',
-    '}': 'RBRACE',
-    '[': 'LBRACKET',
-    ']': 'RBRACKET',
-    ';': 'TERMINATOR',
-    ',': 'COMMA'
-} as const;
+export const DELIMITERS: Record<string, TokenType> = {
+    '(': TokenType.LPAREN,
+    ')': TokenType.RPAREN,
+    '{': TokenType.LBRACE,
+    '}': TokenType.RBRACE,
+    '[': TokenType.LBRACKET,
+    ']': TokenType.RBRACKET,
+    ';': TokenType.TERMINATOR,
+    ',': TokenType.COMMA
+};
 
 /**
  * Characters that are delimiters
@@ -338,10 +340,14 @@ export function isMultiCharOperator(op: string): boolean {
 }
 
 /**
- * Get the delimiter type name
+ * Get the delimiter TokenType for a character
  */
-export function getDelimiterType(char: string): string {
-    return DELIMITERS[char as keyof typeof DELIMITERS] || 'UNKNOWN';
+export function getDelimiterType(char: string): TokenType {
+    const type = DELIMITERS[char];
+    if (!type) {
+        throw new Error(`Unknown delimiter character: ${char}`);
+    }
+    return type;
 }
 
 /**

@@ -4,6 +4,15 @@ export interface ASTNode {
     type: string;
 }
 
+// Error node for parse/tokenization errors
+export interface ErrorNode extends ASTNode {
+    type: 'Error';
+    message: string;      // Description of the error
+    value: string;        // The problematic token/text
+    line: number;         // Line number where error occurred
+    column: number;       // Column number where error occurred
+}
+
 export interface NumberNode extends ASTNode {
     type: 'Number';
     value: string;

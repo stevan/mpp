@@ -1,7 +1,8 @@
-import { Lexeme } from './Lexer.js';
+import { Lexeme, LexemeCategory } from './Lexer.js';
 import * as Lang from './LanguageSpec.js';
 import {
     ASTNode,
+    ErrorNode,
     NumberNode,
     StringNode,
     VariableNode,
@@ -568,6 +569,21 @@ export class Parser {
         }
 
         const lexeme = lexemes[pos];
+
+        // Handle tokenization errors
+        if (lexeme.category === 'TOKEN_ERROR') {
+            const errorNode: ErrorNode = {
+                type: 'Error',
+                message: this.getErrorMessage(lexeme.token),
+                value: lexeme.token.value,
+                line: lexeme.token.line,
+                column: lexeme.token.column
+            };
+            return {
+                node: errorNode,
+                nextPos: pos + 1
+            };
+        }
 
         // Unary operators: -, +, !
         if (lexeme.category === 'BINOP' || lexeme.category === 'OPERATOR' || lexeme.category === 'UNOP') {
@@ -2801,5 +2817,25 @@ export class Parser {
             parameters,
             body: blockResult.statements
         };
+    }
+
+    private getErrorMessage(token: { type: string; value: string }): string {
+        // Detect if this is an unclosed string
+        if (token.value.startsWith('"') || token.value.startsWith("'")) {
+            const quote = token.value[0];
+            return `Unterminated string literal (missing closing ${quote})`;
+        }
+
+        // Unknown character
+        if (token.value.length === 1) {
+            const charCode = token.value.charCodeAt(0);
+            if (charCode < 32 || charCode > 126) {
+                return `Unexpected control character (code: ${charCode})`;
+            }
+            return `Unexpected character '${token.value}'`;
+        }
+
+        // Other errors
+        return `Invalid token: ${token.value}`;
     }
 }

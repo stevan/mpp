@@ -30,6 +30,10 @@ export class PrettyPrinter {
         const type = node.type;
 
         switch (type) {
+            // Error
+            case 'Error':
+                return this.printError(node as any);
+
             // Literals
             case 'Number':
                 return this.printNumber(node as any);
@@ -139,6 +143,17 @@ export class PrettyPrinter {
             default:
                 return `(Unknown ${type})`;
         }
+    }
+
+    private printError(node: { message: string; value: string; line: number; column: number }): string {
+        // Create a detailed error message with all available information
+        const escapedValue = JSON.stringify(node.value);
+        return `(Error\n` +
+            `${this.indent(`(message ${JSON.stringify(node.message)})\n`)}` +
+            `${this.indent(`(value ${escapedValue})\n`)}` +
+            `${this.indent(`(line ${node.line})\n`)}` +
+            `${this.indent(`(column ${node.column})`)}` +
+            `)`;
     }
 
     private printNumber(node: { value: string }): string {
