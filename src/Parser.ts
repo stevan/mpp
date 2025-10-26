@@ -209,11 +209,8 @@ export class Parser {
                         return null;
                     }
 
-                    // Parse the condition
+                    // Parse the condition (always returns a node, possibly ErrorNode)
                     const condition = this.parseExpression(condLexemes, 0);
-                    if (!condition) {
-                        return null;
-                    }
 
                     // Create appropriate control structure
                     if (keyword === 'if') {
@@ -361,17 +358,11 @@ export class Parser {
             const operator = lexemes[assignPos].token.value;
             const rightLexemes = lexemes.slice(assignPos + 1);
 
-            // Parse left side (lvalue)
+            // Parse left side (lvalue) - always returns a node (possibly ErrorNode)
             const left = this.parseExpression(leftLexemes, 0);
-            if (!left) {
-                return null;
-            }
 
-            // Parse right side (expression)
+            // Parse right side (expression) - always returns a node (possibly ErrorNode)
             const right = this.parseExpression(rightLexemes, 0);
-            if (!right) {
-                return null;
-            }
 
             const assignNode: AssignmentNode = {
                 type: 'Assignment',
@@ -429,21 +420,19 @@ export class Parser {
         return declNode;
     }
 
-    private parseExpression(lexemes: Lexeme[], pos: number): ASTNode | null {
+    private parseExpression(lexemes: Lexeme[], pos: number): ASTNode {
         const result = this.precedenceClimb(lexemes, pos, 21); // Start at lowest precedence
-        return result?.node || null;
+        return result.node;
     }
 
     private precedenceClimb(
         lexemes: Lexeme[],
         pos: number,
         minPrecedence: number
-    ): { node: ASTNode; nextPos: number } | null {
+    ): { node: ASTNode; nextPos: number } {
         // Parse left side (primary expression)
+        // parsePrimary now always returns a result (possibly an ErrorNode)
         const leftResult = this.parsePrimary(lexemes, pos);
-        if (!leftResult) {
-            return null;
-        }
 
         let left = leftResult.node;
         let currentPos = leftResult.nextPos;
@@ -563,9 +552,15 @@ export class Parser {
     private parsePrimary(
         lexemes: Lexeme[],
         pos: number
-    ): { node: ASTNode; nextPos: number } | null {
+    ): { node: ASTNode; nextPos: number } {
         if (pos >= lexemes.length) {
-            return null;
+            // Return an error for unexpected end of input
+            const errorNode = this.createParseError(
+                'Unexpected end of input',
+                lexemes,
+                Math.max(0, lexemes.length - 1)
+            );
+            return { node: errorNode, nextPos: pos };
         }
 
         const lexeme = lexemes[pos];
@@ -597,17 +592,16 @@ export class Parser {
                 } else {
                     // This is a unary operator - recursively parse the operand
                     const operandResult = this.parsePrimary(lexemes, pos + 1);
-                    if (operandResult) {
-                        const unaryNode: UnaryOpNode = {
-                            type: 'UnaryOp',
-                            operator: op,
-                            operand: operandResult.node
-                        };
-                        return {
-                            node: unaryNode,
-                            nextPos: operandResult.nextPos
-                        };
-                    }
+                    // parsePrimary now always returns a result (possibly an ErrorNode)
+                    const unaryNode: UnaryOpNode = {
+                        type: 'UnaryOp',
+                        operator: op,
+                        operand: operandResult.node
+                    };
+                    return {
+                        node: unaryNode,
+                        nextPos: operandResult.nextPos
+                    };
                 }
             }
         }
@@ -1255,10 +1249,23 @@ export class Parser {
                 if (innerNode) {
                     return { node: innerNode, nextPos: endPos };
                 }
+                // If inner expression is empty, return error
+                const errorNode = this.createParseError(
+                    'Empty parenthesized expression',
+                    lexemes,
+                    pos
+                );
+                return { node: errorNode, nextPos: endPos };
             }
         }
 
-        return null;
+        // If we reach here, we encountered an unexpected token
+        const errorNode = this.createParseError(
+            `Unexpected token: ${lexeme.token.value} (${lexeme.category})`,
+            lexemes,
+            pos
+        );
+        return { node: errorNode, nextPos: pos + 1 };
     }
 
     private parseHashPair(lexemes: Lexeme[]): { key: ASTNode; value: ASTNode } | null {
@@ -1605,15 +1612,8 @@ export class Parser {
             return returnNode;
         }
 
-        // Parse the return value as an expression
+        // Parse the return value as an expression (always returns a node, possibly ErrorNode)
         const value = this.parseExpression(remainingLexemes, 0);
-        if (!value) {
-            // Empty return if expression parsing fails
-            const returnNode: ReturnNode = {
-                type: 'Return'
-            };
-            return returnNode;
-        }
 
         const returnNode: ReturnNode = {
             type: 'Return',
@@ -1694,15 +1694,8 @@ export class Parser {
             return dieNode;
         }
 
-        // Parse the die message as an expression
+        // Parse the die message as an expression (always returns a node, possibly ErrorNode)
         const message = this.parseExpression(remainingLexemes, 0);
-        if (!message) {
-            // Empty die if expression parsing fails
-            const dieNode: DieNode = {
-                type: 'Die'
-            };
-            return dieNode;
-        }
 
         const dieNode: DieNode = {
             type: 'Die',
@@ -1723,15 +1716,8 @@ export class Parser {
             return warnNode;
         }
 
-        // Parse the warn message as an expression
+        // Parse the warn message as an expression (always returns a node, possibly ErrorNode)
         const message = this.parseExpression(remainingLexemes, 0);
-        if (!message) {
-            // Empty warn if expression parsing fails
-            const warnNode: WarnNode = {
-                type: 'Warn'
-            };
-            return warnNode;
-        }
 
         const warnNode: WarnNode = {
             type: 'Warn',
@@ -2088,12 +2074,9 @@ export class Parser {
             condEnd++;
         }
 
-        // Parse condition expression
+        // Parse condition expression (always returns a node, possibly ErrorNode)
         const condLexemes = lexemes.slice(pos + 1, condEnd - 1);
         const condition = this.parseExpression(condLexemes, 0);
-        if (!condition) {
-            return null;
-        }
 
         pos = condEnd;
 
@@ -2194,12 +2177,9 @@ export class Parser {
             condEnd++;
         }
 
-        // Parse condition expression
+        // Parse condition expression (always returns a node, possibly ErrorNode)
         const condLexemes = lexemes.slice(pos + 1, condEnd - 1);
         const condition = this.parseExpression(condLexemes, 0);
-        if (!condition) {
-            return null;
-        }
 
         pos = condEnd;
 
@@ -2358,12 +2338,9 @@ export class Parser {
             listEnd++;
         }
 
-        // Parse list expression
+        // Parse list expression (always returns a node, possibly ErrorNode)
         const listLexemes = lexemes.slice(pos + 1, listEnd - 1);
         const listExpr = this.parseExpression(listLexemes, 0);
-        if (!listExpr) {
-            return null;
-        }
 
         pos = listEnd;
 
@@ -2420,9 +2397,25 @@ export class Parser {
                 } else if (blockLexemes[stmtEnd].category === 'RBRACE') {
                     braceDepth--;
                     // If we just closed a brace and we're back at depth 0,
-                    // this is the end of a block statement
+                    // check if this might continue with elsif/else
                     if (braceDepth === 0) {
                         stmtEnd++;
+                        // Check if next token is elsif or else
+                        if (stmtEnd < blockLexemes.length &&
+                            blockLexemes[stmtEnd].category === 'CONTROL') {
+                            const nextKeyword = blockLexemes[stmtEnd].token.value;
+                            // Check if current statement starts with if/unless
+                            const stmtLexemes = blockLexemes.slice(pos, stmtEnd);
+                            if (stmtLexemes.length > 0 && stmtLexemes[0].category === 'CONTROL') {
+                                const firstKeyword = stmtLexemes[0].token.value;
+                                // Check for valid continuations
+                                if ((firstKeyword === 'if' && (nextKeyword === 'elsif' || nextKeyword === 'else')) ||
+                                    (firstKeyword === 'unless' && nextKeyword === 'else')) {
+                                    // Continue to include elsif/else in this statement
+                                    continue;
+                                }
+                            }
+                        }
                         break;
                     }
                 } else if (blockLexemes[stmtEnd].category === 'TERMINATOR' && braceDepth === 0) {
@@ -2816,6 +2809,36 @@ export class Parser {
             name,
             parameters,
             body: blockResult.statements
+        };
+    }
+
+    /**
+     * Creates an ErrorNode for parse/syntax errors
+     * @param message The error message
+     * @param lexemes The lexeme array for context
+     * @param pos The position in lexemes where the error occurred (defaults to 0)
+     */
+    private createParseError(message: string, lexemes: Lexeme[], pos: number = 0): ErrorNode {
+        // Use the lexeme at pos if available, otherwise use first or create a default
+        const lexeme = lexemes[pos] || lexemes[0];
+
+        if (lexeme) {
+            return {
+                type: 'Error',
+                message,
+                value: lexeme.token.value,
+                line: lexeme.token.line,
+                column: lexeme.token.column
+            };
+        }
+
+        // Fallback for empty lexeme arrays (shouldn't happen in practice)
+        return {
+            type: 'Error',
+            message,
+            value: '',
+            line: 0,
+            column: 0
         };
     }
 

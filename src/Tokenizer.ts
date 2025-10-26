@@ -34,6 +34,17 @@ export class Tokenizer {
                     continue;
                 }
 
+                // Skip comments (# to end of line)
+                if (char === '#') {
+                    // Skip until newline or end of chunk
+                    while (i < chunk.length && chunk[i] !== '\n') {
+                        i++;
+                        column++;
+                    }
+                    // The newline will be handled on the next iteration
+                    continue;
+                }
+
                 // Check for string literals
                 if (char === '"' || char === "'") {
                     const result = this.tokenizeString(chunk, i, char, line, column);
