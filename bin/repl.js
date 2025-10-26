@@ -4,6 +4,7 @@ import * as readline from 'readline';
 import { Tokenizer } from '../js/src/Tokenizer.js';
 import { Lexer } from '../js/src/Lexer.js';
 import { Parser } from '../js/src/Parser.js';
+import { PrettyPrinter } from '../js/src/PrettyPrinter.js';
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -68,16 +69,17 @@ rl.on('line', async (line) => {
 
     try {
         const ast = await parseSource(trimmed);
+        const printer = new PrettyPrinter();
 
         if (ast.length === 0) {
             console.log('(no statements parsed)');
         } else if (ast.length === 1) {
-            console.log(JSON.stringify(ast[0], null, 2));
+            console.log(printer.print(ast[0]));
         } else {
             console.log(`(${ast.length} statements)`);
             ast.forEach((stmt, i) => {
                 console.log(`\n[${i}]:`);
-                console.log(JSON.stringify(stmt, null, 2));
+                console.log(printer.print(stmt));
             });
         }
     } catch (error) {
