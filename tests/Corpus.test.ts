@@ -28,6 +28,30 @@ async function parse(source: string): Promise<ASTNode[]> {
     return statements;
 }
 
+// Helper to deserialize JSON back to AST
+function deserializeAST(json: string): ASTNode[] {
+    return JSON.parse(json) as ASTNode[];
+}
+
+// Helper to deeply compare two AST structures
+function compareAST(ast1: ASTNode[], ast2: ASTNode[]): boolean {
+    return JSON.stringify(ast1) === JSON.stringify(ast2);
+}
+
+// Helper to perform detailed AST comparison with helpful error messages
+function assertASTEqual(ast1: ASTNode[], ast2: ASTNode[], context: string = 'root'): void {
+    const json1 = JSON.stringify(ast1, null, 2);
+    const json2 = JSON.stringify(ast2, null, 2);
+
+    if (json1 !== json2) {
+        throw new Error(
+            `AST mismatch at ${context}\n` +
+            `Expected:\n${json1}\n\n` +
+            `Actual:\n${json2}`
+        );
+    }
+}
+
 // Helper to recursively find all .mpp files
 function findMppFiles(dir: string, baseDir: string = dir): string[] {
     const files: string[] = [];
@@ -123,6 +147,39 @@ describe('Corpus Tests', () => {
                     throw err;
                 }
             }
+        });
+
+        // Roundtrip test: Parse → Serialize → Deserialize → Compare
+        test(`roundtrips ${testName}`, async () => {
+            // Read input file
+            const source = readFileSync(inputPath, 'utf-8');
+
+            // Parse source to AST (first pass)
+            const originalAST = await parse(source);
+
+            // Serialize to JSON
+            const jsonString = JSON.stringify(originalAST, null, 2);
+
+            // Deserialize back to AST (second pass)
+            const roundtrippedAST = deserializeAST(jsonString);
+
+            // Compare original and roundtripped ASTs
+            try {
+                assertASTEqual(originalAST, roundtrippedAST, testName);
+            } catch (err) {
+                console.error(`\n❌ Roundtrip failed for ${testName}`);
+                console.error(`   Input: ${inputPath}`);
+                console.error(`   Original and roundtripped ASTs differ\n`);
+                throw err;
+            }
+
+            // Additional verification: ensure roundtripped AST can be serialized again
+            const reserializedJson = JSON.stringify(roundtrippedAST, null, 2);
+            assert.strictEqual(
+                jsonString,
+                reserializedJson,
+                `Reserialization of roundtripped AST should be identical for ${testName}`
+            );
         });
     }
 });
