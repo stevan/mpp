@@ -47,9 +47,9 @@ npm test tests/Corpus.test.ts
    echo 'my @array = (1, 2, 3);' > corpus/input/data-structures/051-array-declaration.mpp
    ```
 
-2. **Generate expected output**: Run tests with `UPDATE_SNAPSHOTS=true`
+2. **Generate expected output**: Run the update-snapshots script
    ```bash
-   UPDATE_SNAPSHOTS=true npm test
+   npm run build && node bin/update-snapshots.js
    ```
 
 3. **Review the JSON**: Check the generated JSON is correct
@@ -79,7 +79,7 @@ When parser behavior changes intentionally:
 
 ```bash
 # Regenerate ALL expected JSON files
-UPDATE_SNAPSHOTS=true npm test
+npm run build && node bin/update-snapshots.js
 
 # Review the diffs
 git diff corpus/expected/
@@ -91,7 +91,7 @@ git commit -m "Update corpus snapshots for parser changes"
 
 ## Corpus Coverage
 
-The corpus currently includes **50 test cases** organized into **9 categories**:
+The corpus currently includes **55 test cases** organized into **9 categories**:
 
 ### basics/ (11 tests)
 - 001-scalar-variable - Variable references
@@ -128,21 +128,26 @@ The corpus currently includes **50 test cases** organized into **9 categories**:
 - 028-array-slice - Array slicing
 - 029-hash-slice - Hash slicing
 
-### functions/ (4 tests)
+### functions/ (6 tests)
 - 030-function-definition - Function definitions
 - 031-function-call - Function calls
 - 032-default-parameter - Default parameter values
 - 033-fibonacci - Recursive functions
+- 051-sub-method-optional-parens - Optional parentheses for subs/methods
+- 052-lexical-subroutines - Lexical subs (my sub, our sub)
 
-### classes/ (3 tests)
+### classes/ (4 tests)
 - 034-class-definition - Class declarations
 - 035-has-syntax - Has attribute syntax
 - 036-method-call - Method invocation
+- 053-class-inheritance - Class inheritance with :isa()
 
-### modules/ (3 tests)
+### modules/ (5 tests)
 - 037-package - Package declarations
 - 038-use-statement - Use statements with imports
 - 039-qualified-name - Fully qualified names
+- 054-version-statements - Version statements (use v5.40)
+- 055-package-blocks - Package block syntax (package Foo {})
 
 ### advanced/ (8 tests)
 - 040-postfix-deref - Postfix dereferencing (->@*)
@@ -171,17 +176,17 @@ The test runner (`tests/Corpus.test.ts`):
 4. Compares against expected JSON in `corpus/expected/`
 5. Fails if any mismatch is detected
 
-### Update Mode
+### Updating Snapshots
 
-With `UPDATE_SNAPSHOTS=true`:
-- Regenerates all JSON files
+Use `bin/update-snapshots.js`:
+- Regenerates all JSON files from `.mpp` sources
 - Useful after intentional parser changes
 - Always review diffs before committing
 
 ### Test Mode (default)
 
-Without `UPDATE_SNAPSHOTS`:
-- Compares against existing JSON
+Normal test runs:
+- Compares parsed AST against existing JSON
 - Fails on any mismatch
 - Shows helpful error messages
 
@@ -223,7 +228,7 @@ Place tests in the appropriate category directory.
 ### Test Fails After Parser Change
 
 1. Check if the change was intentional
-2. If yes: `UPDATE_SNAPSHOTS=true npm test`
+2. If yes: `npm run build && node bin/update-snapshots.js`
 3. Review the diff: `git diff corpus/expected/`
 4. If correct, commit; if not, fix the parser
 
@@ -232,10 +237,10 @@ Place tests in the appropriate category directory.
 Error message will say:
 ```
 Expected file not found: corpus/expected/XXX.json
-Run with UPDATE_SNAPSHOTS=true to generate it
+Run update-snapshots to generate it
 ```
 
-Solution: `UPDATE_SNAPSHOTS=true npm test`
+Solution: `npm run build && node bin/update-snapshots.js`
 
 ### AST Mismatch
 
