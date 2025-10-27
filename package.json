@@ -9,7 +9,8 @@
     "test": "npm run build && node --test js/tests/**/*.test.js",
     "test:watch": "node --test --watch js/tests/**/*.test.js",
     "repl": "npm run build && node bin/repl.js",
-    "ast-dump": "npm run build && node bin/ast-dump.js"
+    "ast-dump": "npm run build && node bin/ast-dump.js",
+    "update-snapshots": "npm run build && node bin/update-snapshots.js"
   },
   "keywords": ["parser", "perl", "async", "generator", "pipeline"],
   "author": "",
