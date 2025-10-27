@@ -1,0 +1,26 @@
+[
+  {
+    "type": "Use",
+    "version": "v5.40"
+  },
+  {
+    "type": "Use",
+    "version": "5.040"
+  },
+  {
+    "type": "Use",
+    "version": "v5.38"
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$x"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "10"
+    }
+  }
+]

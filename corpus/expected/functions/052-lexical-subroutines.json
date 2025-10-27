@@ -1,0 +1,138 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Sub",
+      "name": "foo",
+      "parameters": [],
+      "body": [
+        {
+          "type": "Return",
+          "value": {
+            "type": "Number",
+            "value": "42"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Sub",
+      "name": "bar",
+      "parameters": [],
+      "body": [
+        {
+          "type": "Return",
+          "value": {
+            "type": "Number",
+            "value": "100"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Sub",
+      "name": "add",
+      "parameters": [
+        {
+          "type": "Parameter",
+          "variable": {
+            "type": "Variable",
+            "name": "$x"
+          }
+        },
+        {
+          "type": "Parameter",
+          "variable": {
+            "type": "Variable",
+            "name": "$y"
+          }
+        }
+      ],
+      "body": [
+        {
+          "type": "Return",
+          "value": {
+            "type": "BinaryOp",
+            "operator": "+",
+            "left": {
+              "type": "Variable",
+              "name": "$x"
+            },
+            "right": {
+              "type": "Variable",
+              "name": "$y"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "our",
+    "variable": {
+      "type": "Sub",
+      "name": "global_helper",
+      "parameters": [],
+      "body": [
+        {
+          "type": "Return",
+          "value": {
+            "type": "String",
+            "value": "\"helper\""
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "our",
+    "variable": {
+      "type": "Sub",
+      "name": "multiply",
+      "parameters": [
+        {
+          "type": "Parameter",
+          "variable": {
+            "type": "Variable",
+            "name": "$a"
+          }
+        },
+        {
+          "type": "Parameter",
+          "variable": {
+            "type": "Variable",
+            "name": "$b"
+          }
+        }
+      ],
+      "body": [
+        {
+          "type": "Return",
+          "value": {
+            "type": "BinaryOp",
+            "operator": "*",
+            "left": {
+              "type": "Variable",
+              "name": "$a"
+            },
+            "right": {
+              "type": "Variable",
+              "name": "$b"
+            }
+          }
+        }
+      ]
+    }
+  }
+]

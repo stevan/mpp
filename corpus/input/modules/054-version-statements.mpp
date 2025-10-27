@@ -1,0 +1,11 @@
+# Version with 'v' prefix
+use v5.40;
+
+# Version without 'v' prefix (also valid)
+use 5.040;
+
+# Version with feature bundle
+use v5.38;
+
+# Code after version statement
+my $x = 10;

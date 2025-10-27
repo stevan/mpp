@@ -1,0 +1,78 @@
+[
+  {
+    "type": "Package",
+    "name": "Foo",
+    "body": [
+      {
+        "type": "Declaration",
+        "declarator": "my",
+        "variable": {
+          "type": "Variable",
+          "name": "$x"
+        },
+        "initializer": {
+          "type": "Number",
+          "value": "10"
+        }
+      },
+      {
+        "type": "Sub",
+        "name": "bar",
+        "parameters": [],
+        "body": [
+          {
+            "type": "Return",
+            "value": {
+              "type": "Variable",
+              "name": "$x"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Package",
+    "name": "My::Module",
+    "body": [
+      {
+        "type": "Declaration",
+        "declarator": "my",
+        "variable": {
+          "type": "Variable",
+          "name": "$value"
+        },
+        "initializer": {
+          "type": "Number",
+          "value": "42"
+        }
+      },
+      {
+        "type": "Sub",
+        "name": "get_value",
+        "parameters": [],
+        "body": [
+          {
+            "type": "Return",
+            "value": {
+              "type": "Variable",
+              "name": "$value"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$y"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "20"
+    }
+  }
+]

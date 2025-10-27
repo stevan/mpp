@@ -1,0 +1,76 @@
+[
+  {
+    "type": "Sub",
+    "name": "foo",
+    "parameters": [],
+    "body": [
+      {
+        "type": "Return",
+        "value": {
+          "type": "Number",
+          "value": "42"
+        }
+      }
+    ]
+  },
+  {
+    "type": "Sub",
+    "name": "bar",
+    "parameters": [],
+    "body": [
+      {
+        "type": "Return",
+        "value": {
+          "type": "Number",
+          "value": "42"
+        }
+      }
+    ]
+  },
+  {
+    "type": "Sub",
+    "name": "no_params",
+    "parameters": [],
+    "body": [
+      {
+        "type": "Declaration",
+        "declarator": "my",
+        "variable": {
+          "type": "Variable",
+          "name": "$x"
+        },
+        "initializer": {
+          "type": "Number",
+          "value": "1"
+        }
+      },
+      {
+        "type": "Declaration",
+        "declarator": "my",
+        "variable": {
+          "type": "Variable",
+          "name": "$y"
+        },
+        "initializer": {
+          "type": "Number",
+          "value": "2"
+        }
+      },
+      {
+        "type": "Return",
+        "value": {
+          "type": "BinaryOp",
+          "operator": "+",
+          "left": {
+            "type": "Variable",
+            "name": "$x"
+          },
+          "right": {
+            "type": "Variable",
+            "name": "$y"
+          }
+        }
+      }
+    ]
+  }
+]

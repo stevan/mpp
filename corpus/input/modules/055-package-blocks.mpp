@@ -1,0 +1,20 @@
+# Package block with simple name
+package Foo {
+    my $x = 10;
+
+    sub bar {
+        return $x;
+    }
+}
+
+# Package block with qualified name
+package My::Module {
+    my $value = 42;
+
+    sub get_value {
+        return $value;
+    }
+}
+
+# Code after package block
+my $y = 20;
