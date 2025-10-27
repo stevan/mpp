@@ -1,0 +1,24 @@
+# Package Blocks
+# Issue: package Foo {} syntax is not supported, only package Foo; works
+# In Perl: package Foo {} creates a scoped package namespace
+
+# Package block with simple name
+package Foo {
+    my $x = 10;
+
+    sub bar {
+        return $x;
+    }
+}
+
+# Package block with qualified name
+package My::Module {
+    my $value = 42;
+
+    sub get_value {
+        return $value;
+    }
+}
+
+# Code after package block
+my $y = 20;

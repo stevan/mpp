@@ -51,7 +51,7 @@ export interface TernaryNode extends ASTNode {
 export interface DeclarationNode extends ASTNode {
     type: 'Declaration';
     declarator: string; // 'my', 'our', 'state', 'const'
-    variable: VariableNode;
+    variable: VariableNode | SubNode;
     initializer?: ASTNode;
 }
 
@@ -239,11 +239,13 @@ export interface PostfixDerefSliceNode extends ASTNode {
 export interface PackageNode extends ASTNode {
     type: 'Package';
     name: string;         // Package name (e.g., "Foo::Bar")
+    body?: ASTNode[];     // Optional package body for package blocks
 }
 
 export interface UseNode extends ASTNode {
     type: 'Use';
-    module: string;       // Module name (e.g., "strict", "List::Util")
+    module?: string;      // Module name (e.g., "strict", "List::Util")
+    version?: string;     // Version string (e.g., "v5.40", "5.040")
     imports?: ASTNode;    // Optional import list (e.g., qw(max min))
 }
 
@@ -251,6 +253,7 @@ export interface UseNode extends ASTNode {
 export interface ClassNode extends ASTNode {
     type: 'Class';
     name: string;         // Class name (e.g., "Point", "Point::3D")
+    parent?: string;      // Parent class name for :isa() (e.g., "Animal", "My::Base")
     body: ASTNode[];      // Class body (fields, methods, etc.)
 }
 

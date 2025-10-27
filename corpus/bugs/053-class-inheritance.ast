@@ -1,0 +1,26 @@
+(Class "Animal"
+  (Field
+    (Variable $name))
+  (Method "speak"
+    (body
+      (Return (String "\"Some sound\"")))))
+
+(Class "Dog"
+  (parent "Animal")
+  (Method "speak"
+    (body
+      (Return (String "\"Woof!\"")))))
+
+(Class "Cat"
+  (parent "My::Animal")
+  (Method "speak"
+    (body
+      (Return (String "\"Meow!\"")))))
+
+(Class "Bird"
+  (parent "Animal")
+  (Field
+    (Variable $can_fly))
+  (Method "fly"
+    (body
+      (Return (Variable $can_fly)))))

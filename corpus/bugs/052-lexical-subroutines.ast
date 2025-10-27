@@ -1,0 +1,41 @@
+(Declaration my
+  (Sub
+    (name "foo")
+    (body
+      (Return (Number 42)))))
+
+(Declaration my
+  (Sub
+    (name "bar")
+    (body
+      (Return (Number 100)))))
+
+(Declaration my
+  (Sub
+    (name "add")
+    (params
+      (Parameter (Variable $x))
+      (Parameter (Variable $y)))
+    (body
+      (Return
+        (BinaryOp +
+          (Variable $x)
+          (Variable $y))))))
+
+(Declaration our
+  (Sub
+    (name "global_helper")
+    (body
+      (Return (String "\"helper\"")))))
+
+(Declaration our
+  (Sub
+    (name "multiply")
+    (params
+      (Parameter (Variable $a))
+      (Parameter (Variable $b)))
+    (body
+      (Return
+        (BinaryOp *
+          (Variable $a)
+          (Variable $b))))))

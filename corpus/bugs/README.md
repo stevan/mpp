@@ -38,6 +38,36 @@ Each bug gets two files:
 **Example**: `foo => 1` now correctly parses as `"foo" => 1`
 **Note**: Both bare `{}` and `+{}` syntax work for hash literals
 
+### 051 - Optional Parentheses for Subroutines and Methods ✅
+**Status**: Fixed
+**Issue**: Empty parameter lists should be optional for sub and method declarations
+**Example**: `sub foo { 10 }` now correctly parses the same as `sub foo () { 10 }`
+**Note**: Parentheses are now optional for both `sub` and `method` declarations when there are no parameters
+
+### 052 - Lexical Subroutines ✅
+**Status**: Fixed
+**Issue**: `my sub` and `our sub` declarations were not being parsed
+**Example**: `my sub foo { 10 }` now correctly parses as a lexically-scoped subroutine
+**Note**: Both `my sub` and `our sub` are now fully supported, with or without parameters
+
+### 053 - Class Inheritance ✅
+**Status**: Fixed
+**Issue**: The `:isa()` syntax for class inheritance was not being parsed
+**Example**: `class Dog :isa(Animal) {}` now correctly parses with parent class information
+**Note**: Supports qualified parent class names like `My::Base::Class`
+
+### 054 - Version Statements ✅
+**Status**: Fixed
+**Issue**: Version statements like `use v5.40;` were not being parsed correctly
+**Example**: `use v5.40;` and `use 5.040;` now correctly parse as version requirements
+**Note**: Supports both `v5.40` and `5.040` formats
+
+### 055 - Package Blocks ✅
+**Status**: Fixed
+**Issue**: The `package Foo {}` block syntax was not supported, only `package Foo;` worked
+**Example**: `package Foo { ... }` now correctly parses as a scoped package block
+**Note**: Supports both simple and qualified package names like `My::Module`
+
 ## Adding New Issues
 
 ```bash

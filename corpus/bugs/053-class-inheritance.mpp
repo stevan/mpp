@@ -1,0 +1,35 @@
+# Class Inheritance
+# Issue: :isa() syntax for class inheritance is not being parsed
+# In Perl: class Bar :isa(Foo) {} creates a subclass that inherits from Foo
+
+# Base class
+class Animal {
+    field $name;
+
+    method speak {
+        return "Some sound";
+    }
+}
+
+# Single inheritance
+class Dog :isa(Animal) {
+    method speak {
+        return "Woof!";
+    }
+}
+
+# Inheritance with qualified class name
+class Cat :isa(My::Animal) {
+    method speak {
+        return "Meow!";
+    }
+}
+
+# Class with inheritance and fields
+class Bird :isa(Animal) {
+    field $can_fly;
+
+    method fly {
+        return $can_fly;
+    }
+}

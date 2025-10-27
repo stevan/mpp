@@ -487,8 +487,15 @@ export class PrettyPrinter {
         return result + ')';
     }
 
-    private printClass(node: { name: string; body: ASTNode[] }): string {
-        return `(Class ${JSON.stringify(node.name)}\n${this.indent(this.printBlockNodes(node.body))})`;
+    private printClass(node: { name: string; parent?: string; body: ASTNode[] }): string {
+        let result = `(Class ${JSON.stringify(node.name)}\n`;
+
+        if (node.parent) {
+            result += this.indent(`(parent ${JSON.stringify(node.parent)})\n`);
+        }
+
+        result += this.indent(this.printBlockNodes(node.body)) + ')';
+        return result;
     }
 
     private printField(node: { variable: ASTNode; attributes?: string[] }): string {
@@ -512,11 +519,17 @@ export class PrettyPrinter {
         return result + ')';
     }
 
-    private printPackage(node: { name: string }): string {
+    private printPackage(node: { name: string; body?: ASTNode[] }): string {
+        if (node.body) {
+            return `(Package ${JSON.stringify(node.name)}\n${this.indent(`(body\n${this.indent(this.printBlockNodes(node.body))})`)})`
+        }
         return `(Package ${JSON.stringify(node.name)})`;
     }
 
-    private printUse(node: { module: string; imports?: ASTNode }): string {
+    private printUse(node: { module?: string; version?: string; imports?: ASTNode }): string {
+        if (node.version) {
+            return `(Use\n${this.indent(`(version ${JSON.stringify(node.version)})`)})`;
+        }
         if (node.imports) {
             return `(Use ${JSON.stringify(node.module)}\n${this.indent(this.printNode(node.imports))})`;
         }

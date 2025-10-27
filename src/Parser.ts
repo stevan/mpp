@@ -114,8 +114,26 @@ export class Parser {
                             yield ast;
                         }
                         buffer = [];
+                    } else if (buffer.length > 1 &&
+                               buffer[0].category === 'DECLARATION' &&
+                               (buffer[0].token.value === 'my' || buffer[0].token.value === 'our') &&
+                               buffer[1].category === 'DECLARATION' &&
+                               buffer[1].token.value === 'sub') {
+                        // Lexical sub definition (my sub, our sub) - parse immediately
+                        const ast = this.parseStatement(buffer);
+                        if (ast) {
+                            yield ast;
+                        }
+                        buffer = [];
                     } else if (buffer[0].category === 'DECLARATION' && buffer[0].token.value === 'class') {
                         // Class definition - parse immediately
+                        const ast = this.parseStatement(buffer);
+                        if (ast) {
+                            yield ast;
+                        }
+                        buffer = [];
+                    } else if (buffer[0].category === 'KEYWORD' && buffer[0].token.value === 'package') {
+                        // Package block - parse immediately
                         const ast = this.parseStatement(buffer);
                         if (ast) {
                             yield ast;
@@ -383,6 +401,21 @@ export class Parser {
         }
 
         const declarator = lexemes[0].token.value;
+
+        // Check for lexical subroutine (my sub, our sub)
+        if (lexemes[1].category === 'DECLARATION' && lexemes[1].token.value === 'sub') {
+            const subNode = this.parseSubDeclaration(lexemes.slice(1));
+            if (subNode) {
+                const declNode: DeclarationNode = {
+                    type: 'Declaration',
+                    declarator,
+                    variable: subNode
+                };
+                return declNode;
+            }
+            return null;
+        }
+
         const variable = lexemes[1];
 
         if (variable.category !== 'SCALAR_VAR' &&
@@ -1952,56 +1985,56 @@ export class Parser {
             pos++;
         }
 
-        // Expect LPAREN for parameters
-        if (pos >= lexemes.length || lexemes[pos].category !== 'LPAREN') {
-            return null;
-        }
-        pos++; // Skip LPAREN
-
-        // Find matching RPAREN
-        let depth = 1;
-        let paramEnd = pos;
-        while (paramEnd < lexemes.length && depth > 0) {
-            if (lexemes[paramEnd].category === 'LPAREN') depth++;
-            if (lexemes[paramEnd].category === 'RPAREN') depth--;
-            paramEnd++;
-        }
-
-        // Parse parameters
-        const paramLexemes = lexemes.slice(pos, paramEnd - 1);
+        // Parse parameters (parentheses are optional)
         const parameters: ParameterNode[] = [];
 
-        if (paramLexemes.length > 0) {
-            // Split by commas at depth 0
-            let paramStart = 0;
-            let parenDepth = 0;
+        if (pos < lexemes.length && lexemes[pos].category === 'LPAREN') {
+            pos++; // Skip LPAREN
 
-            for (let i = 0; i < paramLexemes.length; i++) {
-                if (paramLexemes[i].category === 'LPAREN') parenDepth++;
-                if (paramLexemes[i].category === 'RPAREN') parenDepth--;
+            // Find matching RPAREN
+            let depth = 1;
+            let paramEnd = pos;
+            while (paramEnd < lexemes.length && depth > 0) {
+                if (lexemes[paramEnd].category === 'LPAREN') depth++;
+                if (lexemes[paramEnd].category === 'RPAREN') depth--;
+                paramEnd++;
+            }
 
-                if (paramLexemes[i].category === 'COMMA' && parenDepth === 0) {
-                    // Found a parameter boundary
-                    const paramTokens = paramLexemes.slice(paramStart, i);
-                    const param = this.parseParameter(paramTokens);
+            // Parse parameters
+            const paramLexemes = lexemes.slice(pos, paramEnd - 1);
+
+            if (paramLexemes.length > 0) {
+                // Split by commas at depth 0
+                let paramStart = 0;
+                let parenDepth = 0;
+
+                for (let i = 0; i < paramLexemes.length; i++) {
+                    if (paramLexemes[i].category === 'LPAREN') parenDepth++;
+                    if (paramLexemes[i].category === 'RPAREN') parenDepth--;
+
+                    if (paramLexemes[i].category === 'COMMA' && parenDepth === 0) {
+                        // Found a parameter boundary
+                        const paramTokens = paramLexemes.slice(paramStart, i);
+                        const param = this.parseParameter(paramTokens);
+                        if (param) {
+                            parameters.push(param);
+                        }
+                        paramStart = i + 1; // Skip the comma
+                    }
+                }
+
+                // Don't forget the last parameter
+                const lastParamTokens = paramLexemes.slice(paramStart);
+                if (lastParamTokens.length > 0) {
+                    const param = this.parseParameter(lastParamTokens);
                     if (param) {
                         parameters.push(param);
                     }
-                    paramStart = i + 1; // Skip the comma
                 }
             }
 
-            // Don't forget the last parameter
-            const lastParamTokens = paramLexemes.slice(paramStart);
-            if (lastParamTokens.length > 0) {
-                const param = this.parseParameter(lastParamTokens);
-                if (param) {
-                    parameters.push(param);
-                }
-            }
+            pos = paramEnd; // Move past RPAREN
         }
-
-        pos = paramEnd; // Move past RPAREN
 
         // Expect LBRACE for body
         if (pos >= lexemes.length || lexemes[pos].category !== 'LBRACE') {
@@ -2481,6 +2514,7 @@ export class Parser {
 
     private parsePackageDeclaration(lexemes: Lexeme[]): PackageNode | null {
         // package Foo::Bar;
+        // package Foo::Bar { ... }
         // Skip 'package' keyword
         const remainingLexemes = lexemes.slice(1);
 
@@ -2490,7 +2524,8 @@ export class Parser {
 
         // Build the package name from identifiers and :: operators
         let packageName = '';
-        for (let i = 0; i < remainingLexemes.length; i++) {
+        let i = 0;
+        for (; i < remainingLexemes.length; i++) {
             const lex = remainingLexemes[i];
 
             if (lex.category === 'IDENTIFIER') {
@@ -2516,6 +2551,20 @@ export class Parser {
             return null;
         }
 
+        // Check for package block { }
+        if (i < remainingLexemes.length && remainingLexemes[i].category === 'LBRACE') {
+            // Parse the block body
+            const blockResult = this.parseBlock(remainingLexemes, i);
+            if (blockResult) {
+                const packageNode: PackageNode = {
+                    type: 'Package',
+                    name: packageName,
+                    body: blockResult.statements
+                };
+                return packageNode;
+            }
+        }
+
         const packageNode: PackageNode = {
             type: 'Package',
             name: packageName
@@ -2526,6 +2575,8 @@ export class Parser {
     private parseUseStatement(lexemes: Lexeme[]): UseNode | null {
         // use Module;
         // use Module qw(...);
+        // use v5.40;
+        // use 5.040;
         // Skip 'use' keyword
         const remainingLexemes = lexemes.slice(1);
 
@@ -2533,9 +2584,63 @@ export class Parser {
             return null;
         }
 
+        // Check if this is a version statement
+        // Version patterns: v5.40, 5.040, v5
+        let isVersion = false;
+        let version = '';
+        let i = 0;
+
+        // Check for version: starts with identifier like "v5" or just a number
+        if (remainingLexemes[0].category === 'IDENTIFIER' && remainingLexemes[0].token.value.match(/^v\d+$/)) {
+            // Pattern: v5.40 (identifier "v5" followed by ".40")
+            version = remainingLexemes[0].token.value;
+            i = 1;
+            isVersion = true;
+
+            // Look for .NN after v5
+            if (i < remainingLexemes.length &&
+                remainingLexemes[i].category === 'BINOP' &&
+                remainingLexemes[i].token.value === '.') {
+                version += '.';
+                i++;
+                if (i < remainingLexemes.length &&
+                    remainingLexemes[i].category === 'LITERAL' &&
+                    remainingLexemes[i].token.type === 'NUMBER') {
+                    version += remainingLexemes[i].token.value;
+                    i++;
+                }
+            }
+        } else if (remainingLexemes[0].category === 'LITERAL' && remainingLexemes[0].token.type === 'NUMBER') {
+            // Pattern: 5.040 (number followed by . and another number)
+            version = remainingLexemes[0].token.value;
+            i = 1;
+            isVersion = true;
+
+            // Look for .NNN after the first number
+            if (i < remainingLexemes.length &&
+                remainingLexemes[i].category === 'BINOP' &&
+                remainingLexemes[i].token.value === '.') {
+                version += '.';
+                i++;
+                if (i < remainingLexemes.length &&
+                    remainingLexemes[i].category === 'LITERAL' &&
+                    remainingLexemes[i].token.type === 'NUMBER') {
+                    version += remainingLexemes[i].token.value;
+                    i++;
+                }
+            }
+        }
+
+        if (isVersion) {
+            const useNode: UseNode = {
+                type: 'Use',
+                version
+            };
+            return useNode;
+        }
+
         // Build the module name from identifiers and :: operators
         let moduleName = '';
-        let i = 0;
         for (; i < remainingLexemes.length; i++) {
             const lex = remainingLexemes[i];
 
@@ -2616,6 +2721,48 @@ export class Parser {
             return null;
         }
 
+        // Check for :isa(...) inheritance
+        let parent: string | undefined = undefined;
+        if (i < lexemes.length &&
+            lexemes[i].category === 'BINOP' &&
+            lexemes[i].token.value === ':') {
+            i++; // Skip ':'
+
+            // Expect 'isa' identifier
+            if (i < lexemes.length &&
+                lexemes[i].category === 'IDENTIFIER' &&
+                lexemes[i].token.value === 'isa') {
+                i++; // Skip 'isa'
+
+                // Expect opening parenthesis
+                if (i < lexemes.length && lexemes[i].category === 'LPAREN') {
+                    i++; // Skip '('
+
+                    // Parse parent class name (can include ::)
+                    parent = '';
+                    while (i < lexemes.length) {
+                        if (lexemes[i].category === 'IDENTIFIER') {
+                            parent += lexemes[i].token.value;
+                            i++;
+                        } else if (i + 1 < lexemes.length &&
+                                   lexemes[i].category === 'BINOP' &&
+                                   lexemes[i].token.value === ':' &&
+                                   lexemes[i + 1].category === 'BINOP' &&
+                                   lexemes[i + 1].token.value === ':') {
+                            // Handle :: separator
+                            parent += '::';
+                            i += 2; // Skip both :
+                        } else if (lexemes[i].category === 'RPAREN') {
+                            i++; // Skip ')'
+                            break;
+                        } else {
+                            return null; // Invalid syntax
+                        }
+                    }
+                }
+            }
+        }
+
         // Expect opening brace
         if (i >= lexemes.length || lexemes[i].category !== 'LBRACE') {
             return null;
@@ -2676,11 +2823,17 @@ export class Parser {
             i++;
         }
 
-        return {
+        const classNode: ClassNode = {
             type: 'Class',
             name,
             body
         };
+
+        if (parent !== undefined) {
+            classNode.parent = parent;
+        }
+
+        return classNode;
     }
 
     private parseClassBodyStatement(lexemes: Lexeme[]): ASTNode | null {
@@ -2773,56 +2926,56 @@ export class Parser {
         const name = lexemes[pos].token.value;
         pos++;
 
-        // Expect opening parenthesis for parameters
-        if (pos >= lexemes.length || lexemes[pos].category !== 'LPAREN') {
-            return null;
-        }
-        pos++; // Skip LPAREN
-
-        // Find matching closing parenthesis
-        let depth = 1;
-        let paramEnd = pos;
-        while (paramEnd < lexemes.length && depth > 0) {
-            if (lexemes[paramEnd].category === 'LPAREN') depth++;
-            if (lexemes[paramEnd].category === 'RPAREN') depth--;
-            paramEnd++;
-        }
-
-        // Parse parameters (same logic as sub declaration)
-        const paramLexemes = lexemes.slice(pos, paramEnd - 1);
+        // Parse parameters (parentheses are optional)
         const parameters: ParameterNode[] = [];
 
-        if (paramLexemes.length > 0) {
-            // Split by commas at depth 0
-            let paramStart = 0;
-            let parenDepth = 0;
+        if (pos < lexemes.length && lexemes[pos].category === 'LPAREN') {
+            pos++; // Skip LPAREN
 
-            for (let i = 0; i < paramLexemes.length; i++) {
-                if (paramLexemes[i].category === 'LPAREN') parenDepth++;
-                if (paramLexemes[i].category === 'RPAREN') parenDepth--;
+            // Find matching closing parenthesis
+            let depth = 1;
+            let paramEnd = pos;
+            while (paramEnd < lexemes.length && depth > 0) {
+                if (lexemes[paramEnd].category === 'LPAREN') depth++;
+                if (lexemes[paramEnd].category === 'RPAREN') depth--;
+                paramEnd++;
+            }
 
-                if (paramLexemes[i].category === 'COMMA' && parenDepth === 0) {
-                    // Found a parameter boundary
-                    const paramTokens = paramLexemes.slice(paramStart, i);
-                    const param = this.parseParameter(paramTokens);
+            // Parse parameters (same logic as sub declaration)
+            const paramLexemes = lexemes.slice(pos, paramEnd - 1);
+
+            if (paramLexemes.length > 0) {
+                // Split by commas at depth 0
+                let paramStart = 0;
+                let parenDepth = 0;
+
+                for (let i = 0; i < paramLexemes.length; i++) {
+                    if (paramLexemes[i].category === 'LPAREN') parenDepth++;
+                    if (paramLexemes[i].category === 'RPAREN') parenDepth--;
+
+                    if (paramLexemes[i].category === 'COMMA' && parenDepth === 0) {
+                        // Found a parameter boundary
+                        const paramTokens = paramLexemes.slice(paramStart, i);
+                        const param = this.parseParameter(paramTokens);
+                        if (param) {
+                            parameters.push(param);
+                        }
+                        paramStart = i + 1; // Skip the comma
+                    }
+                }
+
+                // Don't forget the last parameter
+                const lastParamTokens = paramLexemes.slice(paramStart);
+                if (lastParamTokens.length > 0) {
+                    const param = this.parseParameter(lastParamTokens);
                     if (param) {
                         parameters.push(param);
                     }
-                    paramStart = i + 1; // Skip the comma
                 }
             }
 
-            // Don't forget the last parameter
-            const lastParamTokens = paramLexemes.slice(paramStart);
-            if (lastParamTokens.length > 0) {
-                const param = this.parseParameter(lastParamTokens);
-                if (param) {
-                    parameters.push(param);
-                }
-            }
+            pos = paramEnd; // Move past RPAREN
         }
-
-        pos = paramEnd; // Move past RPAREN
 
         // Expect LBRACE for body
         if (pos >= lexemes.length || lexemes[pos].category !== 'LBRACE') {
