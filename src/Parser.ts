@@ -952,6 +952,21 @@ export class Parser {
 
         // Function calls and identifiers
         if (lexeme.category === 'IDENTIFIER' || lexeme.category === 'KEYWORD') {
+            // Check if next token is => (autoquoting in hash context)
+            if (pos + 1 < lexemes.length &&
+                (lexemes[pos + 1].category === 'BINOP' || lexemes[pos + 1].category === 'OPERATOR') &&
+                lexemes[pos + 1].token.value === '=>') {
+                // Bareword before => - treat as autoquoted string
+                const stringNode: StringNode = {
+                    type: 'String',
+                    value: lexeme.token.value
+                };
+                return {
+                    node: stringNode,
+                    nextPos: pos + 1
+                };
+            }
+
             // Check if next token is LPAREN
             if (pos + 1 < lexemes.length && lexemes[pos + 1].category === 'LPAREN') {
                 // This is a function call
@@ -1096,13 +1111,21 @@ export class Parser {
             };
         }
 
-        // Hash literals +{...}
-        if ((lexeme.category === 'BINOP' || lexeme.category === 'OPERATOR') && lexeme.token.value === '+') {
-            // Check if next token is LBRACE
-            if (pos + 1 < lexemes.length && lexemes[pos + 1].category === 'LBRACE') {
+        // Hash literals {..} or +{...}
+        // Check for bare hash literal or +{...}
+        const isHashLiteral =
+            (lexeme.category === 'LBRACE') ||
+            ((lexeme.category === 'BINOP' || lexeme.category === 'OPERATOR') &&
+             lexeme.token.value === '+' &&
+             pos + 1 < lexemes.length &&
+             lexemes[pos + 1].category === 'LBRACE');
+
+        if (isHashLiteral) {
+            const startPos = lexeme.category === 'LBRACE' ? pos : pos + 1;
+            if (startPos < lexemes.length && lexemes[startPos].category === 'LBRACE') {
                 // Find matching RBRACE
                 let depth = 1;
-                let endPos = pos + 2;
+                let endPos = startPos + 1;
                 while (endPos < lexemes.length && depth > 0) {
                     if (lexemes[endPos].category === 'LBRACE') depth++;
                     if (lexemes[endPos].category === 'RBRACE') depth--;
@@ -1110,7 +1133,7 @@ export class Parser {
                 }
 
                 // Parse pairs (comma-separated key => value)
-                const pairLexemes = lexemes.slice(pos + 2, endPos - 1);
+                const pairLexemes = lexemes.slice(startPos + 1, endPos - 1);
                 const pairs: Array<{ key: ASTNode; value: ASTNode }> = [];
 
                 if (pairLexemes.length > 0) {
@@ -1295,14 +1318,22 @@ export class Parser {
         const keyLexemes = lexemes.slice(0, arrowPos);
         const valueLexemes = lexemes.slice(arrowPos + 1);
 
-        const key = this.parseExpression(keyLexemes, 0);
-        const value = this.parseExpression(valueLexemes, 0);
-
-        if (key && value) {
-            return { key, value };
+        // Special handling for bareword keys (single identifier)
+        let key: ASTNode;
+        if (keyLexemes.length === 1 && keyLexemes[0].category === 'IDENTIFIER') {
+            // Autoquote bareword key
+            const stringNode: StringNode = {
+                type: 'String',
+                value: keyLexemes[0].token.value
+            };
+            key = stringNode;
+        } else {
+            key = this.parseExpression(keyLexemes, 0);
         }
 
-        return null;
+        const value = this.parseExpression(valueLexemes, 0);
+
+        return { key, value };
     }
 
     private parsePostfixOperators(

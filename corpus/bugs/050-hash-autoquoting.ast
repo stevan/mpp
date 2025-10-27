@@ -1,0 +1,19 @@
+(Declaration my
+  (Variable %hash)
+  (List
+    (BinaryOp => (String "foo") (Number 1))
+    (BinaryOp => (String "bar") (Number 2))))
+
+(Declaration my
+  (Variable %mixed)
+  (List
+    (BinaryOp => (String "auto") (Number 1))
+    (BinaryOp => (String "\"quoted\"") (Number 2))
+    (BinaryOp => (Number 123) (Number 3))))
+
+(Declaration my
+  (Variable %nested)
+  (BinaryOp =>
+    (String "outer")
+    (HashLiteral
+      (pair (String "inner") (Number 42)))))
