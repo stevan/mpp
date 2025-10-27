@@ -1,7 +1,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
-import { readFileSync, readdirSync, writeFileSync, statSync, mkdirSync } from 'node:fs';
-import { join, relative, dirname } from 'node:path';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { Tokenizer } from '../src/Tokenizer.js';
 import { Lexer } from '../src/Lexer.js';
 import { Parser } from '../src/Parser.js';
@@ -79,9 +79,6 @@ function findMppFiles(dir: string, baseDir: string = dir): string[] {
     return files.sort();
 }
 
-// Check if we should update snapshots
-const UPDATE_SNAPSHOTS = process.env['UPDATE_SNAPSHOTS'] === 'true';
-
 // Paths
 const CORPUS_INPUT = 'corpus/input';
 const CORPUS_EXPECTED = 'corpus/expected';
@@ -113,39 +110,28 @@ describe('Corpus Tests', () => {
             // Convert to formatted JSON
             const actualJson = JSON.stringify(ast, null, 2);
 
-            if (UPDATE_SNAPSHOTS) {
-                // Update mode: write the JSON file
-                // Ensure directory exists
-                const dir = dirname(expectedPath);
-                mkdirSync(dir, { recursive: true });
+            // Compare against expected
+            let expectedJson: string;
+            try {
+                expectedJson = readFileSync(expectedPath, 'utf-8');
+            } catch (err) {
+                throw new Error(
+                    `Expected file not found: ${expectedPath}\n` +
+                    `Run update-snapshots to generate it:\n` +
+                    `  npm run build && node bin/update-snapshots.js`
+                );
+            }
 
-                writeFileSync(expectedPath, actualJson, 'utf-8');
-                console.log(`✓ Updated ${expectedPath}`);
-                assert.ok(true);
-            } else {
-                // Test mode: compare against expected
-                let expectedJson: string;
-                try {
-                    expectedJson = readFileSync(expectedPath, 'utf-8');
-                } catch (err) {
-                    throw new Error(
-                        `Expected file not found: ${expectedPath}\n` +
-                        `Run with UPDATE_SNAPSHOTS=true to generate it:\n` +
-                        `  UPDATE_SNAPSHOTS=true npm test`
-                    );
-                }
-
-                // Compare
-                try {
-                    assert.strictEqual(actualJson, expectedJson);
-                } catch (err) {
-                    // Show a helpful diff message
-                    console.error(`\n❌ AST mismatch for ${testName}`);
-                    console.error(`   Input: ${inputPath}`);
-                    console.error(`   Expected: ${expectedPath}`);
-                    console.error(`\n   To update snapshot: UPDATE_SNAPSHOTS=true npm test\n`);
-                    throw err;
-                }
+            // Compare
+            try {
+                assert.strictEqual(actualJson, expectedJson);
+            } catch (err) {
+                // Show a helpful diff message
+                console.error(`\n❌ AST mismatch for ${testName}`);
+                console.error(`   Input: ${inputPath}`);
+                console.error(`   Expected: ${expectedPath}`);
+                console.error(`\n   To update snapshot: npm run build && node bin/update-snapshots.js\n`);
+                throw err;
             }
         });
 
