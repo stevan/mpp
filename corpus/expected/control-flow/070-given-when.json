@@ -1,0 +1,733 @@
+[
+  {
+    "type": "Given",
+    "expression": {
+      "type": "Variable",
+      "name": "$value"
+    },
+    "whenClauses": [
+      {
+        "condition": {
+          "type": "Number",
+          "value": "1"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"one\""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "Number",
+          "value": "2"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"two\""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "Number",
+          "value": "3"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"three\""
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "defaultBlock": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"other\""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Given",
+    "expression": {
+      "type": "Variable",
+      "name": "$x"
+    },
+    "whenClauses": [
+      {
+        "condition": {
+          "type": "BinaryOp",
+          "operator": "<",
+          "left": {
+            "type": "Variable",
+            "name": "$_"
+          },
+          "right": {
+            "type": "Number",
+            "value": "0"
+          }
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"negative\""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "BinaryOp",
+          "operator": ">",
+          "left": {
+            "type": "Variable",
+            "name": "$_"
+          },
+          "right": {
+            "type": "Number",
+            "value": "0"
+          }
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"positive\""
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "defaultBlock": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"zero\""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Given",
+    "expression": {
+      "type": "BinaryOp",
+      "operator": "+",
+      "left": {
+        "type": "Variable",
+        "name": "$x"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$y"
+      }
+    },
+    "whenClauses": [
+      {
+        "condition": {
+          "type": "Number",
+          "value": "10"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "process_ten",
+            "arguments": []
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "Number",
+          "value": "20"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "process_twenty",
+            "arguments": []
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "Number",
+          "value": "30"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "process_thirty",
+            "arguments": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Given",
+    "expression": {
+      "type": "Variable",
+      "name": "$category"
+    },
+    "whenClauses": [
+      {
+        "condition": {
+          "type": "String",
+          "value": "\"number\""
+        },
+        "block": [
+          {
+            "type": "Given",
+            "expression": {
+              "type": "Variable",
+              "name": "$value"
+            },
+            "whenClauses": [
+              {
+                "condition": {
+                  "type": "Number",
+                  "value": "0"
+                },
+                "block": [
+                  {
+                    "type": "Call",
+                    "name": "print",
+                    "arguments": [
+                      {
+                        "type": "String",
+                        "value": "\"zero\""
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "condition": {
+                  "type": "Number",
+                  "value": "1"
+                },
+                "block": [
+                  {
+                    "type": "Call",
+                    "name": "print",
+                    "arguments": [
+                      {
+                        "type": "String",
+                        "value": "\"one\""
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "defaultBlock": [
+              {
+                "type": "Call",
+                "name": "print",
+                "arguments": [
+                  {
+                    "type": "String",
+                    "value": "\"other number\""
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "String",
+          "value": "\"string\""
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"string value\""
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Given",
+    "expression": {
+      "type": "Variable",
+      "name": "$day"
+    },
+    "whenClauses": [
+      {
+        "condition": {
+          "type": "ArrayLiteral",
+          "elements": [
+            {
+              "type": "Number",
+              "value": "1"
+            },
+            {
+              "type": "Number",
+              "value": "2"
+            },
+            {
+              "type": "Number",
+              "value": "3"
+            },
+            {
+              "type": "Number",
+              "value": "4"
+            },
+            {
+              "type": "Number",
+              "value": "5"
+            }
+          ]
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"weekday\""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "ArrayLiteral",
+          "elements": [
+            {
+              "type": "Number",
+              "value": "6"
+            },
+            {
+              "type": "Number",
+              "value": "7"
+            }
+          ]
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"weekend\""
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Given",
+    "expression": {
+      "type": "Variable",
+      "name": "$input"
+    },
+    "whenClauses": [
+      {
+        "condition": {
+          "type": "BinaryOp",
+          "operator": "^",
+          "left": {
+            "type": "Error",
+            "message": "Unexpected token: / (BINOP)",
+            "value": "/",
+            "line": 75,
+            "column": 11
+          },
+          "right": {
+            "type": "BinaryOp",
+            "operator": "+",
+            "left": {
+              "type": "ArrayLiteral",
+              "elements": [
+                {
+                  "type": "BinaryOp",
+                  "operator": "-",
+                  "left": {
+                    "type": "Number",
+                    "value": "0"
+                  },
+                  "right": {
+                    "type": "Number",
+                    "value": "9"
+                  }
+                }
+              ]
+            },
+            "right": {
+              "type": "BinaryOp",
+              "operator": "/",
+              "left": {
+                "type": "Error",
+                "message": "Unexpected character '$'",
+                "value": "$",
+                "line": 75,
+                "column": 19
+              },
+              "right": {
+                "type": "Error",
+                "message": "Unexpected end of input",
+                "value": "/",
+                "line": 75,
+                "column": 20
+              }
+            }
+          }
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"numeric\""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "BinaryOp",
+          "operator": "^",
+          "left": {
+            "type": "Error",
+            "message": "Unexpected token: / (BINOP)",
+            "value": "/",
+            "line": 78,
+            "column": 11
+          },
+          "right": {
+            "type": "BinaryOp",
+            "operator": "+",
+            "left": {
+              "type": "ArrayLiteral",
+              "elements": [
+                {
+                  "type": "BinaryOp",
+                  "operator": "-",
+                  "left": {
+                    "type": "Error",
+                    "message": "Unexpected token: a (IDENTIFIER)",
+                    "value": "a",
+                    "line": 78,
+                    "column": 14
+                  },
+                  "right": {
+                    "type": "Error",
+                    "message": "Unexpected token: z (IDENTIFIER)",
+                    "value": "z",
+                    "line": 78,
+                    "column": 16
+                  }
+                }
+              ]
+            },
+            "right": {
+              "type": "BinaryOp",
+              "operator": "/",
+              "left": {
+                "type": "Error",
+                "message": "Unexpected character '$'",
+                "value": "$",
+                "line": 78,
+                "column": 19
+              },
+              "right": {
+                "type": "Error",
+                "message": "Unexpected end of input",
+                "value": "/",
+                "line": 78,
+                "column": 20
+              }
+            }
+          }
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"alphabetic\""
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "defaultBlock": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"mixed\""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Given",
+    "expression": {
+      "type": "Variable",
+      "name": "$code"
+    },
+    "whenClauses": [
+      {
+        "condition": {
+          "type": "Number",
+          "value": "200"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "success",
+            "arguments": []
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "Number",
+          "value": "404"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "not_found",
+            "arguments": []
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "Number",
+          "value": "500"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "server_error",
+            "arguments": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Given",
+    "expression": {
+      "type": "Variable",
+      "name": "$flag"
+    },
+    "whenClauses": [
+      {
+        "condition": {
+          "type": "Number",
+          "value": "0"
+        },
+        "block": []
+      },
+      {
+        "condition": {
+          "type": "Number",
+          "value": "1"
+        },
+        "block": []
+      }
+    ]
+  },
+  {
+    "type": "Given",
+    "expression": {
+      "type": "Variable",
+      "name": "$action"
+    },
+    "whenClauses": [
+      {
+        "condition": {
+          "type": "String",
+          "value": "\"stop\""
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "cleanup",
+            "arguments": []
+          },
+          {
+            "type": "Break"
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "String",
+          "value": "\"pause\""
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "save_state",
+            "arguments": []
+          },
+          {
+            "type": "Break"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Given",
+    "expression": {
+      "type": "Variable",
+      "name": "$score"
+    },
+    "whenClauses": [
+      {
+        "condition": {
+          "type": "BinaryOp",
+          "operator": ">",
+          "left": {
+            "type": "Variable",
+            "name": "$_"
+          },
+          "right": {
+            "type": "Number",
+            "value": "90"
+          }
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"A\""
+              }
+            ]
+          },
+          {
+            "type": "Continue"
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "BinaryOp",
+          "operator": ">",
+          "left": {
+            "type": "Variable",
+            "name": "$_"
+          },
+          "right": {
+            "type": "Number",
+            "value": "80"
+          }
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"B\""
+              }
+            ]
+          },
+          {
+            "type": "Continue"
+          }
+        ]
+      },
+      {
+        "condition": {
+          "type": "BinaryOp",
+          "operator": ">",
+          "left": {
+            "type": "Variable",
+            "name": "$_"
+          },
+          "right": {
+            "type": "Number",
+            "value": "70"
+          }
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"C\""
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

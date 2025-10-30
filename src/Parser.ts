@@ -39,6 +39,10 @@ import {
     LastNode,
     NextNode,
     RedoNode,
+    BreakNode,
+    ContinueNode,
+    GivenNode,
+    WhenClause,
     DieNode,
     WarnNode,
     PrintNode,
@@ -98,6 +102,15 @@ export class Parser {
                             // Don't keep pending - we need to accumulate the catch/finally block
                             keepPending = false;
                         }
+                    } else if (firstKeyword === 'given') {
+                        // After given, we can have when or default
+                        if (keyword === 'when' || keyword === 'default') {
+                            isValidContinuation = true;
+                            // Keep pending after when to check for more when blocks or default
+                            if (keyword === 'when') {
+                                keepPending = true;
+                            }
+                        }
                     }
 
                     // Check if buffer contains catch blocks and we're getting another catch or finally
@@ -113,6 +126,22 @@ export class Parser {
                         isValidContinuation = true;
                         // Don't keep pending - we need to accumulate the catch/finally block
                         keepPending = false;
+                    }
+
+                    // Check if buffer contains when blocks and we're getting another when or default
+                    let hasWhen = false;
+                    for (const lex of buffer) {
+                        if (lex.category === 'CONTROL' && lex.token.value === 'when') {
+                            hasWhen = true;
+                            break;
+                        }
+                    }
+
+                    if (hasWhen && firstKeyword === 'given' && (keyword === 'when' || keyword === 'default')) {
+                        isValidContinuation = true;
+                        if (keyword === 'when') {
+                            keepPending = true;
+                        }
                     }
 
                     if (isValidContinuation) {
@@ -363,6 +392,15 @@ export class Parser {
             }
             if (TokenChecker.isControlKeyword(lexemes[0], 'throw')) {
                 return this.parseThrowStatement(lexemes);
+            }
+            if (TokenChecker.isControlKeyword(lexemes[0], 'given')) {
+                return this.parseGiven(lexemes);
+            }
+            if (TokenChecker.isControlKeyword(lexemes[0], 'break')) {
+                return this.parseBreakStatement(lexemes);
+            }
+            if (TokenChecker.isControlKeyword(lexemes[0], 'continue')) {
+                return this.parseContinueStatement(lexemes);
             }
         }
 
@@ -2217,6 +2255,252 @@ export class Parser {
             throwNode.value = value;
         }
         return throwNode;
+    }
+
+    private parseGiven(lexemes: Lexeme[]): GivenNode | ErrorNode | null {
+        // Expect: given ($expr) { when (...) { ... } default { ... } }
+        if (lexemes.length < 4) {
+            return ParseError.incompleteDeclaration('given', 'expression and block', lexemes[0]?.token);
+        }
+
+        let pos = 1; // Skip 'given' keyword
+
+        // Parse expression in parentheses
+        if (lexemes[pos].category !== 'LPAREN') {
+            return ParseError.missingToken('(', lexemes[pos]?.token, 'for given expression');
+        }
+        pos++; // Skip '('
+
+        // Find matching RPAREN
+        const exprStart = pos;
+        let parenDepth = 1;
+        while (pos < lexemes.length && parenDepth > 0) {
+            if (lexemes[pos].category === 'LPAREN') parenDepth++;
+            if (lexemes[pos].category === 'RPAREN') parenDepth--;
+            pos++;
+        }
+
+        if (parenDepth > 0) {
+            return ParseError.missingToken(')', lexemes[pos - 1]?.token, 'for given expression');
+        }
+
+        // Parse the expression
+        const exprLexemes = lexemes.slice(exprStart, pos - 1);
+        const expression = this.parseExpression(exprLexemes, 0);
+        if (!expression) {
+            return ParseError.parseFailure('given expression', exprLexemes, 0);
+        }
+
+        // Expect '{'
+        if (pos >= lexemes.length || lexemes[pos].category !== 'LBRACE') {
+            return ParseError.missingToken('{', lexemes[pos]?.token, 'for given block');
+        }
+
+        // Find matching RBRACE for given block
+        let depth = 1;
+        const blockStart = pos + 1;
+        pos++; // Skip '{'
+        while (pos < lexemes.length && depth > 0) {
+            if (lexemes[pos].category === 'LBRACE') depth++;
+            if (lexemes[pos].category === 'RBRACE') depth--;
+            pos++;
+        }
+
+        // Parse when clauses and optional default
+        const blockLexemes = lexemes.slice(blockStart, pos - 1);
+        const whenClauses: WhenClause[] = [];
+        let defaultBlock: ASTNode[] | undefined;
+        let blockPos = 0;
+
+        while (blockPos < blockLexemes.length) {
+            // Skip any terminators
+            while (blockPos < blockLexemes.length && blockLexemes[blockPos].category === 'TERMINATOR') {
+                blockPos++;
+            }
+            if (blockPos >= blockLexemes.length) break;
+
+            const keyword = blockLexemes[blockPos];
+
+            if (keyword.category === 'CONTROL' && TokenChecker.isControlKeyword(keyword, 'when')) {
+                // Parse when clause
+                blockPos++; // Skip 'when'
+
+                // Parse condition in parentheses
+                if (blockPos >= blockLexemes.length || blockLexemes[blockPos].category !== 'LPAREN') {
+                    return ParseError.missingToken('(', blockLexemes[blockPos]?.token, 'for when condition');
+                }
+                blockPos++; // Skip '('
+
+                // Find matching RPAREN
+                const condStart = blockPos;
+                let condParenDepth = 1;
+                while (blockPos < blockLexemes.length && condParenDepth > 0) {
+                    if (blockLexemes[blockPos].category === 'LPAREN') condParenDepth++;
+                    if (blockLexemes[blockPos].category === 'RPAREN') condParenDepth--;
+                    blockPos++;
+                }
+
+                // Parse the condition
+                const condLexemes = blockLexemes.slice(condStart, blockPos - 1);
+                const condition = this.parseExpression(condLexemes, 0);
+                if (!condition) {
+                    return ParseError.parseFailure('when condition', condLexemes, 0);
+                }
+
+                // Parse when block
+                if (blockPos >= blockLexemes.length || blockLexemes[blockPos].category !== 'LBRACE') {
+                    return ParseError.missingToken('{', blockLexemes[blockPos]?.token, 'for when block');
+                }
+
+                blockPos++; // Skip '{'
+                let whenDepth = 1;
+                const whenBlockStart = blockPos;
+                while (blockPos < blockLexemes.length && whenDepth > 0) {
+                    if (blockLexemes[blockPos].category === 'LBRACE') whenDepth++;
+                    if (blockLexemes[blockPos].category === 'RBRACE') whenDepth--;
+                    blockPos++;
+                }
+
+                // Parse when block statements
+                const whenBlockLexemes = blockLexemes.slice(whenBlockStart, blockPos - 1);
+                const whenBlock: ASTNode[] = [];
+                let whenStmtPos = 0;
+
+                while (whenStmtPos < whenBlockLexemes.length) {
+                    let stmtEnd = whenStmtPos;
+                    let braceDepth = 0;
+
+                    while (stmtEnd < whenBlockLexemes.length) {
+                        if (whenBlockLexemes[stmtEnd].category === 'LBRACE') {
+                            braceDepth++;
+                        } else if (whenBlockLexemes[stmtEnd].category === 'RBRACE') {
+                            braceDepth--;
+                            if (braceDepth === 0) {
+                                stmtEnd++;
+                                break;
+                            }
+                        } else if (whenBlockLexemes[stmtEnd].category === 'TERMINATOR' && braceDepth === 0) {
+                            break;
+                        }
+                        stmtEnd++;
+                    }
+
+                    const stmtLexemes = whenBlockLexemes.slice(whenStmtPos, stmtEnd);
+                    if (stmtLexemes.length > 0) {
+                        const stmt = this.parseStatement(stmtLexemes);
+                        if (stmt) {
+                            whenBlock.push(stmt);
+                        }
+                    }
+
+                    whenStmtPos = stmtEnd;
+                    if (whenStmtPos < whenBlockLexemes.length && whenBlockLexemes[whenStmtPos].category === 'TERMINATOR') {
+                        whenStmtPos++;
+                    }
+                }
+
+                whenClauses.push({
+                    condition,
+                    block: whenBlock
+                });
+
+            } else if (keyword.category === 'CONTROL' && TokenChecker.isControlKeyword(keyword, 'default')) {
+                // Parse default block
+                blockPos++; // Skip 'default'
+
+                if (blockPos >= blockLexemes.length || blockLexemes[blockPos].category !== 'LBRACE') {
+                    return ParseError.missingToken('{', blockLexemes[blockPos]?.token, 'for default block');
+                }
+
+                blockPos++; // Skip '{'
+                let defaultDepth = 1;
+                const defaultBlockStart = blockPos;
+                while (blockPos < blockLexemes.length && defaultDepth > 0) {
+                    if (blockLexemes[blockPos].category === 'LBRACE') defaultDepth++;
+                    if (blockLexemes[blockPos].category === 'RBRACE') defaultDepth--;
+                    blockPos++;
+                }
+
+                // Parse default block statements
+                const defaultBlockLexemes = blockLexemes.slice(defaultBlockStart, blockPos - 1);
+                defaultBlock = [];
+                let defaultStmtPos = 0;
+
+                while (defaultStmtPos < defaultBlockLexemes.length) {
+                    let stmtEnd = defaultStmtPos;
+                    let braceDepth = 0;
+
+                    while (stmtEnd < defaultBlockLexemes.length) {
+                        if (defaultBlockLexemes[stmtEnd].category === 'LBRACE') {
+                            braceDepth++;
+                        } else if (defaultBlockLexemes[stmtEnd].category === 'RBRACE') {
+                            braceDepth--;
+                            if (braceDepth === 0) {
+                                stmtEnd++;
+                                break;
+                            }
+                        } else if (defaultBlockLexemes[stmtEnd].category === 'TERMINATOR' && braceDepth === 0) {
+                            break;
+                        }
+                        stmtEnd++;
+                    }
+
+                    const stmtLexemes = defaultBlockLexemes.slice(defaultStmtPos, stmtEnd);
+                    if (stmtLexemes.length > 0) {
+                        const stmt = this.parseStatement(stmtLexemes);
+                        if (stmt) {
+                            defaultBlock.push(stmt);
+                        }
+                    }
+
+                    defaultStmtPos = stmtEnd;
+                    if (defaultStmtPos < defaultBlockLexemes.length && defaultBlockLexemes[defaultStmtPos].category === 'TERMINATOR') {
+                        defaultStmtPos++;
+                    }
+                }
+            } else {
+                // Unexpected token in given block
+                blockPos++;
+            }
+        }
+
+        const givenNode: GivenNode = {
+            type: 'Given',
+            expression,
+            whenClauses
+        };
+
+        if (defaultBlock) {
+            givenNode.defaultBlock = defaultBlock;
+        }
+
+        return givenNode;
+    }
+
+    private parseBreakStatement(lexemes: Lexeme[]): BreakNode | ErrorNode | null {
+        // break or break LABEL
+        const breakNode: BreakNode = {
+            type: 'Break'
+        };
+
+        if (lexemes.length > 1 && lexemes[1].category === 'IDENTIFIER') {
+            breakNode.label = lexemes[1].token.value;
+        }
+
+        return breakNode;
+    }
+
+    private parseContinueStatement(lexemes: Lexeme[]): ContinueNode | ErrorNode | null {
+        // continue or continue LABEL
+        const continueNode: ContinueNode = {
+            type: 'Continue'
+        };
+
+        if (lexemes.length > 1 && lexemes[1].category === 'IDENTIFIER') {
+            continueNode.label = lexemes[1].token.value;
+        }
+
+        return continueNode;
     }
 
     private parseSubDeclaration(lexemes: Lexeme[]): SubNode | ErrorNode | null {

@@ -173,6 +173,28 @@ export interface RedoNode extends ASTNode {
     label?: string;
 }
 
+export interface BreakNode extends ASTNode {
+    type: 'Break';
+    label?: string;
+}
+
+export interface ContinueNode extends ASTNode {
+    type: 'Continue';
+    label?: string;
+}
+
+export interface WhenClause {
+    condition: ASTNode;  // The value or expression to match against
+    block: ASTNode[];     // The statements to execute if matched
+}
+
+export interface GivenNode extends ASTNode {
+    type: 'Given';
+    expression: ASTNode;  // The expression to match against
+    whenClauses: WhenClause[];
+    defaultBlock?: ASTNode[];  // Optional default block
+}
+
 export interface DieNode extends ASTNode {
     type: 'Die';
     message?: ASTNode;
