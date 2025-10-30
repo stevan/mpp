@@ -363,3 +363,187 @@ export function getClosingDelimiter(opening: string): string {
 export function isOperatorChar(char: string): boolean {
     return '+-*/%=<>!&|^~.?:'.includes(char);
 }
+
+// ============================================================================
+// ENHANCED UTILITY FUNCTIONS FOR PARSER
+// ============================================================================
+
+/**
+ * Check if a string is a control keyword
+ */
+export function isControlKeyword(str: string): boolean {
+    return KEYWORDS.CONTROL.has(str);
+}
+
+/**
+ * Check if a string is a declaration keyword
+ */
+export function isDeclarationKeyword(str: string): boolean {
+    return KEYWORDS.DECLARATION.has(str);
+}
+
+/**
+ * Check if a string is a builtin keyword
+ */
+export function isBuiltinKeyword(str: string): boolean {
+    return KEYWORDS.BUILTIN.has(str);
+}
+
+/**
+ * Check if a string is a module keyword
+ */
+export function isModuleKeyword(str: string): boolean {
+    return KEYWORDS.MODULE.has(str);
+}
+
+/**
+ * Check if a string is a word operator
+ */
+export function isWordOperator(str: string): boolean {
+    return KEYWORDS.WORD_OPERATOR.has(str);
+}
+
+/**
+ * Check if a string is a special keyword (has)
+ */
+export function isSpecialKeyword(str: string): boolean {
+    return KEYWORDS.SPECIAL.has(str);
+}
+
+/**
+ * Check if a string is any operator
+ */
+export function isOperator(str: string): boolean {
+    return OPERATORS.BINARY.has(str) ||
+           OPERATORS.ASSIGNMENT.has(str) ||
+           OPERATORS.UNARY.has(str);
+}
+
+/**
+ * Check if a string is a binary operator
+ */
+export function isBinaryOperator(str: string): boolean {
+    return OPERATORS.BINARY.has(str);
+}
+
+/**
+ * Check if a string is an assignment operator
+ */
+export function isAssignmentOperator(str: string): boolean {
+    return OPERATORS.ASSIGNMENT.has(str);
+}
+
+/**
+ * Check if a string is a unary operator
+ */
+export function isUnaryOperator(str: string): boolean {
+    return OPERATORS.UNARY.has(str);
+}
+
+/**
+ * Check if a string is the arrow operator
+ */
+export function isArrowOperator(str: string): boolean {
+    return str === '->';
+}
+
+/**
+ * Check if a string is the fat comma operator
+ */
+export function isFatComma(str: string): boolean {
+    return str === '=>';
+}
+
+/**
+ * Check if a string is a colon operator
+ */
+export function isColonOperator(str: string): boolean {
+    return str === ':';
+}
+
+/**
+ * Get operator info with null safety
+ */
+export function getOperatorInfo(op: string): OperatorInfo | null {
+    return OPERATOR_PRECEDENCE[op] || null;
+}
+
+/**
+ * Check if an operator exists in the precedence table
+ */
+export function hasOperatorPrecedence(op: string): boolean {
+    return op in OPERATOR_PRECEDENCE;
+}
+
+/**
+ * Check if an operator is right-associative
+ */
+export function isRightAssociative(op: string): boolean {
+    const info = OPERATOR_PRECEDENCE[op];
+    return info ? info.associativity === 'RIGHT' : false;
+}
+
+/**
+ * Check if an operator is left-associative
+ */
+export function isLeftAssociative(op: string): boolean {
+    const info = OPERATOR_PRECEDENCE[op];
+    return info ? info.associativity === 'LEFT' : false;
+}
+
+/**
+ * Get the precedence level of an operator
+ */
+export function getOperatorPrecedence(op: string): number {
+    const info = OPERATOR_PRECEDENCE[op];
+    return info ? info.precedence : -1;
+}
+
+/**
+ * Compare operator precedence (returns -1, 0, or 1)
+ */
+export function compareOperatorPrecedence(op1: string, op2: string): number {
+    const p1 = getOperatorPrecedence(op1);
+    const p2 = getOperatorPrecedence(op2);
+
+    if (p1 === -1 || p2 === -1) return 0;
+    if (p1 < p2) return 1;  // Lower number = higher precedence
+    if (p1 > p2) return -1;
+    return 0;
+}
+
+/**
+ * Check if a string is a postfix control keyword (if, unless, while, until)
+ */
+export function isPostfixControlKeyword(str: string): boolean {
+    return str === 'if' || str === 'unless' ||
+           str === 'while' || str === 'until';
+}
+
+/**
+ * Check if a string is a loop control keyword (last, next, redo)
+ */
+export function isLoopControlKeyword(str: string): boolean {
+    return str === 'last' || str === 'next' || str === 'redo';
+}
+
+/**
+ * Check if a string is a loop keyword (for, foreach, while, until)
+ */
+export function isLoopKeyword(str: string): boolean {
+    return str === 'for' || str === 'foreach' ||
+           str === 'while' || str === 'until';
+}
+
+/**
+ * Get the category of a keyword
+ */
+export function getKeywordCategory(keyword: string): string | null {
+    if (KEYWORDS.DECLARATION.has(keyword)) return 'DECLARATION';
+    if (KEYWORDS.CONTROL.has(keyword)) return 'CONTROL';
+    if (KEYWORDS.MODULE.has(keyword)) return 'MODULE';
+    if (KEYWORDS.BUILTIN.has(keyword)) return 'BUILTIN';
+    if (KEYWORDS.WORD_OPERATOR.has(keyword)) return 'WORD_OPERATOR';
+    if (KEYWORDS.SPECIAL.has(keyword)) return 'SPECIAL';
+    return null;
+}

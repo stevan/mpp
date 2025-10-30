@@ -1,5 +1,14 @@
 import { Lexeme, LexemeCategory } from './Lexer.js';
 import * as Lang from './LanguageSpec.js';
+import { ParseError, ErrorRecovery, ErrorContext } from './ErrorSystem.js';
+import {
+    DepthTracker,
+    DelimiterMatcher,
+    TokenChecker,
+    splitByCommas,
+    findCommasAtDepthZero
+} from './ParserUtils.js';
+import { CommonParsers } from './CommonParsers.js';
 import {
     ASTNode,
     ErrorNode,
@@ -175,7 +184,10 @@ export class Parser {
 
     private parseStatement(lexemes: Lexeme[]): ASTNode | null {
         if (lexemes.length === 0) {
-            return null;
+            return ParseError.emptyExpression(
+                'statement',
+                lexemes[0]?.token
+            );
         }
 
         // Check for loop labels (LABEL: while/until/for/foreach)
@@ -224,7 +236,7 @@ export class Parser {
                     // Parse the statement (recursively call parseStatement to handle return, etc.)
                     const stmt = this.parseStatement(stmtLexemes);
                     if (!stmt) {
-                        return null;
+                        return ParseError.parseFailure('labeled statement', lexemes, i);
                     }
 
                     // Parse the condition (always returns a node, possibly ErrorNode)
@@ -395,9 +407,13 @@ export class Parser {
         return this.parseExpression(lexemes, 0);
     }
 
-    private parseDeclaration(lexemes: Lexeme[]): DeclarationNode | null {
+    private parseDeclaration(lexemes: Lexeme[]): DeclarationNode | ErrorNode {
         if (lexemes.length < 2) {
-            return null;
+            return ParseError.incompleteDeclaration(
+                'variable',
+                'variable name',
+                lexemes[0]?.token || { value: '', type: 'ERROR', line: 0, column: 0 }
+            );
         }
 
         const declarator = lexemes[0].token.value;
@@ -413,7 +429,11 @@ export class Parser {
                 };
                 return declNode;
             }
-            return null;
+            return ParseError.incompleteDeclaration(
+                'subroutine',
+                'sub definition',
+                lexemes[2]?.token || lexemes[0].token
+            );
         }
 
         const variable = lexemes[1];
@@ -421,7 +441,10 @@ export class Parser {
         if (variable.category !== 'SCALAR_VAR' &&
             variable.category !== 'ARRAY_VAR' &&
             variable.category !== 'HASH_VAR') {
-            return null;
+            return ParseError.invalidSyntax(
+                `Expected variable after '${declarator}', found ${variable.category}`,
+                variable.token
+            );
         }
 
         const varNode: VariableNode = {
@@ -510,13 +533,24 @@ export class Parser {
                 }
 
                 if (colonPos === -1) {
-                    break; // Error: missing ':'
+                    // Error: missing ':' in ternary
+                    left = ParseError.missingToken(
+                        ':',
+                        lexemes[currentPos - 1]?.token,
+                        'in ternary operator after ? expression'
+                    );
+                    break;
                 }
 
                 // Parse true expression
                 const trueLexemes = lexemes.slice(currentPos, colonPos);
                 const trueResult = this.parseExpression(trueLexemes, 0);
                 if (!trueResult) {
+                    // Error: empty true expression in ternary
+                    left = ParseError.emptyExpression(
+                        'ternary true expression',
+                        lexemes[currentPos]?.token
+                    );
                     break;
                 }
 
@@ -527,6 +561,11 @@ export class Parser {
                 const nextMinPrec = opInfo.precedence; // RIGHT associative
                 const falseResult = this.precedenceClimb(lexemes, currentPos, nextMinPrec);
                 if (!falseResult) {
+                    // Error: empty false expression in ternary
+                    left = ParseError.emptyExpression(
+                        'ternary false expression',
+                        lexemes[currentPos]?.token
+                    );
                     break;
                 }
 
@@ -564,6 +603,11 @@ export class Parser {
             const rightResult = this.precedenceClimb(lexemes, currentPos, nextMinPrec);
             if (!rightResult) {
                 // Error: expected right operand
+                left = ParseError.missingToken(
+                    'expression',
+                    lexemes[currentPos]?.token,
+                    `after operator '${operator}'`
+                );
                 break;
             }
 
@@ -2121,12 +2165,16 @@ export class Parser {
         return blockNode;
     }
 
-    private parseIfStatement(lexemes: Lexeme[]): IfNode | null {
+    private parseIfStatement(lexemes: Lexeme[]): IfNode | ErrorNode {
         let pos = 1; // Skip 'if'
 
         // Parse condition (must be parenthesized)
         if (pos >= lexemes.length || lexemes[pos].category !== 'LPAREN') {
-            return null;
+            return ParseError.missingToken(
+                '(',
+                lexemes[pos]?.token,
+                'after if keyword'
+            );
         }
 
         // Find matching RPAREN for condition
@@ -2147,7 +2195,7 @@ export class Parser {
         // Parse then block
         const thenResult = this.parseBlock(lexemes, pos);
         if (!thenResult) {
-            return null;
+            return ParseError.missingToken('{', lexemes[pos]?.token, 'for if statement body');
         }
 
         const thenBlock = thenResult.statements;
@@ -2224,12 +2272,12 @@ export class Parser {
         return ifNode;
     }
 
-    private parseUnlessStatement(lexemes: Lexeme[]): UnlessNode | null {
+    private parseUnlessStatement(lexemes: Lexeme[]): UnlessNode | ErrorNode {
         let pos = 1; // Skip 'unless'
 
         // Parse condition (must be parenthesized)
         if (pos >= lexemes.length || lexemes[pos].category !== 'LPAREN') {
-            return null;
+            return ParseError.missingToken('(', lexemes[pos]?.token, 'after unless keyword');
         }
 
         // Find matching RPAREN for condition
@@ -2250,7 +2298,7 @@ export class Parser {
         // Parse then block
         const thenResult = this.parseBlock(lexemes, pos);
         if (!thenResult) {
-            return null;
+            return ParseError.missingToken('{', lexemes[pos]?.token, 'for unless statement body');
         }
 
         const thenBlock = thenResult.statements;
@@ -2283,12 +2331,12 @@ export class Parser {
         return unlessNode;
     }
 
-    private parseWhileStatement(lexemes: Lexeme[], label?: string): WhileNode | null {
+    private parseWhileStatement(lexemes: Lexeme[], label?: string): WhileNode | ErrorNode {
         let pos = 1; // Skip 'while'
 
         // Parse condition (must be parenthesized)
         if (pos >= lexemes.length || lexemes[pos].category !== 'LPAREN') {
-            return null;
+            return ParseError.missingToken('(', lexemes[pos]?.token, 'after while keyword');
         }
 
         // Find matching RPAREN for condition
@@ -2304,7 +2352,7 @@ export class Parser {
         const condLexemes = lexemes.slice(pos + 1, condEnd - 1);
         const condition = this.parseExpression(condLexemes, 0);
         if (!condition) {
-            return null;
+            return ParseError.emptyExpression('while condition', lexemes[pos]?.token);
         }
 
         pos = condEnd;
@@ -2312,7 +2360,7 @@ export class Parser {
         // Parse block
         const blockResult = this.parseBlock(lexemes, pos);
         if (!blockResult) {
-            return null;
+            return ParseError.missingToken('{', lexemes[pos]?.token, 'for while statement body');
         }
 
         const whileNode: WhileNode = {
@@ -2325,12 +2373,12 @@ export class Parser {
         return whileNode;
     }
 
-    private parseUntilStatement(lexemes: Lexeme[], label?: string): UntilNode | null {
+    private parseUntilStatement(lexemes: Lexeme[], label?: string): UntilNode | ErrorNode {
         let pos = 1; // Skip 'until'
 
         // Parse condition (must be parenthesized)
         if (pos >= lexemes.length || lexemes[pos].category !== 'LPAREN') {
-            return null;
+            return ParseError.missingToken('(', lexemes[pos]?.token, 'after until keyword');
         }
 
         // Find matching RPAREN for condition
@@ -2346,7 +2394,7 @@ export class Parser {
         const condLexemes = lexemes.slice(pos + 1, condEnd - 1);
         const condition = this.parseExpression(condLexemes, 0);
         if (!condition) {
-            return null;
+            return ParseError.emptyExpression('until condition', lexemes[pos]?.token);
         }
 
         pos = condEnd;
@@ -2354,7 +2402,7 @@ export class Parser {
         // Parse block
         const blockResult = this.parseBlock(lexemes, pos);
         if (!blockResult) {
-            return null;
+            return ParseError.missingToken('{', lexemes[pos]?.token, 'for until statement body');
         }
 
         const untilNode: UntilNode = {
@@ -2367,7 +2415,7 @@ export class Parser {
         return untilNode;
     }
 
-    private parseForeachStatement(lexemes: Lexeme[], label?: string): ForeachNode | null {
+    private parseForeachStatement(lexemes: Lexeme[], label?: string): ForeachNode | ErrorNode {
         let pos = 1; // Skip 'foreach' or 'for'
 
         // Check for optional declarator (my, our, state)
@@ -2379,7 +2427,7 @@ export class Parser {
 
         // Parse iterator variable (must be a scalar)
         if (pos >= lexemes.length || lexemes[pos].category !== 'SCALAR_VAR') {
-            return null;
+            return ParseError.invalidSyntax('foreach requires a scalar iterator variable', lexemes[pos]?.token);
         }
 
         const variable: VariableNode = {
@@ -2390,7 +2438,7 @@ export class Parser {
 
         // Parse list expression (must be parenthesized)
         if (pos >= lexemes.length || lexemes[pos].category !== 'LPAREN') {
-            return null;
+            return ParseError.missingToken('(', lexemes[pos]?.token, 'after foreach iterator variable');
         }
 
         // Find matching RPAREN for list expression
@@ -2411,7 +2459,7 @@ export class Parser {
         // Parse block
         const blockResult = this.parseBlock(lexemes, pos);
         if (!blockResult) {
-            return null;
+            return ParseError.missingToken('{', lexemes[pos]?.token, 'for foreach statement body');
         }
 
         const foreachNode: ForeachNode = {
