@@ -116,7 +116,7 @@ export class Parser {
                             yield ast;
                         }
                         buffer = [];
-                    } else if (buffer[0].category === 'DECLARATION' && buffer[0].token.value === 'sub') {
+                    } else if (buffer[0].category === 'DECLARATION' && TokenChecker.isDeclarationKeyword(buffer[0], 'sub')) {
                         // Sub definition - parse immediately
                         const ast = this.parseStatement(buffer);
                         if (ast) {
@@ -125,23 +125,23 @@ export class Parser {
                         buffer = [];
                     } else if (buffer.length > 1 &&
                                buffer[0].category === 'DECLARATION' &&
-                               (buffer[0].token.value === 'my' || buffer[0].token.value === 'our') &&
+                               (TokenChecker.isDeclarationKeyword(buffer[0], 'my') || TokenChecker.isDeclarationKeyword(buffer[0], 'our')) &&
                                buffer[1].category === 'DECLARATION' &&
-                               buffer[1].token.value === 'sub') {
+                               TokenChecker.isDeclarationKeyword(buffer[1], 'sub')) {
                         // Lexical sub definition (my sub, our sub) - parse immediately
                         const ast = this.parseStatement(buffer);
                         if (ast) {
                             yield ast;
                         }
                         buffer = [];
-                    } else if (buffer[0].category === 'DECLARATION' && buffer[0].token.value === 'class') {
+                    } else if (buffer[0].category === 'DECLARATION' && TokenChecker.isDeclarationKeyword(buffer[0], 'class')) {
                         // Class definition - parse immediately
                         const ast = this.parseStatement(buffer);
                         if (ast) {
                             yield ast;
                         }
                         buffer = [];
-                    } else if (buffer[0].category === 'KEYWORD' && buffer[0].token.value === 'package') {
+                    } else if (buffer[0].category === 'KEYWORD' && TokenChecker.isKeyword(buffer[0], 'package')) {
                         // Package block - parse immediately
                         const ast = this.parseStatement(buffer);
                         if (ast) {
@@ -193,8 +193,7 @@ export class Parser {
         // Check for loop labels (LABEL: while/until/for/foreach)
         if (lexemes.length >= 3 &&
             lexemes[0].category === 'IDENTIFIER' &&
-            lexemes[1].category === 'BINOP' &&
-            lexemes[1].token.value === ':' &&
+            TokenChecker.isColon(lexemes[1]) &&
             lexemes[2].category === 'CONTROL') {
 
             const label = lexemes[0].token.value;
@@ -215,17 +214,12 @@ export class Parser {
 
         // Check for postfix conditionals (if/unless/while/until appearing after statement)
         // Only detect at depth 0 (not inside braces or parens)
-        let depth = 0;
+        const tracker = new DepthTracker();
         for (let i = 1; i < lexemes.length; i++) {
             // Track depth
-            if (lexemes[i].category === 'LPAREN' || lexemes[i].category === 'LBRACE') {
-                depth++;
-            }
-            if (lexemes[i].category === 'RPAREN' || lexemes[i].category === 'RBRACE') {
-                depth--;
-            }
+            tracker.update(lexemes[i]);
 
-            if (depth === 0 && lexemes[i].category === 'CONTROL') {
+            if (tracker.isAtDepthZero() && lexemes[i].category === 'CONTROL') {
                 const keyword = lexemes[i].token.value;
                 if (keyword === 'if' || keyword === 'unless' ||
                     keyword === 'while' || keyword === 'until') {
@@ -284,69 +278,69 @@ export class Parser {
 
         // Check for prefix control structures
         if (lexemes[0].category === 'CONTROL') {
-            if (lexemes[0].token.value === 'if') {
+            if (TokenChecker.isControlKeyword(lexemes[0], 'if')) {
                 return this.parseIfStatement(lexemes);
             }
-            if (lexemes[0].token.value === 'unless') {
+            if (TokenChecker.isControlKeyword(lexemes[0], 'unless')) {
                 return this.parseUnlessStatement(lexemes);
             }
-            if (lexemes[0].token.value === 'while') {
+            if (TokenChecker.isControlKeyword(lexemes[0], 'while')) {
                 return this.parseWhileStatement(lexemes);
             }
-            if (lexemes[0].token.value === 'until') {
+            if (TokenChecker.isControlKeyword(lexemes[0], 'until')) {
                 return this.parseUntilStatement(lexemes);
             }
-            if (lexemes[0].token.value === 'foreach' || lexemes[0].token.value === 'for') {
+            if (TokenChecker.isControlKeyword(lexemes[0], 'foreach') || TokenChecker.isControlKeyword(lexemes[0], 'for')) {
                 return this.parseForeachStatement(lexemes);
             }
-            if (lexemes[0].token.value === 'return') {
+            if (TokenChecker.isControlKeyword(lexemes[0], 'return')) {
                 return this.parseReturnStatement(lexemes);
             }
-            if (lexemes[0].token.value === 'last') {
+            if (TokenChecker.isControlKeyword(lexemes[0], 'last')) {
                 return this.parseLastStatement(lexemes);
             }
-            if (lexemes[0].token.value === 'next') {
+            if (TokenChecker.isControlKeyword(lexemes[0], 'next')) {
                 return this.parseNextStatement(lexemes);
             }
-            if (lexemes[0].token.value === 'redo') {
+            if (TokenChecker.isControlKeyword(lexemes[0], 'redo')) {
                 return this.parseRedoStatement(lexemes);
             }
-            if (lexemes[0].token.value === 'die') {
+            if (TokenChecker.isControlKeyword(lexemes[0], 'die')) {
                 return this.parseDieStatement(lexemes);
             }
-            if (lexemes[0].token.value === 'warn') {
+            if (TokenChecker.isControlKeyword(lexemes[0], 'warn')) {
                 return this.parseWarnStatement(lexemes);
             }
-            if (lexemes[0].token.value === 'do') {
+            if (TokenChecker.isControlKeyword(lexemes[0], 'do')) {
                 return this.parseDoBlock(lexemes);
             }
         }
 
         // Check for package declaration
-        if (lexemes[0].category === 'KEYWORD' && lexemes[0].token.value === 'package') {
+        if (lexemes[0].category === 'KEYWORD' && TokenChecker.isKeyword(lexemes[0], 'package')) {
             return this.parsePackageDeclaration(lexemes);
         }
 
         // Check for use statement
-        if (lexemes[0].category === 'KEYWORD' && lexemes[0].token.value === 'use') {
+        if (lexemes[0].category === 'KEYWORD' && TokenChecker.isKeyword(lexemes[0], 'use')) {
             return this.parseUseStatement(lexemes);
         }
 
         // Check for class declaration
-        if (lexemes[0].category === 'DECLARATION' && lexemes[0].token.value === 'class') {
+        if (lexemes[0].category === 'DECLARATION' && TokenChecker.isDeclarationKeyword(lexemes[0], 'class')) {
             return this.parseClassDeclaration(lexemes);
         }
 
         // Check for print and say (can be either statements or function calls)
         if (lexemes[0].category === 'KEYWORD') {
-            if (lexemes[0].token.value === 'print') {
+            if (TokenChecker.isKeyword(lexemes[0], 'print')) {
                 // If followed by '(', treat as function call, not statement
                 if (lexemes.length === 1 || lexemes[1].category !== 'LPAREN') {
                     return this.parsePrintStatement(lexemes);
                 }
                 // Otherwise, let it fall through to be parsed as a function call
             }
-            if (lexemes[0].token.value === 'say') {
+            if (TokenChecker.isKeyword(lexemes[0], 'say')) {
                 // If followed by '(', treat as function call, not statement
                 if (lexemes.length === 1 || lexemes[1].category !== 'LPAREN') {
                     return this.parseSayStatement(lexemes);
@@ -356,7 +350,7 @@ export class Parser {
         }
 
         // Check for sub declaration
-        if (lexemes[0].category === 'DECLARATION' && lexemes[0].token.value === 'sub') {
+        if (lexemes[0].category === 'DECLARATION' && TokenChecker.isDeclarationKeyword(lexemes[0], 'sub')) {
             return this.parseSubDeclaration(lexemes);
         }
 
@@ -419,15 +413,18 @@ export class Parser {
         const declarator = lexemes[0].token.value;
 
         // Check for lexical subroutine (my sub, our sub)
-        if (lexemes[1].category === 'DECLARATION' && lexemes[1].token.value === 'sub') {
+        if (TokenChecker.isDeclarationKeyword(lexemes[1], 'sub')) {
             const subNode = this.parseSubDeclaration(lexemes.slice(1));
-            if (subNode) {
+            if (subNode && subNode.type === 'Sub') {
                 const declNode: DeclarationNode = {
                     type: 'Declaration',
                     declarator,
                     variable: subNode
                 };
                 return declNode;
+            }
+            if (subNode && subNode.type === 'Error') {
+                return subNode;
             }
             return ParseError.incompleteDeclaration(
                 'subroutine',
@@ -503,7 +500,7 @@ export class Parser {
             const current = lexemes[currentPos];
 
             // Special handling for ternary operator
-            if ((current.category === 'BINOP' || current.category === 'OPERATOR') && current.token.value === '?') {
+            if (TokenChecker.isQuestionMark(current)) {
                 const opInfo = this.getOperatorInfo('?');
                 if (!opInfo || opInfo.precedence > minPrecedence) {
                     break;
@@ -520,13 +517,13 @@ export class Parser {
                         depth++;
                     } else if (lexemes[i].category === 'RPAREN' || lexemes[i].category === 'RBRACKET' || lexemes[i].category === 'RBRACE') {
                         depth--;
-                    } else if (depth === 0 && lexemes[i].token.value === '?') {
+                    } else if (depth === 0 && TokenChecker.isQuestionMark(lexemes[i])) {
                         // Nested ternary
                         depth++;
-                    } else if (depth === 1 && lexemes[i].token.value === ':') {
+                    } else if (depth === 1 && TokenChecker.isColon(lexemes[i])) {
                         // This ':' belongs to the nested ternary
                         depth--;
-                    } else if (depth === 0 && (lexemes[i].category === 'BINOP' || lexemes[i].category === 'OPERATOR') && lexemes[i].token.value === ':') {
+                    } else if (depth === 0 && TokenChecker.isColon(lexemes[i])) {
                         colonPos = i;
                         break;
                     }
@@ -684,7 +681,7 @@ export class Parser {
         }
 
         // Do blocks (can be used in expressions)
-        if (lexeme.category === 'CONTROL' && lexeme.token.value === 'do') {
+        if (TokenChecker.isControlKeyword(lexeme, 'do')) {
             // Expect: do { statements }
             if (pos + 1 < lexemes.length && lexemes[pos + 1].category === 'LBRACE') {
                 // Find matching RBRACE
@@ -797,68 +794,35 @@ export class Parser {
                 pos + 1 < lexemes.length &&
                 lexemes[pos + 1].category === 'LBRACKET') {
 
-                // Find matching RBRACKET
-                let depth = 1;
-                let endPos = pos + 2;
-                while (endPos < lexemes.length && depth > 0) {
-                    if (lexemes[endPos].category === 'LBRACKET') depth++;
-                    if (lexemes[endPos].category === 'RBRACKET') depth--;
-                    endPos++;
+                // Find matching RBRACKET using DelimiterMatcher
+                const closingPos = DelimiterMatcher.findClosingBracket(lexemes, pos + 1);
+                if (closingPos === -1) {
+                    // Missing closing bracket
+                    return {
+                        node: this.createParseError('Missing closing bracket for array slice', lexemes, pos),
+                        nextPos: lexemes.length
+                    };
                 }
+                const endPos = closingPos + 1;
 
                 // Parse indices expression
-                const indicesLexemes = lexemes.slice(pos + 2, endPos - 1);
+                const indicesLexemes = lexemes.slice(pos + 2, closingPos);
 
                 // Check if there are commas at depth 0 (list of indices)
-                let hasComma = false;
-                let checkDepth = 0;
-                for (let i = 0; i < indicesLexemes.length; i++) {
-                    if (indicesLexemes[i].category === 'LPAREN' || indicesLexemes[i].category === 'LBRACKET' || indicesLexemes[i].category === 'LBRACE') {
-                        checkDepth++;
-                    }
-                    if (indicesLexemes[i].category === 'RPAREN' || indicesLexemes[i].category === 'RBRACKET' || indicesLexemes[i].category === 'RBRACE') {
-                        checkDepth--;
-                    }
-                    if (checkDepth === 0 && indicesLexemes[i].category === 'COMMA') {
-                        hasComma = true;
-                        break;
-                    }
-                }
-
+                const commaPositions = findCommasAtDepthZero(indicesLexemes);
                 let indices: ASTNode | null = null;
 
-                if (hasComma) {
-                    // Parse as list (comma-separated indices)
+                if (commaPositions.length > 0) {
+                    // Parse as list (comma-separated indices) using splitByCommas
+                    const segments = splitByCommas(indicesLexemes);
                     const elements: ASTNode[] = [];
-                    let elemStart = 0;
-                    let elemDepth = 0;
 
-                    for (let i = 0; i < indicesLexemes.length; i++) {
-                        if (indicesLexemes[i].category === 'LPAREN' || indicesLexemes[i].category === 'LBRACKET' || indicesLexemes[i].category === 'LBRACE') {
-                            elemDepth++;
-                        }
-                        if (indicesLexemes[i].category === 'RPAREN' || indicesLexemes[i].category === 'RBRACKET' || indicesLexemes[i].category === 'RBRACE') {
-                            elemDepth--;
-                        }
-
-                        if (elemDepth === 0 && indicesLexemes[i].category === 'COMMA') {
-                            const elemTokens = indicesLexemes.slice(elemStart, i);
-                            if (elemTokens.length > 0) {
-                                const elem = this.parseExpression(elemTokens, 0);
-                                if (elem) {
-                                    elements.push(elem);
-                                }
+                    for (const segment of segments) {
+                        if (segment.length > 0) {
+                            const elem = this.parseExpression(segment, 0);
+                            if (elem) {
+                                elements.push(elem);
                             }
-                            elemStart = i + 1; // Skip the comma
-                        }
-                    }
-
-                    // Don't forget the last element
-                    const lastElemTokens = indicesLexemes.slice(elemStart);
-                    if (lastElemTokens.length > 0) {
-                        const elem = this.parseExpression(lastElemTokens, 0);
-                        if (elem) {
-                            elements.push(elem);
                         }
                     }
 
@@ -894,87 +858,45 @@ export class Parser {
                 pos + 1 < lexemes.length &&
                 lexemes[pos + 1].category === 'LBRACE') {
 
-                // Find matching RBRACE
-                let depth = 1;
-                let endPos = pos + 2;
-                while (endPos < lexemes.length && depth > 0) {
-                    if (lexemes[endPos].category === 'LBRACE') depth++;
-                    if (lexemes[endPos].category === 'RBRACE') depth--;
-                    endPos++;
+                // Find matching RBRACE using DelimiterMatcher
+                const closingPos = DelimiterMatcher.findClosingBrace(lexemes, pos + 1);
+                if (closingPos === -1) {
+                    // Missing closing brace
+                    return {
+                        node: this.createParseError('Missing closing brace for hash slice', lexemes, pos),
+                        nextPos: lexemes.length
+                    };
                 }
+                const endPos = closingPos + 1;
 
                 // Parse keys expression
-                const keysLexemes = lexemes.slice(pos + 2, endPos - 1);
+                const keysLexemes = lexemes.slice(pos + 2, closingPos);
 
                 // Check if there are commas at depth 0 (list of keys)
-                let hasComma = false;
-                let checkDepth = 0;
-                for (let i = 0; i < keysLexemes.length; i++) {
-                    if (keysLexemes[i].category === 'LPAREN' || keysLexemes[i].category === 'LBRACKET' || keysLexemes[i].category === 'LBRACE') {
-                        checkDepth++;
-                    }
-                    if (keysLexemes[i].category === 'RPAREN' || keysLexemes[i].category === 'RBRACKET' || keysLexemes[i].category === 'RBRACE') {
-                        checkDepth--;
-                    }
-                    if (checkDepth === 0 && keysLexemes[i].category === 'COMMA') {
-                        hasComma = true;
-                        break;
-                    }
-                }
-
+                const commaPositions = findCommasAtDepthZero(keysLexemes);
                 let keys: ASTNode | null = null;
 
-                if (hasComma) {
-                    // Parse as list (comma-separated keys)
+                if (commaPositions.length > 0) {
+                    // Parse as list (comma-separated keys) using splitByCommas
+                    const segments = splitByCommas(keysLexemes);
                     const elements: ASTNode[] = [];
-                    let elemStart = 0;
-                    let elemDepth = 0;
 
-                    for (let i = 0; i < keysLexemes.length; i++) {
-                        if (keysLexemes[i].category === 'LPAREN' || keysLexemes[i].category === 'LBRACKET' || keysLexemes[i].category === 'LBRACE') {
-                            elemDepth++;
-                        }
-                        if (keysLexemes[i].category === 'RPAREN' || keysLexemes[i].category === 'RBRACKET' || keysLexemes[i].category === 'RBRACE') {
-                            elemDepth--;
-                        }
-
-                        if (elemDepth === 0 && keysLexemes[i].category === 'COMMA') {
-                            const elemTokens = keysLexemes.slice(elemStart, i);
-                            if (elemTokens.length > 0) {
-                                // Check for bareword key
-                                let elem: ASTNode | null = null;
-                                if (elemTokens.length === 1 && elemTokens[0].category === 'IDENTIFIER') {
-                                    const barewordKey: StringNode = {
-                                        type: 'String',
-                                        value: elemTokens[0].token.value
-                                    };
-                                    elem = barewordKey;
-                                } else {
-                                    elem = this.parseExpression(elemTokens, 0);
-                                }
-                                if (elem) {
-                                    elements.push(elem);
-                                }
+                    for (const segment of segments) {
+                        if (segment.length > 0) {
+                            // Check for bareword key
+                            let elem: ASTNode | null = null;
+                            if (segment.length === 1 && segment[0].category === 'IDENTIFIER') {
+                                const barewordKey: StringNode = {
+                                    type: 'String',
+                                    value: segment[0].token.value
+                                };
+                                elem = barewordKey;
+                            } else {
+                                elem = this.parseExpression(segment, 0);
                             }
-                            elemStart = i + 1; // Skip the comma
-                        }
-                    }
-
-                    // Don't forget the last element
-                    const lastElemTokens = keysLexemes.slice(elemStart);
-                    if (lastElemTokens.length > 0) {
-                        let elem: ASTNode | null = null;
-                        if (lastElemTokens.length === 1 && lastElemTokens[0].category === 'IDENTIFIER') {
-                            const barewordKey: StringNode = {
-                                type: 'String',
-                                value: lastElemTokens[0].token.value
-                            };
-                            elem = barewordKey;
-                        } else {
-                            elem = this.parseExpression(lastElemTokens, 0);
-                        }
-                        if (elem) {
-                            elements.push(elem);
+                            if (elem) {
+                                elements.push(elem);
+                            }
                         }
                     }
 
@@ -1016,7 +938,7 @@ export class Parser {
         }
 
         // Anonymous sub (sub keyword in expression context)
-        if (lexeme.category === 'DECLARATION' && lexeme.token.value === 'sub') {
+        if (TokenChecker.isDeclarationKeyword(lexeme, 'sub')) {
             // This is an anonymous sub - parse it without a name
             const subNode = this.parseSubDeclaration(lexemes.slice(pos));
             if (subNode) {
@@ -1031,8 +953,7 @@ export class Parser {
         if (lexeme.category === 'IDENTIFIER' || lexeme.category === 'KEYWORD') {
             // Check if next token is => (autoquoting in hash context)
             if (pos + 1 < lexemes.length &&
-                (lexemes[pos + 1].category === 'BINOP' || lexemes[pos + 1].category === 'OPERATOR') &&
-                lexemes[pos + 1].token.value === '=>') {
+                TokenChecker.isFatComma(lexemes[pos + 1])) {
                 // Bareword before => - treat as autoquoted string
                 const stringNode: StringNode = {
                     type: 'String',
@@ -1050,14 +971,15 @@ export class Parser {
                 const functionName = lexeme.token.value;
                 let currentPos = pos + 2; // Skip identifier and LPAREN
 
-                // Find matching RPAREN
-                let depth = 1;
-                let endPos = currentPos;
-                while (endPos < lexemes.length && depth > 0) {
-                    if (lexemes[endPos].category === 'LPAREN') depth++;
-                    if (lexemes[endPos].category === 'RPAREN') depth--;
-                    endPos++;
+                // Find matching RPAREN using DelimiterMatcher
+                const closingPos = DelimiterMatcher.findClosingParen(lexemes, pos + 1);
+                if (closingPos === -1) {
+                    return {
+                        node: ParseError.missingToken(')', lexemes[pos + 1].token, 'for function call'),
+                        nextPos: lexemes.length
+                    };
                 }
+                const endPos = closingPos + 1; // endPos is one past the closing paren
 
                 // Parse arguments (comma-separated expressions)
                 const argLexemes = lexemes.slice(currentPos, endPos - 1);
@@ -1108,8 +1030,7 @@ export class Parser {
             }
             // Check if next token is -> (for class method calls like Point->new())
             else if (pos + 1 < lexemes.length &&
-                     lexemes[pos + 1].category === 'BINOP' &&
-                     lexemes[pos + 1].token.value === '->') {
+                     TokenChecker.isArrowOperator(lexemes[pos + 1])) {
                 // This is an identifier followed by ->, treat it as a Variable-like node
                 // The -> will be handled by parsePostfixOperators
                 const identNode: VariableNode = {
@@ -1125,54 +1046,30 @@ export class Parser {
 
         // Array literals [...]
         if (lexeme.category === 'LBRACKET') {
-            // Find matching RBRACKET
-            let depth = 1;
-            let endPos = pos + 1;
-            while (endPos < lexemes.length && depth > 0) {
-                if (lexemes[endPos].category === 'LBRACKET') depth++;
-                if (lexemes[endPos].category === 'RBRACKET') depth--;
-                endPos++;
+            // Find matching RBRACKET using DelimiterMatcher
+            const closingPos = DelimiterMatcher.findClosingBracket(lexemes, pos);
+            if (closingPos === -1) {
+                return {
+                    node: ParseError.missingToken(']', lexeme.token, 'for array literal'),
+                    nextPos: lexemes.length
+                };
             }
+            const endPos = closingPos + 1; // endPos is one past the closing bracket
 
             // Parse elements (comma-separated expressions)
             const elementLexemes = lexemes.slice(pos + 1, endPos - 1);
             const elements: ASTNode[] = [];
 
             if (elementLexemes.length > 0) {
-                // Split by commas at depth 0
-                let elemStart = 0;
-                let bracketDepth = 0;
-                let braceDepth = 0;
-                let parenDepth = 0;
+                // Split by commas at depth 0 using utility function
+                const segments = splitByCommas(elementLexemes, 0, elementLexemes.length);
 
-                for (let i = 0; i < elementLexemes.length; i++) {
-                    if (elementLexemes[i].category === 'LBRACKET') bracketDepth++;
-                    if (elementLexemes[i].category === 'RBRACKET') bracketDepth--;
-                    if (elementLexemes[i].category === 'LBRACE') braceDepth++;
-                    if (elementLexemes[i].category === 'RBRACE') braceDepth--;
-                    if (elementLexemes[i].category === 'LPAREN') parenDepth++;
-                    if (elementLexemes[i].category === 'RPAREN') parenDepth--;
-
-                    if (elementLexemes[i].category === 'COMMA' &&
-                        bracketDepth === 0 && braceDepth === 0 && parenDepth === 0) {
-                        // Found an element boundary
-                        const elemTokens = elementLexemes.slice(elemStart, i);
-                        if (elemTokens.length > 0) {
-                            const elem = this.parseExpression(elemTokens, 0);
-                            if (elem) {
-                                elements.push(elem);
-                            }
+                for (const segment of segments) {
+                    if (segment.length > 0) {
+                        const elem = this.parseExpression(segment, 0);
+                        if (elem) {
+                            elements.push(elem);
                         }
-                        elemStart = i + 1; // Skip the comma
-                    }
-                }
-
-                // Don't forget the last element
-                const lastElemTokens = elementLexemes.slice(elemStart);
-                if (lastElemTokens.length > 0) {
-                    const elem = this.parseExpression(lastElemTokens, 0);
-                    if (elem) {
-                        elements.push(elem);
                     }
                 }
             }
@@ -1200,54 +1097,30 @@ export class Parser {
         if (isHashLiteral) {
             const startPos = lexeme.category === 'LBRACE' ? pos : pos + 1;
             if (startPos < lexemes.length && lexemes[startPos].category === 'LBRACE') {
-                // Find matching RBRACE
-                let depth = 1;
-                let endPos = startPos + 1;
-                while (endPos < lexemes.length && depth > 0) {
-                    if (lexemes[endPos].category === 'LBRACE') depth++;
-                    if (lexemes[endPos].category === 'RBRACE') depth--;
-                    endPos++;
+                // Find matching RBRACE using DelimiterMatcher
+                const closingPos = DelimiterMatcher.findClosingBrace(lexemes, startPos);
+                if (closingPos === -1) {
+                    return {
+                        node: ParseError.missingToken('}', lexemes[startPos].token, 'for hash literal'),
+                        nextPos: lexemes.length
+                    };
                 }
+                const endPos = closingPos + 1; // endPos is one past the closing brace
 
                 // Parse pairs (comma-separated key => value)
                 const pairLexemes = lexemes.slice(startPos + 1, endPos - 1);
                 const pairs: Array<{ key: ASTNode; value: ASTNode }> = [];
 
                 if (pairLexemes.length > 0) {
-                    // Split by commas at depth 0
-                    let pairStart = 0;
-                    let bracketDepth = 0;
-                    let braceDepth = 0;
-                    let parenDepth = 0;
+                    // Split by commas at depth 0 using utility function
+                    const segments = splitByCommas(pairLexemes, 0, pairLexemes.length);
 
-                    for (let i = 0; i < pairLexemes.length; i++) {
-                        if (pairLexemes[i].category === 'LBRACKET') bracketDepth++;
-                        if (pairLexemes[i].category === 'RBRACKET') bracketDepth--;
-                        if (pairLexemes[i].category === 'LBRACE') braceDepth++;
-                        if (pairLexemes[i].category === 'RBRACE') braceDepth--;
-                        if (pairLexemes[i].category === 'LPAREN') parenDepth++;
-                        if (pairLexemes[i].category === 'RPAREN') parenDepth--;
-
-                        if (pairLexemes[i].category === 'COMMA' &&
-                            bracketDepth === 0 && braceDepth === 0 && parenDepth === 0) {
-                            // Found a pair boundary
-                            const pairTokens = pairLexemes.slice(pairStart, i);
-                            if (pairTokens.length > 0) {
-                                const pair = this.parseHashPair(pairTokens);
-                                if (pair) {
-                                    pairs.push(pair);
-                                }
+                    for (const segment of segments) {
+                        if (segment.length > 0) {
+                            const pair = this.parseHashPair(segment);
+                            if (pair) {
+                                pairs.push(pair);
                             }
-                            pairStart = i + 1; // Skip the comma
-                        }
-                    }
-
-                    // Don't forget the last pair
-                    const lastPairTokens = pairLexemes.slice(pairStart);
-                    if (lastPairTokens.length > 0) {
-                        const pair = this.parseHashPair(lastPairTokens);
-                        if (pair) {
-                            pairs.push(pair);
                         }
                     }
                 }
@@ -1369,19 +1242,14 @@ export class Parser {
     }
 
     private parseHashPair(lexemes: Lexeme[]): { key: ASTNode; value: ASTNode } | null {
-        // Find the => operator at depth 0
-        let depth = 0;
+        // Find the => operator at depth 0 using DepthTracker
+        const tracker = new DepthTracker();
         let arrowPos = -1;
 
         for (let i = 0; i < lexemes.length; i++) {
-            if (lexemes[i].category === 'LPAREN' || lexemes[i].category === 'LBRACKET' || lexemes[i].category === 'LBRACE') {
-                depth++;
-            }
-            if (lexemes[i].category === 'RPAREN' || lexemes[i].category === 'RBRACKET' || lexemes[i].category === 'RBRACE') {
-                depth--;
-            }
+            tracker.update(lexemes[i]);
 
-            if (depth === 0 && (lexemes[i].category === 'BINOP' || lexemes[i].category === 'OPERATOR') && lexemes[i].token.value === '=>') {
+            if (tracker.isAtDepthZero() && TokenChecker.isFatComma(lexemes[i])) {
                 arrowPos = i;
                 break;
             }
@@ -1426,7 +1294,7 @@ export class Parser {
             const current = lexemes[pos];
 
             // Check for dereference operator ->
-            if (current.category === 'BINOP' && current.token.value === '->') {
+            if (TokenChecker.isArrowOperator(current)) {
                 pos++; // Consume ->
                 if (pos >= lexemes.length) {
                     break;
@@ -1439,56 +1307,31 @@ export class Parser {
 
                     const methodName = lexemes[pos].token.value;
                     pos++; // Consume method name
+
+                    // Find matching RPAREN using DelimiterMatcher
+                    const closingPos = DelimiterMatcher.findClosingParen(lexemes, pos);
+                    if (closingPos === -1) {
+                        // Missing closing parenthesis
+                        const errorNode = this.createParseError('Missing closing parenthesis for method call', lexemes, pos);
+                        node = errorNode;
+                        pos = lexemes.length;
+                        break;
+                    }
+                    const endPos = closingPos + 1;
                     pos++; // Consume LPAREN
 
-                    // Find matching RPAREN
-                    let depth = 1;
-                    let endPos = pos;
-                    while (endPos < lexemes.length && depth > 0) {
-                        if (lexemes[endPos].category === 'LPAREN') depth++;
-                        if (lexemes[endPos].category === 'RPAREN') depth--;
-                        endPos++;
-                    }
-
-                    // Parse arguments (comma-separated expressions)
-                    const argLexemes = lexemes.slice(pos, endPos - 1);
+                    // Parse arguments (comma-separated expressions) using splitByCommas
+                    const argLexemes = lexemes.slice(pos, closingPos);
                     const args: ASTNode[] = [];
 
                     if (argLexemes.length > 0) {
-                        // Split by commas at depth 0
-                        let argStart = 0;
-                        let parenDepth = 0;
-                        let bracketDepth = 0;
-                        let braceDepth = 0;
-
-                        for (let i = 0; i < argLexemes.length; i++) {
-                            if (argLexemes[i].category === 'LPAREN') parenDepth++;
-                            if (argLexemes[i].category === 'RPAREN') parenDepth--;
-                            if (argLexemes[i].category === 'LBRACKET') bracketDepth++;
-                            if (argLexemes[i].category === 'RBRACKET') bracketDepth--;
-                            if (argLexemes[i].category === 'LBRACE') braceDepth++;
-                            if (argLexemes[i].category === 'RBRACE') braceDepth--;
-
-                            if (argLexemes[i].category === 'COMMA' &&
-                                parenDepth === 0 && bracketDepth === 0 && braceDepth === 0) {
-                                // Found an argument boundary
-                                const argTokens = argLexemes.slice(argStart, i);
-                                if (argTokens.length > 0) {
-                                    const arg = this.parseExpression(argTokens, 0);
-                                    if (arg) {
-                                        args.push(arg);
-                                    }
+                        const segments = splitByCommas(argLexemes);
+                        for (const segment of segments) {
+                            if (segment.length > 0) {
+                                const arg = this.parseExpression(segment, 0);
+                                if (arg) {
+                                    args.push(arg);
                                 }
-                                argStart = i + 1; // Skip the comma
-                            }
-                        }
-
-                        // Don't forget the last argument
-                        const lastArgTokens = argLexemes.slice(argStart);
-                        if (lastArgTokens.length > 0) {
-                            const arg = this.parseExpression(lastArgTokens, 0);
-                            if (arg) {
-                                args.push(arg);
                             }
                         }
                     }
@@ -1508,7 +1351,7 @@ export class Parser {
                 // Check for postfix dereferencing: ->@*, ->%*, ->$*
                 if (lexemes[pos].category === 'POSTFIX_DEREF_SIGIL' &&
                     pos + 1 < lexemes.length &&
-                    lexemes[pos + 1].token.value === '*') {
+                    TokenChecker.isOperator(lexemes[pos + 1], '*')) {
 
                     const sigil = lexemes[pos].token.value; // The sigil: @, %, or $
                     pos += 2; // Consume sigil and *
@@ -1630,17 +1473,19 @@ export class Parser {
 
             // Check for array access [
             if (current.category === 'LBRACKET' || lexemes[pos].category === 'LBRACKET') {
-                // Find matching RBRACKET
-                let depth = 1;
-                let endPos = pos + 1;
-                while (endPos < lexemes.length && depth > 0) {
-                    if (lexemes[endPos].category === 'LBRACKET') depth++;
-                    if (lexemes[endPos].category === 'RBRACKET') depth--;
-                    endPos++;
+                // Find matching RBRACKET using DelimiterMatcher
+                const closingPos = DelimiterMatcher.findClosingBracket(lexemes, pos);
+                if (closingPos === -1) {
+                    // Missing closing bracket
+                    const errorNode = this.createParseError('Missing closing bracket for array access', lexemes, pos);
+                    node = errorNode;
+                    pos = lexemes.length;
+                    break;
                 }
+                const endPos = closingPos + 1;
 
                 // Parse index expression
-                const indexLexemes = lexemes.slice(pos + 1, endPos - 1);
+                const indexLexemes = lexemes.slice(pos + 1, closingPos);
                 const index = this.parseExpression(indexLexemes, 0);
 
                 if (index) {
@@ -1658,17 +1503,19 @@ export class Parser {
 
             // Check for hash access {
             if (current.category === 'LBRACE' || lexemes[pos].category === 'LBRACE') {
-                // Find matching RBRACE
-                let depth = 1;
-                let endPos = pos + 1;
-                while (endPos < lexemes.length && depth > 0) {
-                    if (lexemes[endPos].category === 'LBRACE') depth++;
-                    if (lexemes[endPos].category === 'RBRACE') depth--;
-                    endPos++;
+                // Find matching RBRACE using DelimiterMatcher
+                const closingPos = DelimiterMatcher.findClosingBrace(lexemes, pos);
+                if (closingPos === -1) {
+                    // Missing closing brace
+                    const errorNode = this.createParseError('Missing closing brace for hash access', lexemes, pos);
+                    node = errorNode;
+                    pos = lexemes.length;
+                    break;
                 }
+                const endPos = closingPos + 1;
 
                 // Parse key expression
-                const keyLexemes = lexemes.slice(pos + 1, endPos - 1);
+                const keyLexemes = lexemes.slice(pos + 1, closingPos);
                 let key: ASTNode | null = null;
 
                 // Check for bareword key (single IDENTIFIER)
@@ -1847,40 +1694,16 @@ export class Parser {
             return printNode;
         }
 
-        // Parse the arguments as a comma-separated list
+        // Parse the arguments as a comma-separated list using splitByCommas
         const args: ASTNode[] = [];
-        let depth = 0;
-        let start = 0;
+        const segments = splitByCommas(remainingLexemes);
 
-        for (let i = 0; i < remainingLexemes.length; i++) {
-            const lex = remainingLexemes[i];
-
-            // Track depth for nested expressions
-            if (lex.category === 'LPAREN' || lex.category === 'LBRACKET' || lex.category === 'LBRACE') {
-                depth++;
-            } else if (lex.category === 'RPAREN' || lex.category === 'RBRACKET' || lex.category === 'RBRACE') {
-                depth--;
-            }
-
-            // At depth 0, commas separate arguments
-            if (depth === 0 && lex.category === 'COMMA') {
-                const argLexemes = remainingLexemes.slice(start, i);
-                if (argLexemes.length > 0) {
-                    const arg = this.parseExpression(argLexemes, 0);
-                    if (arg) {
-                        args.push(arg);
-                    }
+        for (const segment of segments) {
+            if (segment.length > 0) {
+                const arg = this.parseExpression(segment, 0);
+                if (arg) {
+                    args.push(arg);
                 }
-                start = i + 1;
-            }
-        }
-
-        // Parse the last argument
-        const lastArgLexemes = remainingLexemes.slice(start);
-        if (lastArgLexemes.length > 0) {
-            const arg = this.parseExpression(lastArgLexemes, 0);
-            if (arg) {
-                args.push(arg);
             }
         }
 
@@ -1904,40 +1727,16 @@ export class Parser {
             return sayNode;
         }
 
-        // Parse the arguments as a comma-separated list
+        // Parse the arguments as a comma-separated list using splitByCommas
         const args: ASTNode[] = [];
-        let depth = 0;
-        let start = 0;
+        const segments = splitByCommas(remainingLexemes);
 
-        for (let i = 0; i < remainingLexemes.length; i++) {
-            const lex = remainingLexemes[i];
-
-            // Track depth for nested expressions
-            if (lex.category === 'LPAREN' || lex.category === 'LBRACKET' || lex.category === 'LBRACE') {
-                depth++;
-            } else if (lex.category === 'RPAREN' || lex.category === 'RBRACKET' || lex.category === 'RBRACE') {
-                depth--;
-            }
-
-            // At depth 0, commas separate arguments
-            if (depth === 0 && lex.category === 'COMMA') {
-                const argLexemes = remainingLexemes.slice(start, i);
-                if (argLexemes.length > 0) {
-                    const arg = this.parseExpression(argLexemes, 0);
-                    if (arg) {
-                        args.push(arg);
-                    }
+        for (const segment of segments) {
+            if (segment.length > 0) {
+                const arg = this.parseExpression(segment, 0);
+                if (arg) {
+                    args.push(arg);
                 }
-                start = i + 1;
-            }
-        }
-
-        // Parse the last argument
-        const lastArgLexemes = remainingLexemes.slice(start);
-        if (lastArgLexemes.length > 0) {
-            const arg = this.parseExpression(lastArgLexemes, 0);
-            if (arg) {
-                args.push(arg);
             }
         }
 
@@ -1948,15 +1747,15 @@ export class Parser {
         return sayNode;
     }
 
-    private parseDoBlock(lexemes: Lexeme[]): DoBlockNode | null {
+    private parseDoBlock(lexemes: Lexeme[]): DoBlockNode | ErrorNode | null {
         // Expect: do { statements }
         if (lexemes.length < 3) {
-            return null;
+            return ParseError.incompleteDeclaration('do', 'block body', lexemes[0]?.token);
         }
 
         // Skip 'do' keyword
         if (lexemes[1].category !== 'LBRACE') {
-            return null;
+            return ParseError.missingToken('{', lexemes[1]?.token, 'for do block');
         }
 
         // Find matching RBRACE
@@ -2015,11 +1814,11 @@ export class Parser {
         return doBlockNode;
     }
 
-    private parseSubDeclaration(lexemes: Lexeme[]): SubNode | null {
+    private parseSubDeclaration(lexemes: Lexeme[]): SubNode | ErrorNode | null {
         let pos = 1; // Skip 'sub' keyword
 
         if (pos >= lexemes.length) {
-            return null;
+            return ParseError.incompleteDeclaration('sub', 'name or parameters', lexemes[0].token);
         }
 
         // Check for optional name (identifier)
@@ -2060,7 +1859,7 @@ export class Parser {
                         // Found a parameter boundary
                         const paramTokens = paramLexemes.slice(paramStart, i);
                         const param = this.parseParameter(paramTokens);
-                        if (param) {
+                        if (param && param.type === 'Parameter') {
                             parameters.push(param);
                         }
                         paramStart = i + 1; // Skip the comma
@@ -2071,7 +1870,7 @@ export class Parser {
                 const lastParamTokens = paramLexemes.slice(paramStart);
                 if (lastParamTokens.length > 0) {
                     const param = this.parseParameter(lastParamTokens);
-                    if (param) {
+                    if (param && param.type === 'Parameter') {
                         parameters.push(param);
                     }
                 }
@@ -2082,13 +1881,13 @@ export class Parser {
 
         // Expect LBRACE for body
         if (pos >= lexemes.length || lexemes[pos].category !== 'LBRACE') {
-            return null;
+            return ParseError.missingToken('{', lexemes[pos - 1]?.token || lexemes[lexemes.length - 1]?.token, 'for sub body');
         }
 
         // Parse the block body
         const blockResult = this.parseBlock(lexemes, pos);
         if (!blockResult) {
-            return null;
+            return ParseError.missingToken('{', lexemes[pos]?.token, 'for sub body');
         }
 
         // Create SubNode with or without name
@@ -2110,16 +1909,16 @@ export class Parser {
         }
     }
 
-    private parseParameter(lexemes: Lexeme[]): ParameterNode | null {
+    private parseParameter(lexemes: Lexeme[]): ParameterNode | ErrorNode | null {
         if (lexemes.length === 0) {
-            return null;
+            return ParseError.emptyExpression('parameter', undefined);
         }
 
         // First token should be a variable
         if (lexemes[0].category !== 'SCALAR_VAR' &&
             lexemes[0].category !== 'ARRAY_VAR' &&
             lexemes[0].category !== 'HASH_VAR') {
-            return null;
+            return ParseError.invalidSyntax('Parameter must be a variable', lexemes[0].token);
         }
 
         const variable: VariableNode = {
@@ -2578,11 +2377,10 @@ export class Parser {
 
             if (lex.category === 'IDENTIFIER') {
                 packageName += lex.token.value;
-            } else if (lex.category === 'BINOP' && lex.token.value === ':') {
+            } else if (TokenChecker.isColon(lex)) {
                 // Handle :: as two : tokens
                 if (i + 1 < remainingLexemes.length &&
-                    remainingLexemes[i + 1].category === 'BINOP' &&
-                    remainingLexemes[i + 1].token.value === ':') {
+                    TokenChecker.isColon(remainingLexemes[i + 1])) {
                     packageName += '::';
                     i++; // Skip the second :
                 } else {
@@ -2647,8 +2445,7 @@ export class Parser {
 
             // Look for .NN after v5
             if (i < remainingLexemes.length &&
-                remainingLexemes[i].category === 'BINOP' &&
-                remainingLexemes[i].token.value === '.') {
+                TokenChecker.isOperator(remainingLexemes[i], '.')) {
                 version += '.';
                 i++;
                 if (i < remainingLexemes.length &&
@@ -2666,8 +2463,7 @@ export class Parser {
 
             // Look for .NNN after the first number
             if (i < remainingLexemes.length &&
-                remainingLexemes[i].category === 'BINOP' &&
-                remainingLexemes[i].token.value === '.') {
+                TokenChecker.isOperator(remainingLexemes[i], '.')) {
                 version += '.';
                 i++;
                 if (i < remainingLexemes.length &&
@@ -2694,11 +2490,10 @@ export class Parser {
 
             if (lex.category === 'IDENTIFIER') {
                 moduleName += lex.token.value;
-            } else if (lex.category === 'BINOP' && lex.token.value === ':') {
+            } else if (TokenChecker.isColon(lex)) {
                 // Handle :: as two : tokens
                 if (i + 1 < remainingLexemes.length &&
-                    remainingLexemes[i + 1].category === 'BINOP' &&
-                    remainingLexemes[i + 1].token.value === ':') {
+                    TokenChecker.isColon(remainingLexemes[i + 1])) {
                     moduleName += '::';
                     i++; // Skip the second :
                 } else {
@@ -2739,7 +2534,7 @@ export class Parser {
         return useNode;
     }
 
-    private parseClassDeclaration(lexemes: Lexeme[]): ClassNode | null {
+    private parseClassDeclaration(lexemes: Lexeme[]): ClassNode | ErrorNode | null {
         // class Name { body }
         // class Name::Foo { body }
 
@@ -2753,10 +2548,9 @@ export class Parser {
                 name += lexemes[i].token.value;
                 i++;
             } else if (i + 1 < lexemes.length &&
-                       lexemes[i].category === 'BINOP' &&
-                       lexemes[i].token.value === ':' &&
+                       TokenChecker.isColon(lexemes[i]) &&
                        lexemes[i + 1].category === 'BINOP' &&
-                       lexemes[i + 1].token.value === ':') {
+                       TokenChecker.isColon(lexemes[i + 1])) {
                 // Handle :: separator
                 name += '::';
                 i += 2; // Skip both :
@@ -2766,14 +2560,13 @@ export class Parser {
         }
 
         if (name === '') {
-            return null;
+            return ParseError.incompleteDeclaration('class', 'name', lexemes[0]?.token);
         }
 
         // Check for :isa(...) inheritance
         let parent: string | undefined = undefined;
         if (i < lexemes.length &&
-            lexemes[i].category === 'BINOP' &&
-            lexemes[i].token.value === ':') {
+            TokenChecker.isColon(lexemes[i])) {
             i++; // Skip ':'
 
             // Expect 'isa' identifier
@@ -2804,7 +2597,7 @@ export class Parser {
                             i++; // Skip ')'
                             break;
                         } else {
-                            return null; // Invalid syntax
+                            return ParseError.invalidSyntax('Invalid parent class name in :isa()', lexemes[i].token);
                         }
                     }
                 }
@@ -2813,7 +2606,7 @@ export class Parser {
 
         // Expect opening brace
         if (i >= lexemes.length || lexemes[i].category !== 'LBRACE') {
-            return null;
+            return ParseError.missingToken('{', lexemes[i - 1]?.token || lexemes[lexemes.length - 1]?.token, 'for class body');
         }
         i++; // Skip opening brace
 
@@ -2908,7 +2701,7 @@ export class Parser {
         return this.parseStatement(lexemes);
     }
 
-    private parseFieldDeclaration(lexemes: Lexeme[]): FieldNode | null {
+    private parseFieldDeclaration(lexemes: Lexeme[]): FieldNode | ErrorNode | null {
         // field $x;
         // field $x :param;
         // field $x :param :reader;
@@ -2922,7 +2715,7 @@ export class Parser {
             (lexemes[i].category !== 'SCALAR_VAR' &&
              lexemes[i].category !== 'ARRAY_VAR' &&
              lexemes[i].category !== 'HASH_VAR')) {
-            return null;
+            return ParseError.incompleteDeclaration('field', 'variable', lexemes[0]?.token);
         }
 
         const variable: VariableNode = {
@@ -2934,7 +2727,7 @@ export class Parser {
         // Parse optional attributes (starting with :)
         const attributes: string[] = [];
         while (i < lexemes.length) {
-            if (lexemes[i].category === 'BINOP' && lexemes[i].token.value === ':') {
+            if (TokenChecker.isColon(lexemes[i])) {
                 // Next should be an identifier (attribute name)
                 if (i + 1 < lexemes.length && lexemes[i + 1].category === 'IDENTIFIER') {
                     attributes.push(lexemes[i + 1].token.value);
@@ -2959,7 +2752,7 @@ export class Parser {
         return fieldNode;
     }
 
-    private parseMethodDeclaration(lexemes: Lexeme[]): MethodNode | null {
+    private parseMethodDeclaration(lexemes: Lexeme[]): MethodNode | ErrorNode | null {
         // method name() { body }
         // method name($x, $y) { body }
 
@@ -2968,7 +2761,7 @@ export class Parser {
 
         // Expect method name (identifier)
         if (pos >= lexemes.length || lexemes[pos].category !== 'IDENTIFIER') {
-            return null;
+            return ParseError.incompleteDeclaration('method', 'name', lexemes[0]?.token);
         }
 
         const name = lexemes[pos].token.value;
@@ -3005,7 +2798,7 @@ export class Parser {
                         // Found a parameter boundary
                         const paramTokens = paramLexemes.slice(paramStart, i);
                         const param = this.parseParameter(paramTokens);
-                        if (param) {
+                        if (param && param.type === 'Parameter') {
                             parameters.push(param);
                         }
                         paramStart = i + 1; // Skip the comma
@@ -3016,7 +2809,7 @@ export class Parser {
                 const lastParamTokens = paramLexemes.slice(paramStart);
                 if (lastParamTokens.length > 0) {
                     const param = this.parseParameter(lastParamTokens);
-                    if (param) {
+                    if (param && param.type === 'Parameter') {
                         parameters.push(param);
                     }
                 }
@@ -3027,13 +2820,13 @@ export class Parser {
 
         // Expect LBRACE for body
         if (pos >= lexemes.length || lexemes[pos].category !== 'LBRACE') {
-            return null;
+            return ParseError.missingToken('{', lexemes[pos - 1]?.token || lexemes[lexemes.length - 1]?.token, 'for method body');
         }
 
         // Parse the block body
         const blockResult = this.parseBlock(lexemes, pos);
         if (!blockResult) {
-            return null;
+            return ParseError.missingToken('{', lexemes[pos]?.token, 'for method body');
         }
 
         return {
