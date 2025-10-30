@@ -1,3 +1,2 @@
 for my $arg (@ARGV) {
     print($arg);
-}

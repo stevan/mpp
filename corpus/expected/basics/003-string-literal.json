@@ -2,5 +2,129 @@
   {
     "type": "String",
     "value": "\"hello world\""
+  },
+  {
+    "type": "String",
+    "value": "\"\""
+  },
+  {
+    "type": "String",
+    "value": "\"Hello, World!\""
+  },
+  {
+    "type": "String",
+    "value": "\"Line 1\\nLine 2\""
+  },
+  {
+    "type": "String",
+    "value": "\"Tab\\there\""
+  },
+  {
+    "type": "String",
+    "value": "'hello world'"
+  },
+  {
+    "type": "String",
+    "value": "''"
+  },
+  {
+    "type": "String",
+    "value": "'It\\'s a string'"
+  },
+  {
+    "type": "String",
+    "value": "'No interpolation: $var'"
+  },
+  {
+    "type": "String",
+    "value": "\"She said \\\"Hello\\\"\""
+  },
+  {
+    "type": "String",
+    "value": "\"Path: C:\\\\Windows\\\\System32\""
+  },
+  {
+    "type": "String",
+    "value": "\"Unicode: \\x{263A}\""
+  },
+  {
+    "type": "String",
+    "value": "\"\\t\\r\\n\""
+  },
+  {
+    "type": "String",
+    "value": "\"It's easy\""
+  },
+  {
+    "type": "String",
+    "value": "'He said \"Hello\"'"
+  },
+  {
+    "type": "String",
+    "value": "\"!@#$%^&*()\""
+  },
+  {
+    "type": "String",
+    "value": "\"[]{}<>\""
+  },
+  {
+    "type": "String",
+    "value": "\"+-*/=\""
+  },
+  {
+    "type": "String",
+    "value": "\"The quick brown fox jumps over the lazy dog\""
+  },
+  {
+    "type": "String",
+    "value": "\"Lorem ipsum dolor sit amet\""
+  },
+  {
+    "type": "String",
+    "value": "\"123\""
+  },
+  {
+    "type": "String",
+    "value": "\"3.14159\""
+  },
+  {
+    "type": "String",
+    "value": "\"Version 1.0.0\""
+  },
+  {
+    "type": "String",
+    "value": "\"\""
+  },
+  {
+    "type": "String",
+    "value": "\" \""
+  },
+  {
+    "type": "String",
+    "value": "\"   \""
+  },
+  {
+    "type": "String",
+    "value": "\"\\n\""
+  },
+  {
+    "type": "String",
+    "value": "\"/usr/local/bin\""
+  },
+  {
+    "type": "String",
+    "value": "\"C:\\\\Program Files\""
+  },
+  {
+    "type": "String",
+    "value": "\"../relative/path\""
+  },
+  {
+    "type": "String",
+    "value": "\"https://example.com\""
+  },
+  {
+    "type": "String",
+    "value": "\"http://localhost:8080/api\""
   }
 ]

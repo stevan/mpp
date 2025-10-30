@@ -1,0 +1,12 @@
+    }
+    method add ($other) {
+        return Point->new(
+        );
+    }
+}
+    }
+    method add ($other) {
+        return Point3D->new(
+        );
+    }
+}

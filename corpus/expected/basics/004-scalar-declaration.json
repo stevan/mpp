@@ -10,5 +10,559 @@
       "type": "Number",
       "value": "10"
     }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$y"
+    },
+    "initializer": {
+      "type": "UnaryOp",
+      "operator": "-",
+      "operand": {
+        "type": "Number",
+        "value": "5"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$z"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "0"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$pi"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": ".",
+      "left": {
+        "type": "Number",
+        "value": "3"
+      },
+      "right": {
+        "type": "Number",
+        "value": "14159"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$large"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "1000000"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$name"
+    },
+    "initializer": {
+      "type": "String",
+      "value": "\"Alice\""
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$greeting"
+    },
+    "initializer": {
+      "type": "String",
+      "value": "\"Hello, World!\""
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$empty"
+    },
+    "initializer": {
+      "type": "String",
+      "value": "\"\""
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$path"
+    },
+    "initializer": {
+      "type": "String",
+      "value": "\"/usr/local/bin\""
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$uninitialized"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$pending"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$a"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "1"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$b"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "2"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$c"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "3"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$sum"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "+",
+      "left": {
+        "type": "Number",
+        "value": "10"
+      },
+      "right": {
+        "type": "Number",
+        "value": "20"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$product"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "*",
+      "left": {
+        "type": "Number",
+        "value": "5"
+      },
+      "right": {
+        "type": "Number",
+        "value": "6"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$concat"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": ".",
+      "left": {
+        "type": "BinaryOp",
+        "operator": ".",
+        "left": {
+          "type": "String",
+          "value": "\"Hello\""
+        },
+        "right": {
+          "type": "String",
+          "value": "\" \""
+        }
+      },
+      "right": {
+        "type": "String",
+        "value": "\"World\""
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "our",
+    "variable": {
+      "type": "Variable",
+      "name": "$global"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "100"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "our",
+    "variable": {
+      "type": "Variable",
+      "name": "$shared"
+    },
+    "initializer": {
+      "type": "String",
+      "value": "\"shared value\""
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "our",
+    "variable": {
+      "type": "Variable",
+      "name": "$package_var"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "state",
+    "variable": {
+      "type": "Variable",
+      "name": "$counter"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "0"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "state",
+    "variable": {
+      "type": "Variable",
+      "name": "$initialized"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "1"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "state",
+    "variable": {
+      "type": "Variable",
+      "name": "$memo"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@array"
+    },
+    "initializer": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Number",
+          "value": "1"
+        },
+        {
+          "type": "Number",
+          "value": "2"
+        },
+        {
+          "type": "Number",
+          "value": "3"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@names"
+    },
+    "initializer": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "String",
+          "value": "\"Alice\""
+        },
+        {
+          "type": "String",
+          "value": "\"Bob\""
+        },
+        {
+          "type": "String",
+          "value": "\"Charlie\""
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@mixed"
+    },
+    "initializer": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Number",
+          "value": "1"
+        },
+        {
+          "type": "String",
+          "value": "\"two\""
+        },
+        {
+          "type": "BinaryOp",
+          "operator": ".",
+          "left": {
+            "type": "Number",
+            "value": "3"
+          },
+          "right": {
+            "type": "Number",
+            "value": "14"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "our",
+    "variable": {
+      "type": "Variable",
+      "name": "@global_array"
+    },
+    "initializer": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "Number",
+          "value": "10"
+        },
+        {
+          "type": "Number",
+          "value": "20"
+        },
+        {
+          "type": "Number",
+          "value": "30"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "%hash"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "=>",
+      "left": {
+        "type": "String",
+        "value": "key"
+      },
+      "right": {
+        "type": "String",
+        "value": "\"value\""
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "%config"
+    },
+    "initializer": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "BinaryOp",
+          "operator": "=>",
+          "left": {
+            "type": "String",
+            "value": "host"
+          },
+          "right": {
+            "type": "String",
+            "value": "\"localhost\""
+          }
+        },
+        {
+          "type": "BinaryOp",
+          "operator": "=>",
+          "left": {
+            "type": "String",
+            "value": "port"
+          },
+          "right": {
+            "type": "Number",
+            "value": "8080"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "our",
+    "variable": {
+      "type": "Variable",
+      "name": "%global_hash"
+    },
+    "initializer": {
+      "type": "List",
+      "elements": [
+        {
+          "type": "BinaryOp",
+          "operator": "=>",
+          "left": {
+            "type": "String",
+            "value": "a"
+          },
+          "right": {
+            "type": "Number",
+            "value": "1"
+          }
+        },
+        {
+          "type": "BinaryOp",
+          "operator": "=>",
+          "left": {
+            "type": "String",
+            "value": "b"
+          },
+          "right": {
+            "type": "Number",
+            "value": "2"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$array_ref"
+    },
+    "initializer": {
+      "type": "ArrayLiteral",
+      "elements": [
+        {
+          "type": "Number",
+          "value": "1"
+        },
+        {
+          "type": "Number",
+          "value": "2"
+        },
+        {
+          "type": "Number",
+          "value": "3"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$hash_ref"
+    },
+    "initializer": {
+      "type": "HashLiteral",
+      "pairs": [
+        {
+          "key": {
+            "type": "String",
+            "value": "key"
+          },
+          "value": {
+            "type": "String",
+            "value": "\"value\""
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$default"
+    },
+    "initializer": {
+      "type": "Variable",
+      "name": "$_"
+    }
   }
 ]

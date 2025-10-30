@@ -23,37 +23,17 @@
             "value": "\"big\""
           }
         ]
-      }
-    ],
-    "elseIfClauses": [
+      },
       {
-        "condition": {
-          "type": "BinaryOp",
-          "operator": ">",
-          "left": {
-            "type": "Variable",
-            "name": "$x"
-          },
-          "right": {
-            "type": "Number",
-            "value": "5"
-          }
-        },
-        "block": [
+        "type": "Call",
+        "name": "print",
+        "arguments": [
           {
-            "type": "Call",
-            "name": "print",
-            "arguments": [
-              {
-                "type": "String",
-                "value": "\"medium\""
-              }
-            ]
+            "type": "String",
+            "value": "\"medium\""
           }
         ]
-      }
-    ],
-    "elseBlock": [
+      },
       {
         "type": "Call",
         "name": "print",
@@ -64,6 +44,7 @@
           }
         ]
       }
-    ]
+    ],
+    "elseIfClauses": []
   }
 ]

@@ -1,0 +1,646 @@
+[
+  {
+    "type": "BinaryOp",
+    "operator": "-",
+    "left": {
+      "type": "Number",
+      "value": "10"
+    },
+    "right": {
+      "type": "Number",
+      "value": "5"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "-",
+    "left": {
+      "type": "Variable",
+      "name": "$x"
+    },
+    "right": {
+      "type": "Variable",
+      "name": "$y"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "-",
+    "left": {
+      "type": "BinaryOp",
+      "operator": "-",
+      "left": {
+        "type": "Number",
+        "value": "100"
+      },
+      "right": {
+        "type": "Number",
+        "value": "50"
+      }
+    },
+    "right": {
+      "type": "Number",
+      "value": "25"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": ".",
+    "left": {
+      "type": "BinaryOp",
+      "operator": "-",
+      "left": {
+        "type": "BinaryOp",
+        "operator": ".",
+        "left": {
+          "type": "Number",
+          "value": "5"
+        },
+        "right": {
+          "type": "Number",
+          "value": "5"
+        }
+      },
+      "right": {
+        "type": "Number",
+        "value": "2"
+      }
+    },
+    "right": {
+      "type": "Number",
+      "value": "3"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "-",
+    "left": {
+      "type": "Number",
+      "value": "0"
+    },
+    "right": {
+      "type": "Number",
+      "value": "10"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "*",
+    "left": {
+      "type": "Number",
+      "value": "5"
+    },
+    "right": {
+      "type": "Number",
+      "value": "6"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "*",
+    "left": {
+      "type": "Variable",
+      "name": "$x"
+    },
+    "right": {
+      "type": "Variable",
+      "name": "$y"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "*",
+    "left": {
+      "type": "BinaryOp",
+      "operator": "*",
+      "left": {
+        "type": "Number",
+        "value": "2"
+      },
+      "right": {
+        "type": "Number",
+        "value": "3"
+      }
+    },
+    "right": {
+      "type": "Number",
+      "value": "4"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": ".",
+    "left": {
+      "type": "Number",
+      "value": "3"
+    },
+    "right": {
+      "type": "BinaryOp",
+      "operator": "*",
+      "left": {
+        "type": "Number",
+        "value": "14"
+      },
+      "right": {
+        "type": "Number",
+        "value": "2"
+      }
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "*",
+    "left": {
+      "type": "UnaryOp",
+      "operator": "-",
+      "operand": {
+        "type": "Number",
+        "value": "5"
+      }
+    },
+    "right": {
+      "type": "UnaryOp",
+      "operator": "-",
+      "operand": {
+        "type": "Number",
+        "value": "5"
+      }
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "/",
+    "left": {
+      "type": "Number",
+      "value": "10"
+    },
+    "right": {
+      "type": "Number",
+      "value": "2"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "/",
+    "left": {
+      "type": "Variable",
+      "name": "$x"
+    },
+    "right": {
+      "type": "Variable",
+      "name": "$y"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "/",
+    "left": {
+      "type": "BinaryOp",
+      "operator": "/",
+      "left": {
+        "type": "Number",
+        "value": "100"
+      },
+      "right": {
+        "type": "Number",
+        "value": "4"
+      }
+    },
+    "right": {
+      "type": "Number",
+      "value": "5"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": ".",
+    "left": {
+      "type": "BinaryOp",
+      "operator": ".",
+      "left": {
+        "type": "Number",
+        "value": "7"
+      },
+      "right": {
+        "type": "BinaryOp",
+        "operator": "/",
+        "left": {
+          "type": "Number",
+          "value": "5"
+        },
+        "right": {
+          "type": "Number",
+          "value": "2"
+        }
+      }
+    },
+    "right": {
+      "type": "Number",
+      "value": "5"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "/",
+    "left": {
+      "type": "Number",
+      "value": "1"
+    },
+    "right": {
+      "type": "Number",
+      "value": "3"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "%",
+    "left": {
+      "type": "Number",
+      "value": "10"
+    },
+    "right": {
+      "type": "Number",
+      "value": "3"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "%",
+    "left": {
+      "type": "Variable",
+      "name": "$x"
+    },
+    "right": {
+      "type": "Variable",
+      "name": "$y"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "%",
+    "left": {
+      "type": "Number",
+      "value": "17"
+    },
+    "right": {
+      "type": "Number",
+      "value": "5"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "%",
+    "left": {
+      "type": "Number",
+      "value": "100"
+    },
+    "right": {
+      "type": "Number",
+      "value": "7"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "%",
+    "left": {
+      "type": "UnaryOp",
+      "operator": "-",
+      "operand": {
+        "type": "Number",
+        "value": "10"
+      }
+    },
+    "right": {
+      "type": "Number",
+      "value": "3"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "-",
+    "left": {
+      "type": "BinaryOp",
+      "operator": "+",
+      "left": {
+        "type": "Number",
+        "value": "10"
+      },
+      "right": {
+        "type": "Number",
+        "value": "5"
+      }
+    },
+    "right": {
+      "type": "Number",
+      "value": "3"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "+",
+    "left": {
+      "type": "BinaryOp",
+      "operator": "*",
+      "left": {
+        "type": "Number",
+        "value": "2"
+      },
+      "right": {
+        "type": "Number",
+        "value": "3"
+      }
+    },
+    "right": {
+      "type": "Number",
+      "value": "4"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "*",
+    "left": {
+      "type": "BinaryOp",
+      "operator": "/",
+      "left": {
+        "type": "Number",
+        "value": "10"
+      },
+      "right": {
+        "type": "Number",
+        "value": "2"
+      }
+    },
+    "right": {
+      "type": "Number",
+      "value": "5"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "-",
+    "left": {
+      "type": "Number",
+      "value": "100"
+    },
+    "right": {
+      "type": "BinaryOp",
+      "operator": "*",
+      "left": {
+        "type": "Number",
+        "value": "10"
+      },
+      "right": {
+        "type": "Number",
+        "value": "5"
+      }
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "*",
+    "left": {
+      "type": "BinaryOp",
+      "operator": "+",
+      "left": {
+        "type": "Number",
+        "value": "10"
+      },
+      "right": {
+        "type": "Number",
+        "value": "5"
+      }
+    },
+    "right": {
+      "type": "Number",
+      "value": "2"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "/",
+    "left": {
+      "type": "Number",
+      "value": "100"
+    },
+    "right": {
+      "type": "BinaryOp",
+      "operator": "-",
+      "left": {
+        "type": "Number",
+        "value": "20"
+      },
+      "right": {
+        "type": "Number",
+        "value": "10"
+      }
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "*",
+    "left": {
+      "type": "BinaryOp",
+      "operator": "+",
+      "left": {
+        "type": "Variable",
+        "name": "$x"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$y"
+      }
+    },
+    "right": {
+      "type": "BinaryOp",
+      "operator": "-",
+      "left": {
+        "type": "Variable",
+        "name": "$a"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$b"
+      }
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "-",
+    "left": {
+      "type": "BinaryOp",
+      "operator": "*",
+      "left": {
+        "type": "BinaryOp",
+        "operator": "+",
+        "left": {
+          "type": "Number",
+          "value": "10"
+        },
+        "right": {
+          "type": "Number",
+          "value": "5"
+        }
+      },
+      "right": {
+        "type": "Number",
+        "value": "3"
+      }
+    },
+    "right": {
+      "type": "BinaryOp",
+      "operator": "/",
+      "left": {
+        "type": "Number",
+        "value": "20"
+      },
+      "right": {
+        "type": "Number",
+        "value": "4"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$result"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "+",
+      "left": {
+        "type": "Number",
+        "value": "10"
+      },
+      "right": {
+        "type": "BinaryOp",
+        "operator": "*",
+        "left": {
+          "type": "Number",
+          "value": "20"
+        },
+        "right": {
+          "type": "Number",
+          "value": "3"
+        }
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$average"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "/",
+      "left": {
+        "type": "BinaryOp",
+        "operator": "+",
+        "left": {
+          "type": "BinaryOp",
+          "operator": "+",
+          "left": {
+            "type": "Variable",
+            "name": "$a"
+          },
+          "right": {
+            "type": "Variable",
+            "name": "$b"
+          }
+        },
+        "right": {
+          "type": "Variable",
+          "name": "$c"
+        }
+      },
+      "right": {
+        "type": "Number",
+        "value": "3"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$remainder"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "%",
+      "left": {
+        "type": "Variable",
+        "name": "$total"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$divisor"
+      }
+    }
+  },
+  {
+    "type": "Assignment",
+    "left": {
+      "type": "Variable",
+      "name": "$x"
+    },
+    "operator": "+=",
+    "right": {
+      "type": "Number",
+      "value": "10"
+    }
+  },
+  {
+    "type": "Assignment",
+    "left": {
+      "type": "Variable",
+      "name": "$y"
+    },
+    "operator": "-=",
+    "right": {
+      "type": "Number",
+      "value": "5"
+    }
+  },
+  {
+    "type": "Assignment",
+    "left": {
+      "type": "Variable",
+      "name": "$z"
+    },
+    "operator": "*=",
+    "right": {
+      "type": "Number",
+      "value": "2"
+    }
+  },
+  {
+    "type": "Assignment",
+    "left": {
+      "type": "Variable",
+      "name": "$w"
+    },
+    "operator": "/=",
+    "right": {
+      "type": "Number",
+      "value": "4"
+    }
+  },
+  {
+    "type": "Assignment",
+    "left": {
+      "type": "Variable",
+      "name": "$m"
+    },
+    "operator": "%=",
+    "right": {
+      "type": "Number",
+      "value": "3"
+    }
+  }
+]

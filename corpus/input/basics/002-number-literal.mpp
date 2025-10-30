@@ -1,1 +1,46 @@
+# Integer literals
 42;
+0;
+123456789;
+
+# Negative numbers
+-42;
+-0;
+-999;
+
+# Floating point numbers
+3.14;
+0.5;
+123.456;
+-3.14;
+-0.5;
+
+# Scientific notation
+1e10;
+1.5e-10;
+2.5E8;
+-1.23e45;
+
+# Numbers with underscores (for readability)
+1_000_000;
+123_456.789_012;
+
+# Edge cases
+999999999999999;
+0.000000000001;
+
+# Hexadecimal literals
+0xFF;
+0x10;
+0xDEADBEEF;
+0x0;
+
+# Octal literals (if supported)
+0755;
+0644;
+0777;
+
+# Binary literals (if supported)
+0b1010;
+0b11111111;
+0b0;

@@ -1,1 +1,61 @@
+# Greater than
 $x > 5;
+10 > 5;
+$a > $b;
+3.14 > 3;
+
+# Less than
+$x < 10;
+5 < 10;
+$a < $b;
+2.5 < 3;
+
+# Greater than or equal
+$x >= 5;
+10 >= 10;
+$a >= $b;
+5.0 >= 5;
+
+# Less than or equal
+$x <= 10;
+5 <= 10;
+$a <= $b;
+3.14 <= 4;
+
+# Equality
+$x == 5;
+10 == 10;
+$a == $b;
+3.0 == 3;
+
+# Inequality
+$x != 5;
+10 != 5;
+$a != $b;
+3.14 != 3;
+
+# Spaceship operator
+$x <=> $y;
+10 <=> 20;
+5 <=> 5;
+20 <=> 10;
+
+# Comparisons in conditions
+if ($x > 0) { }
+if ($count < 100) { }
+if ($value >= $threshold) { }
+if ($a == $b) { }
+
+# Complex comparisons
+$x > 0 && $x < 10;
+$y >= 10 || $y <= -10;
+($a > $b) && ($c < $d);
+
+# Comparisons with expressions
+($x + 5) > 10;
+($a * 2) <= ($b / 3);
+(10 - $x) == 0;
+
+# Chained comparisons (with &&)
+$min <= $x && $x <= $max;
+0 < $value && $value < 100;

@@ -1,3 +1,50 @@
+# Basic foreach with range
 for my $i (1..10) {
     print($i);
-}
+
+# Foreach with array
+foreach my $name (@names) {
+    print("Hello, $name");
+
+# Foreach with list literal
+foreach my $val (1, 2, 3, 4, 5) {
+    $sum = $sum + $val;
+
+# Foreach with existing variable
+foreach $item (@items) {
+    process($item);
+
+# For as alias for foreach
+for my $x (@array) {
+    $x = $x * 2;
+
+
+# Nested foreach loops
+foreach my $row (@matrix) {
+    foreach my $col (@columns) {
+        print("$col ");
+    print("\n");
+
+
+# Foreach with range variables
+foreach my $n ($start..$end) {
+    calculate($n);
+
+# Foreach counting down
+foreach my $i (10, 9, 8, 7, 6, 5, 4, 3, 2, 1) {
+    countdown($i);
+
+# Multiple statements in loop body
+foreach my $file (@files) {
+    $content = read_file($fh);
+    close($fh);
+    process_content($content);
+
+# Empty foreach body
+foreach my $x (@list) {
+
+# Foreach with last and next
+foreach my $line (@lines) {
+    next if starts_with_hash($line);
+    last if is_end($line);
+    process_line($line);

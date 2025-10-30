@@ -1,24 +1,19 @@
 # Lexical subroutine without parentheses
 my sub foo {
     return 42;
-}
 
 # Lexical subroutine with empty parentheses
 my sub bar () {
     return 100;
-}
 
 # Lexical subroutine with parameters
 my sub add ($x, $y) {
     return $x + $y;
-}
 
 # Package-scoped subroutine (our)
 our sub global_helper {
     return "helper";
-}
 
 # Package-scoped subroutine with parameters
 our sub multiply ($a, $b) {
     return $a * $b;
-}

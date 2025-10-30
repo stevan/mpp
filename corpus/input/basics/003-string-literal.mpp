@@ -1,1 +1,51 @@
+# Double-quoted strings
 "hello world";
+"";
+"Hello, World!";
+"Line 1\nLine 2";
+"Tab\there";
+
+# Single-quoted strings
+'hello world';
+'';
+'It\'s a string';
+'No interpolation: $var';
+
+# Strings with escape sequences
+"She said \"Hello\"";
+"Path: C:\\Windows\\System32";
+"Unicode: \x{263A}";
+"\t\r\n";
+
+# Mixed quotes
+"It's easy";
+'He said "Hello"';
+
+# Special characters
+"!@#$%^&*()";
+"[]{}<>";
+"+-*/=";
+
+# Multi-word strings
+"The quick brown fox jumps over the lazy dog";
+"Lorem ipsum dolor sit amet";
+
+# Strings with numbers
+"123";
+"3.14159";
+"Version 1.0.0";
+
+# Empty and whitespace
+"";
+" ";
+"   ";
+"\n";
+
+# Path-like strings
+"/usr/local/bin";
+"C:\\Program Files";
+"../relative/path";
+
+# URL-like strings
+"https://example.com";
+"http://localhost:8080/api";

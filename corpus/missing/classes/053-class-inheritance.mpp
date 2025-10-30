@@ -1,0 +1,14 @@
+    method speak {
+    }
+}
+    method speak {
+    }
+}
+    method speak () {
+    }
+}
+    method fly {
+    }
+    method chirp () {
+    }
+}

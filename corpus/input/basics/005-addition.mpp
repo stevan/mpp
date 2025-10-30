@@ -1,1 +1,33 @@
+# Basic addition
 1 + 2;
+10 + 20;
+100 + 200 + 300;
+
+# Addition with variables
+$x + $y;
+$a + 10;
+5 + $b;
+
+# Addition with negative numbers
+-5 + 10;
+10 + -5;
+-10 + -20;
+
+# Floating point addition
+1.5 + 2.5;
+3.14 + 2.86;
+0.1 + 0.2;
+
+# Chain additions
+1 + 2 + 3 + 4 + 5;
+$a + $b + $c + $d;
+
+# Addition in declarations
+my $sum = 10 + 20;
+my $total = $x + $y + $z;
+my $result = 100 + 200 + 300 + 400;
+
+# Mixed numeric types
+10 + 3.14;
+1.5 + 2;
+0 + 42.0;

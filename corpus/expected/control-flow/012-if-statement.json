@@ -26,5 +26,392 @@
       }
     ],
     "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "Variable",
+      "name": "$valid"
+    },
+    "thenBlock": [
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$count"
+        },
+        "operator": "=",
+        "right": {
+          "type": "BinaryOp",
+          "operator": "+",
+          "left": {
+            "type": "Variable",
+            "name": "$count"
+          },
+          "right": {
+            "type": "Number",
+            "value": "1"
+          }
+        }
+      },
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "Variable",
+            "name": "$count"
+          }
+        ]
+      },
+      {
+        "type": "Call",
+        "name": "log_message",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"incremented\""
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "&&",
+      "left": {
+        "type": "BinaryOp",
+        "operator": ">",
+        "left": {
+          "type": "Variable",
+          "name": "$x"
+        },
+        "right": {
+          "type": "Number",
+          "value": "0"
+        }
+      },
+      "right": {
+        "type": "BinaryOp",
+        "operator": "<",
+        "left": {
+          "type": "Variable",
+          "name": "$x"
+        },
+        "right": {
+          "type": "Number",
+          "value": "100"
+        }
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"in range\""
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "||",
+      "left": {
+        "type": "BinaryOp",
+        "operator": "==",
+        "left": {
+          "type": "Variable",
+          "name": "$status"
+        },
+        "right": {
+          "type": "Number",
+          "value": "1"
+        }
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$override"
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "process",
+        "arguments": []
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "UnaryOp",
+      "operator": "!",
+      "operand": {
+        "type": "Variable",
+        "name": "$disabled"
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "enable_feature",
+        "arguments": []
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": ">",
+      "left": {
+        "type": "Variable",
+        "name": "$x"
+      },
+      "right": {
+        "type": "Number",
+        "value": "0"
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "If",
+        "condition": {
+          "type": "BinaryOp",
+          "operator": "<",
+          "left": {
+            "type": "Variable",
+            "name": "$x"
+          },
+          "right": {
+            "type": "Number",
+            "value": "10"
+          }
+        },
+        "thenBlock": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"single digit positive\""
+              }
+            ]
+          }
+        ],
+        "elseIfClauses": []
+      },
+      {
+        "type": "If",
+        "condition": {
+          "type": "BinaryOp",
+          "operator": ">=",
+          "left": {
+            "type": "Variable",
+            "name": "$x"
+          },
+          "right": {
+            "type": "Number",
+            "value": "10"
+          }
+        },
+        "thenBlock": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"multi digit positive\""
+              }
+            ]
+          }
+        ],
+        "elseIfClauses": []
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "Variable",
+      "name": "$condition"
+    },
+    "thenBlock": [],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": ">",
+      "left": {
+        "type": "BinaryOp",
+        "operator": "+",
+        "left": {
+          "type": "Variable",
+          "name": "$x"
+        },
+        "right": {
+          "type": "Variable",
+          "name": "$y"
+        }
+      },
+      "right": {
+        "type": "Number",
+        "value": "100"
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"sum exceeds 100\""
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "Call",
+      "name": "check_status",
+      "arguments": []
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "proceed",
+        "arguments": []
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "=",
+      "left": {
+        "type": "Variable",
+        "name": "$result"
+      },
+      "right": {
+        "type": "Call",
+        "name": "compute",
+        "arguments": []
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "use_result",
+        "arguments": [
+          {
+            "type": "Variable",
+            "name": "$result"
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": ">",
+      "left": {
+        "type": "Variable",
+        "name": "$a"
+      },
+      "right": {
+        "type": "Number",
+        "value": "0"
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "handle_positive",
+        "arguments": [
+          {
+            "type": "Variable",
+            "name": "$a"
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "<",
+      "left": {
+        "type": "Variable",
+        "name": "$b"
+      },
+      "right": {
+        "type": "Number",
+        "value": "0"
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "handle_negative",
+        "arguments": [
+          {
+            "type": "Variable",
+            "name": "$b"
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "==",
+      "left": {
+        "type": "Variable",
+        "name": "$c"
+      },
+      "right": {
+        "type": "Number",
+        "value": "0"
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "handle_zero",
+        "arguments": []
+      }
+    ],
+    "elseIfClauses": []
   }
 ]

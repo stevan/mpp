@@ -6,7 +6,7 @@ OUTER: while ($i < 10) {
 
 # Nested loops with labels
 ROW: foreach my $row (@matrix) {
-    COL: foreach my $col (@$row) {
+    COL: foreach my $col (@columns) {
         next ROW if $col == 0;
         last COL if $col < 0;
         process($col);
@@ -22,7 +22,7 @@ WAIT: until ($ready) {
 }
 
 # Labels with while
-PROCESS: while (my $task = get_next_task()) {
+PROCESS: while ($task = get_next_task()) {
     if (failed($task)) {
         $errors = $errors + 1;
         last PROCESS if $errors > $max_errors;

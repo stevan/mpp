@@ -2,5 +2,209 @@
   {
     "type": "Variable",
     "name": "$x"
+  },
+  {
+    "type": "Variable",
+    "name": "$y"
+  },
+  {
+    "type": "Variable",
+    "name": "$z"
+  },
+  {
+    "type": "Variable",
+    "name": "$name"
+  },
+  {
+    "type": "Variable",
+    "name": "$age"
+  },
+  {
+    "type": "Variable",
+    "name": "$count"
+  },
+  {
+    "type": "Variable",
+    "name": "$total"
+  },
+  {
+    "type": "Variable",
+    "name": "$result"
+  },
+  {
+    "type": "Variable",
+    "name": "$first_name"
+  },
+  {
+    "type": "Variable",
+    "name": "$last_name"
+  },
+  {
+    "type": "Variable",
+    "name": "$user_id"
+  },
+  {
+    "type": "Variable",
+    "name": "$max_value"
+  },
+  {
+    "type": "Variable",
+    "name": "$min_value"
+  },
+  {
+    "type": "Variable",
+    "name": "$var1"
+  },
+  {
+    "type": "Variable",
+    "name": "$var2"
+  },
+  {
+    "type": "Variable",
+    "name": "$test123"
+  },
+  {
+    "type": "Variable",
+    "name": "$element0"
+  },
+  {
+    "type": "Variable",
+    "name": "$configuration"
+  },
+  {
+    "type": "Variable",
+    "name": "$temperature"
+  },
+  {
+    "type": "Variable",
+    "name": "$database_connection"
+  },
+  {
+    "type": "Variable",
+    "name": "$http_response_code"
+  },
+  {
+    "type": "Variable",
+    "name": "$lower"
+  },
+  {
+    "type": "Variable",
+    "name": "$UPPER"
+  },
+  {
+    "type": "Variable",
+    "name": "$CamelCase"
+  },
+  {
+    "type": "Variable",
+    "name": "$mixedCASE"
+  },
+  {
+    "type": "Variable",
+    "name": "$i"
+  },
+  {
+    "type": "Variable",
+    "name": "$j"
+  },
+  {
+    "type": "Variable",
+    "name": "$k"
+  },
+  {
+    "type": "Variable",
+    "name": "$n"
+  },
+  {
+    "type": "Variable",
+    "name": "$tmp"
+  },
+  {
+    "type": "Variable",
+    "name": "$temp"
+  },
+  {
+    "type": "Variable",
+    "name": "$str"
+  },
+  {
+    "type": "Variable",
+    "name": "$num"
+  },
+  {
+    "type": "Variable",
+    "name": "$val"
+  },
+  {
+    "type": "Variable",
+    "name": "$obj"
+  },
+  {
+    "type": "Variable",
+    "name": "$ref"
+  },
+  {
+    "type": "Variable",
+    "name": "$fh"
+  },
+  {
+    "type": "Variable",
+    "name": "$dbh"
+  },
+  {
+    "type": "Variable",
+    "name": "@array"
+  },
+  {
+    "type": "Variable",
+    "name": "@list"
+  },
+  {
+    "type": "Variable",
+    "name": "@items"
+  },
+  {
+    "type": "Variable",
+    "name": "@names"
+  },
+  {
+    "type": "Variable",
+    "name": "@values"
+  },
+  {
+    "type": "Variable",
+    "name": "@results"
+  },
+  {
+    "type": "Variable",
+    "name": "@empty_array"
+  },
+  {
+    "type": "Variable",
+    "name": "%hash"
+  },
+  {
+    "type": "Variable",
+    "name": "%config"
+  },
+  {
+    "type": "Variable",
+    "name": "%options"
+  },
+  {
+    "type": "Variable",
+    "name": "%data"
+  },
+  {
+    "type": "Variable",
+    "name": "%cache"
+  },
+  {
+    "type": "Variable",
+    "name": "%lookup"
+  },
+  {
+    "type": "Variable",
+    "name": "%empty_hash"
   }
 ]

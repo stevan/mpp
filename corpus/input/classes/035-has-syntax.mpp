@@ -1,7 +1,3 @@
 class Circle {
-    has $radius :param :reader :writer;
 
-    method area() {
         return 3.14159 * $radius * $radius;
-    }
-}

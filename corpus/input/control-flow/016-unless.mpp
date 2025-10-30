@@ -1,3 +1,2 @@
 unless ($error) {
     process();
-}

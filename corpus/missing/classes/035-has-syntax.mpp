@@ -1,0 +1,4 @@
+    has $radius :param :reader :writer;
+    method area() {
+    }
+}

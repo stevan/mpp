@@ -2,34 +2,20 @@
 class Animal {
     field $name;
 
-    method speak {
         return "Some sound";
-    }
-}
 
 # Single inheritance with method without parentheses
 class Dog :isa(Animal) {
-    method speak {
         return "Woof!";
-    }
-}
 
 # Inheritance with qualified class name and method with parentheses
 class Cat :isa(My::Animal) {
-    method speak () {
         return "Meow!";
-    }
-}
 
 # Class with inheritance, fields, and methods
 class Bird :isa(Animal) {
     field $can_fly;
 
-    method fly {
         return $can_fly;
-    }
 
-    method chirp () {
         return "Tweet!";
-    }
-}

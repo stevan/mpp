@@ -1,1 +1,69 @@
+# Simple scalar variables
 $x;
+$y;
+$z;
+
+# Descriptive names
+$name;
+$age;
+$count;
+$total;
+$result;
+
+# Variables with underscores
+$first_name;
+$last_name;
+$user_id;
+$max_value;
+$min_value;
+
+# Variables with numbers
+$var1;
+$var2;
+$test123;
+$element0;
+
+# Longer names
+$configuration;
+$temperature;
+$database_connection;
+$http_response_code;
+
+# Case variations
+$lower;
+$UPPER;
+$CamelCase;
+$mixedCASE;
+
+# Common Perl variable names
+$i;
+$j;
+$k;
+$n;
+$tmp;
+$temp;
+$str;
+$num;
+$val;
+$obj;
+$ref;
+$fh;  # file handle
+$dbh; # database handle
+
+# Array variables
+@array;
+@list;
+@items;
+@names;
+@values;
+@results;
+@empty_array;
+
+# Hash variables
+%hash;
+%config;
+%options;
+%data;
+%cache;
+%lookup;
+%empty_hash;

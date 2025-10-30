@@ -1,3 +1,66 @@
+# Simple if statement
 if ($x > 10) {
     print("big");
+}
+
+# If with multiple statements
+if ($valid) {
+    $count = $count + 1;
+    print($count);
+    log_message("incremented");
+}
+
+# If with complex condition
+if ($x > 0 && $x < 100) {
+    print("in range");
+}
+
+# If with OR condition
+if ($status == 1 || $override) {
+    process();
+}
+
+# If with NOT condition
+if (!$disabled) {
+    enable_feature();
+}
+
+# Nested if statements
+if ($x > 0) {
+    if ($x < 10) {
+        print("single digit positive");
+    }
+    if ($x >= 10) {
+        print("multi digit positive");
+    }
+}
+
+# Empty if block
+if ($condition) {
+}
+
+# If with expression condition
+if (($x + $y) > 100) {
+    print("sum exceeds 100");
+}
+
+# If with function call condition
+if (check_status()) {
+    proceed();
+}
+
+# If with assignment in condition
+if ($result = compute()) {
+    use_result($result);
+}
+
+# Multiple independent if statements
+if ($a > 0) {
+    handle_positive($a);
+}
+if ($b < 0) {
+    handle_negative($b);
+}
+if ($c == 0) {
+    handle_zero();
 }

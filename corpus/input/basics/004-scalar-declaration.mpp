@@ -1,1 +1,54 @@
+# Scalar declarations with numbers
 my $x = 10;
+my $y = -5;
+my $z = 0;
+my $pi = 3.14159;
+my $large = 1000000;
+
+# Scalar declarations with strings
+my $name = "Alice";
+my $greeting = "Hello, World!";
+my $empty = "";
+my $path = "/usr/local/bin";
+
+# Scalar declarations without initialization
+my $uninitialized;
+my $pending;
+
+# Multiple declarations
+my $a = 1;
+my $b = 2;
+my $c = 3;
+
+# Declarations with expressions
+my $sum = 10 + 20;
+my $product = 5 * 6;
+my $concat = "Hello" . " " . "World";
+
+# Our declarations
+our $global = 100;
+our $shared = "shared value";
+our $package_var;
+
+# State declarations
+state $counter = 0;
+state $initialized = 1;
+state $memo;
+
+# Array declarations
+my @array = (1, 2, 3);
+my @names = ("Alice", "Bob", "Charlie");
+my @mixed = (1, "two", 3.14);
+our @global_array = (10, 20, 30);
+
+# Hash declarations
+my %hash = (key => "value");
+my %config = (host => "localhost", port => 8080);
+our %global_hash = (a => 1, b => 2);
+
+# Reference declarations
+my $array_ref = [1, 2, 3];
+my $hash_ref = {key => "value"};
+
+# Declarations with special variables
+my $default = $_;

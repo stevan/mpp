@@ -24,66 +24,44 @@
         ]
       },
       {
-        "type": "Method",
-        "name": "move",
-        "parameters": [
-          {
-            "type": "Parameter",
-            "variable": {
-              "type": "Variable",
-              "name": "$dx"
-            }
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$x"
+        },
+        "operator": "=",
+        "right": {
+          "type": "BinaryOp",
+          "operator": "+",
+          "left": {
+            "type": "Variable",
+            "name": "$x"
           },
-          {
-            "type": "Parameter",
-            "variable": {
-              "type": "Variable",
-              "name": "$dy"
-            }
+          "right": {
+            "type": "Variable",
+            "name": "$dx"
           }
-        ],
-        "body": [
-          {
-            "type": "Assignment",
-            "left": {
-              "type": "Variable",
-              "name": "$x"
-            },
-            "operator": "=",
-            "right": {
-              "type": "BinaryOp",
-              "operator": "+",
-              "left": {
-                "type": "Variable",
-                "name": "$x"
-              },
-              "right": {
-                "type": "Variable",
-                "name": "$dx"
-              }
-            }
+        }
+      },
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$y"
+        },
+        "operator": "=",
+        "right": {
+          "type": "BinaryOp",
+          "operator": "+",
+          "left": {
+            "type": "Variable",
+            "name": "$y"
           },
-          {
-            "type": "Assignment",
-            "left": {
-              "type": "Variable",
-              "name": "$y"
-            },
-            "operator": "=",
-            "right": {
-              "type": "BinaryOp",
-              "operator": "+",
-              "left": {
-                "type": "Variable",
-                "name": "$y"
-              },
-              "right": {
-                "type": "Variable",
-                "name": "$dy"
-              }
-            }
+          "right": {
+            "type": "Variable",
+            "name": "$dy"
           }
-        ]
+        }
       }
     ]
   }

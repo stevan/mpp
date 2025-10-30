@@ -4,28 +4,16 @@ class Point {
 
     sub at ($x, $y) {
         return Point->new( x => $x, y => $y )
-    }
 
-    method add ($other) {
-        return Point->new(
             x => $self->x() + $other->x(),
             y => $self->y() + $other->y(),
-        );
-    }
-}
 
 class Point3D :isa(Point) {
     field $z :param :reader;
 
     sub at ($x, $y, $z) {
         return Point3D->new( x => $x, y => $y, z => $z )
-    }
 
-    method add ($other) {
-        return Point3D->new(
             x => $self->x() + $other->x(),
             y => $self->y() + $other->y(),
             z => $self->z() + $other->z(),
-        );
-    }
-}

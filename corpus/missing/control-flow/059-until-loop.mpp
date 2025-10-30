@@ -1,36 +1,5 @@
-# This file only contains unsupported features found in until loops
-# Working until loops are in corpus/input/control-flow/059-until-loop.mpp
-
-# Until with increment operator (unsupported)
-until ($count >= 10) {
-    print $count;
-    $count++;
 }
-
-# Postfix increment with until (unsupported)
-$x++ until $x > 100;
-
-# Until with shift function (unsupported)
-until ($found) {
-    $item = shift @queue;
-    last unless $item;
-    $found = match($item);
 }
-
-# Nested until with increment (unsupported)
-until ($i >= $rows) {
-    $j = 0;
-    until ($j >= $cols) {
-        $matrix[$i][$j] = $i * $j;
-        $j++;
+}
     }
-    $i++;
-}
-
-# Until with continue block (unsupported)
-until ($stop) {
-    process_item();
-} continue {
-    $counter++;
-    update_status();
 }

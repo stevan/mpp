@@ -1,39 +1,11 @@
-# This file only contains unsupported features found in loop labels
-# Working loop labels are in corpus/input/control-flow/060-loop-labels.mpp
-
-# Loop with increment operator (unsupported)
-OUTER: while ($i < 10) {
-    $i++;
-    last OUTER if $i == 5;
 }
-
-# C-style for loop with labels (unsupported)
-SEARCH: for (my $i = 0; $i < @items; $i++) {
-    SCAN: foreach my $pattern (@patterns) {
-        if ($items[$i] =~ /$pattern/) {
-            $found = $i;
-            last SEARCH;
+    COL: foreach my $col (@$row) {
+    }
+}
+}
+PROCESS: while (my $task = get_next_task()) {
+    }
+}
         }
     }
-}
-
-# Labels with string comparison (unsupported due to eq)
-WAIT: until ($ready) {
-    $status = check();
-    last WAIT if $status eq "done";
-    next WAIT if $status eq "pending";
-    redo WAIT if $status eq "retry";
-}
-
-# Loop with eval and continue (unsupported)
-PROCESS: while (my $task = get_next_task()) {
-    eval {
-        $task->execute();
-    };
-    if ($@) {
-        $errors++;
-        last PROCESS if $errors > $max_errors;
-    }
-} continue {
-    $processed++;
 }

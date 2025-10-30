@@ -2,13 +2,11 @@
 until ($count >= 10) {
     print $count;
     $count = $count + 1;
-}
 
 # Until with complex condition
 until ($done || $timeout) {
     $result = process();
     $done = check_complete($result);
-}
 
 # Postfix until
 $x = $x + 1 until $x > 100;
@@ -19,7 +17,6 @@ until ($found) {
     last unless $item;
     next if skip($item);
     $found = match($item);
-}
 
 # Nested until loops
 until ($i >= $rows) {
@@ -27,6 +24,4 @@ until ($i >= $rows) {
     until ($j >= $cols) {
         $matrix[$i][$j] = $i * $j;
         $j = $j + 1;
-    }
     $i = $i + 1;
-}

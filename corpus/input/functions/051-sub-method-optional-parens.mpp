@@ -1,16 +1,13 @@
 # Subroutine without parentheses
 sub foo {
     return 42;
-}
 
 # Subroutine with explicit empty parentheses (should be the same)
 sub bar () {
     return 42;
-}
 
 # Edge case: subroutine with body but no params
 sub no_params {
     my $x = 1;
     my $y = 2;
     return $x + $y;
-}

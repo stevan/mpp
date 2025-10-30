@@ -28,6 +28,324 @@
             "name": "$i"
           }
         ]
+      },
+      {
+        "type": "Foreach",
+        "variable": {
+          "type": "Variable",
+          "name": "$name"
+        },
+        "declarator": "my",
+        "listExpr": {
+          "type": "Variable",
+          "name": "@names"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"Hello, $name\""
+              }
+            ]
+          },
+          {
+            "type": "Foreach",
+            "variable": {
+              "type": "Variable",
+              "name": "$val"
+            },
+            "declarator": "my",
+            "listExpr": {
+              "type": "Number",
+              "value": "1"
+            },
+            "block": [
+              {
+                "type": "Assignment",
+                "left": {
+                  "type": "Variable",
+                  "name": "$sum"
+                },
+                "operator": "=",
+                "right": {
+                  "type": "BinaryOp",
+                  "operator": "+",
+                  "left": {
+                    "type": "Variable",
+                    "name": "$sum"
+                  },
+                  "right": {
+                    "type": "Variable",
+                    "name": "$val"
+                  }
+                }
+              },
+              {
+                "type": "Foreach",
+                "variable": {
+                  "type": "Variable",
+                  "name": "$item"
+                },
+                "listExpr": {
+                  "type": "Variable",
+                  "name": "@items"
+                },
+                "block": [
+                  {
+                    "type": "Call",
+                    "name": "process",
+                    "arguments": [
+                      {
+                        "type": "Variable",
+                        "name": "$item"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Foreach",
+                    "variable": {
+                      "type": "Variable",
+                      "name": "$x"
+                    },
+                    "declarator": "my",
+                    "listExpr": {
+                      "type": "Variable",
+                      "name": "@array"
+                    },
+                    "block": [
+                      {
+                        "type": "Assignment",
+                        "left": {
+                          "type": "Variable",
+                          "name": "$x"
+                        },
+                        "operator": "=",
+                        "right": {
+                          "type": "BinaryOp",
+                          "operator": "*",
+                          "left": {
+                            "type": "Variable",
+                            "name": "$x"
+                          },
+                          "right": {
+                            "type": "Number",
+                            "value": "2"
+                          }
+                        }
+                      },
+                      {
+                        "type": "Foreach",
+                        "variable": {
+                          "type": "Variable",
+                          "name": "$row"
+                        },
+                        "declarator": "my",
+                        "listExpr": {
+                          "type": "Variable",
+                          "name": "@matrix"
+                        },
+                        "block": [
+                          {
+                            "type": "Foreach",
+                            "variable": {
+                              "type": "Variable",
+                              "name": "$col"
+                            },
+                            "declarator": "my",
+                            "listExpr": {
+                              "type": "Variable",
+                              "name": "@columns"
+                            },
+                            "block": [
+                              {
+                                "type": "Call",
+                                "name": "print",
+                                "arguments": [
+                                  {
+                                    "type": "String",
+                                    "value": "\"$col \""
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "Call",
+                                "name": "print",
+                                "arguments": [
+                                  {
+                                    "type": "String",
+                                    "value": "\"\\n\""
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "Foreach",
+                                "variable": {
+                                  "type": "Variable",
+                                  "name": "$n"
+                                },
+                                "declarator": "my",
+                                "listExpr": {
+                                  "type": "BinaryOp",
+                                  "operator": "..",
+                                  "left": {
+                                    "type": "Variable",
+                                    "name": "$start"
+                                  },
+                                  "right": {
+                                    "type": "Variable",
+                                    "name": "$end"
+                                  }
+                                },
+                                "block": [
+                                  {
+                                    "type": "Call",
+                                    "name": "calculate",
+                                    "arguments": [
+                                      {
+                                        "type": "Variable",
+                                        "name": "$n"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "Foreach",
+                                    "variable": {
+                                      "type": "Variable",
+                                      "name": "$i"
+                                    },
+                                    "declarator": "my",
+                                    "listExpr": {
+                                      "type": "Number",
+                                      "value": "10"
+                                    },
+                                    "block": [
+                                      {
+                                        "type": "Call",
+                                        "name": "countdown",
+                                        "arguments": [
+                                          {
+                                            "type": "Variable",
+                                            "name": "$i"
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "type": "Foreach",
+                                        "variable": {
+                                          "type": "Variable",
+                                          "name": "$file"
+                                        },
+                                        "declarator": "my",
+                                        "listExpr": {
+                                          "type": "Variable",
+                                          "name": "@files"
+                                        },
+                                        "block": [
+                                          {
+                                            "type": "Assignment",
+                                            "left": {
+                                              "type": "Variable",
+                                              "name": "$content"
+                                            },
+                                            "operator": "=",
+                                            "right": {
+                                              "type": "Call",
+                                              "name": "read_file",
+                                              "arguments": [
+                                                {
+                                                  "type": "Variable",
+                                                  "name": "$fh"
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "type": "Call",
+                                            "name": "close",
+                                            "arguments": [
+                                              {
+                                                "type": "Variable",
+                                                "name": "$fh"
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "type": "Call",
+                                            "name": "process_content",
+                                            "arguments": [
+                                              {
+                                                "type": "Variable",
+                                                "name": "$content"
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "type": "Foreach",
+                                            "variable": {
+                                              "type": "Variable",
+                                              "name": "$x"
+                                            },
+                                            "declarator": "my",
+                                            "listExpr": {
+                                              "type": "Variable",
+                                              "name": "@list"
+                                            },
+                                            "block": [
+                                              {
+                                                "type": "Foreach",
+                                                "variable": {
+                                                  "type": "Variable",
+                                                  "name": "$line"
+                                                },
+                                                "declarator": "my",
+                                                "listExpr": {
+                                                  "type": "Variable",
+                                                  "name": "@lines"
+                                                },
+                                                "block": [
+                                                  {
+                                                    "type": "If",
+                                                    "condition": {
+                                                      "type": "Call",
+                                                      "name": "starts_with_hash",
+                                                      "arguments": [
+                                                        {
+                                                          "type": "Variable",
+                                                          "name": "$line"
+                                                        }
+                                                      ]
+                                                    },
+                                                    "thenBlock": [
+                                                      {
+                                                        "type": "Next"
+                                                      }
+                                                    ],
+                                                    "elseIfClauses": []
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   }
