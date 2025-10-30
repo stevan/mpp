@@ -31,6 +31,9 @@ import {
     BlockNode,
     DoBlockNode,
     DeferNode,
+    TryNode,
+    CatchClause,
+    ThrowNode,
     CallNode,
     ReturnNode,
     LastNode,
@@ -79,11 +82,43 @@ export class Parser {
                     const keyword = lexeme.token.value;
                     // Check for valid continuations
                     const firstKeyword = buffer[0].token.value;
-                    if ((firstKeyword === 'if' && (keyword === 'elsif' || keyword === 'else')) ||
-                        (firstKeyword === 'unless' && keyword === 'else')) {
+
+                    // Check if this is a valid continuation for the current structure
+                    let isValidContinuation = false;
+                    let keepPending = false;
+
+                    if (firstKeyword === 'if' && (keyword === 'elsif' || keyword === 'else')) {
+                        isValidContinuation = true;
+                    } else if (firstKeyword === 'unless' && keyword === 'else') {
+                        isValidContinuation = true;
+                    } else if (firstKeyword === 'try') {
+                        // After try, we can have catch or finally
+                        if (keyword === 'catch' || keyword === 'finally') {
+                            isValidContinuation = true;
+                            // Don't keep pending - we need to accumulate the catch/finally block
+                            keepPending = false;
+                        }
+                    }
+
+                    // Check if buffer contains catch blocks and we're getting another catch or finally
+                    let hasCatch = false;
+                    for (const lex of buffer) {
+                        if (lex.category === 'CONTROL' && lex.token.value === 'catch') {
+                            hasCatch = true;
+                            break;
+                        }
+                    }
+
+                    if (hasCatch && firstKeyword === 'try' && (keyword === 'catch' || keyword === 'finally')) {
+                        isValidContinuation = true;
+                        // Don't keep pending - we need to accumulate the catch/finally block
+                        keepPending = false;
+                    }
+
+                    if (isValidContinuation) {
                         // Continue building the control structure
                         buffer.push(lexeme);
-                        pendingControlStructure = false;
+                        pendingControlStructure = keepPending;
                         continue;
                     }
                 }
@@ -111,7 +146,9 @@ export class Parser {
                 // If we're back to depth 0, handle based on what type of statement this is
                 if (braceDepth === 0 && buffer.length > 0) {
                     if (buffer[0].category === 'CONTROL') {
-                        // Control structure - mark as pending to check for elsif/else
+                        // Control structure - mark as pending to check for elsif/else/catch/finally
+                        // But for try blocks, we need special handling
+                        const firstKeyword = buffer[0].token.value;
                         pendingControlStructure = true;
                     } else if (buffer[0].category === 'LBRACE') {
                         // Bare block - parse immediately
@@ -320,6 +357,12 @@ export class Parser {
             }
             if (TokenChecker.isControlKeyword(lexemes[0], 'defer')) {
                 return this.parseDefer(lexemes);
+            }
+            if (TokenChecker.isControlKeyword(lexemes[0], 'try')) {
+                return this.parseTryCatch(lexemes);
+            }
+            if (TokenChecker.isControlKeyword(lexemes[0], 'throw')) {
+                return this.parseThrowStatement(lexemes);
             }
         }
 
@@ -1923,6 +1966,257 @@ export class Parser {
             block: statements
         };
         return deferNode;
+    }
+
+    private parseTryCatch(lexemes: Lexeme[]): TryNode | ErrorNode | null {
+        // Expect: try { ... } catch ($e) { ... } finally { ... }
+        if (lexemes.length < 3) {
+            return ParseError.incompleteDeclaration('try', 'block body', lexemes[0]?.token);
+        }
+
+        // Debug: log what lexemes we received
+        // console.log('parseTryCatch received lexemes:', lexemes.map(l => `${l.category}:${l.token.value}`).join(' '));
+
+        // Skip 'try' keyword and expect '{'
+        if (lexemes[1].category !== 'LBRACE') {
+            return ParseError.missingToken('{', lexemes[1]?.token, 'for try block');
+        }
+
+        // Find matching RBRACE for try block
+        let depth = 1;
+        let endPos = 2;
+        while (endPos < lexemes.length && depth > 0) {
+            if (lexemes[endPos].category === 'LBRACE') depth++;
+            if (lexemes[endPos].category === 'RBRACE') depth--;
+            endPos++;
+        }
+
+        // Parse try block statements
+        const tryBlockLexemes = lexemes.slice(2, endPos - 1);
+        const tryBlock: ASTNode[] = [];
+        let blockPos = 0;
+
+        while (blockPos < tryBlockLexemes.length) {
+            let stmtEnd = blockPos;
+            let braceDepth = 0;
+
+            while (stmtEnd < tryBlockLexemes.length) {
+                if (tryBlockLexemes[stmtEnd].category === 'LBRACE') {
+                    braceDepth++;
+                } else if (tryBlockLexemes[stmtEnd].category === 'RBRACE') {
+                    braceDepth--;
+                    if (braceDepth === 0) {
+                        stmtEnd++;
+                        break;
+                    }
+                } else if (tryBlockLexemes[stmtEnd].category === 'TERMINATOR' && braceDepth === 0) {
+                    break;
+                }
+                stmtEnd++;
+            }
+
+            const stmtLexemes = tryBlockLexemes.slice(blockPos, stmtEnd);
+            if (stmtLexemes.length > 0) {
+                const stmt = this.parseStatement(stmtLexemes);
+                if (stmt) {
+                    tryBlock.push(stmt);
+                }
+            }
+
+            blockPos = stmtEnd;
+            if (blockPos < tryBlockLexemes.length && tryBlockLexemes[blockPos].category === 'TERMINATOR') {
+                blockPos++;
+            }
+        }
+
+        // Now parse catch and finally blocks
+        const catchClauses: CatchClause[] = [];
+        let finallyBlock: ASTNode[] | undefined;
+        let pos = endPos;
+
+        // Parse catch clauses (can have multiple)
+        while (pos < lexemes.length &&
+               lexemes[pos].category === 'CONTROL' &&
+               TokenChecker.isControlKeyword(lexemes[pos], 'catch')) {
+
+            pos++; // Skip 'catch'
+
+            // Check for optional parameter
+            let parameter: VariableNode | undefined;
+            if (pos < lexemes.length && lexemes[pos].category === 'LPAREN') {
+                pos++; // Skip '('
+
+                // Check for variable or closing paren (anonymous catch)
+                if (pos < lexemes.length &&
+                    (lexemes[pos].category === 'SCALAR_VAR' || lexemes[pos].category === 'VARIABLE')) {
+                    parameter = {
+                        type: 'Variable',
+                        name: lexemes[pos].token.value
+                    };
+                    pos++;
+                }
+
+                // Skip closing paren
+                if (pos < lexemes.length && lexemes[pos].category === 'RPAREN') {
+                    pos++;
+                } else {
+                    return ParseError.missingToken(')', lexemes[pos]?.token, 'for catch parameter');
+                }
+            }
+
+            // Parse catch block
+            if (pos >= lexemes.length || lexemes[pos].category !== 'LBRACE') {
+                return ParseError.missingToken('{', lexemes[pos]?.token, 'for catch block');
+            }
+
+            pos++; // Skip '{'
+            depth = 1;
+            const catchStart = pos;
+            while (pos < lexemes.length && depth > 0) {
+                if (lexemes[pos].category === 'LBRACE') depth++;
+                if (lexemes[pos].category === 'RBRACE') depth--;
+                pos++;
+            }
+
+            // Parse catch block statements
+            const catchBlockLexemes = lexemes.slice(catchStart, pos - 1);
+            const catchBlock: ASTNode[] = [];
+            blockPos = 0;
+
+            while (blockPos < catchBlockLexemes.length) {
+                let stmtEnd = blockPos;
+                let braceDepth = 0;
+
+                while (stmtEnd < catchBlockLexemes.length) {
+                    if (catchBlockLexemes[stmtEnd].category === 'LBRACE') {
+                        braceDepth++;
+                    } else if (catchBlockLexemes[stmtEnd].category === 'RBRACE') {
+                        braceDepth--;
+                        if (braceDepth === 0) {
+                            stmtEnd++;
+                            break;
+                        }
+                    } else if (catchBlockLexemes[stmtEnd].category === 'TERMINATOR' && braceDepth === 0) {
+                        break;
+                    }
+                    stmtEnd++;
+                }
+
+                const stmtLexemes = catchBlockLexemes.slice(blockPos, stmtEnd);
+                if (stmtLexemes.length > 0) {
+                    const stmt = this.parseStatement(stmtLexemes);
+                    if (stmt) {
+                        catchBlock.push(stmt);
+                    }
+                }
+
+                blockPos = stmtEnd;
+                if (blockPos < catchBlockLexemes.length && catchBlockLexemes[blockPos].category === 'TERMINATOR') {
+                    blockPos++;
+                }
+            }
+
+            const catchClause: CatchClause = {
+                block: catchBlock
+            };
+            if (parameter) {
+                catchClause.parameter = parameter;
+            }
+            catchClauses.push(catchClause);
+        }
+
+        // Check for finally block
+        if (pos < lexemes.length &&
+            lexemes[pos].category === 'CONTROL' &&
+            TokenChecker.isControlKeyword(lexemes[pos], 'finally')) {
+
+            pos++; // Skip 'finally'
+
+            if (pos >= lexemes.length || lexemes[pos].category !== 'LBRACE') {
+                return ParseError.missingToken('{', lexemes[pos]?.token, 'for finally block');
+            }
+
+            pos++; // Skip '{'
+            depth = 1;
+            const finallyStart = pos;
+            while (pos < lexemes.length && depth > 0) {
+                if (lexemes[pos].category === 'LBRACE') depth++;
+                if (lexemes[pos].category === 'RBRACE') depth--;
+                pos++;
+            }
+
+            // Parse finally block statements
+            const finallyBlockLexemes = lexemes.slice(finallyStart, pos - 1);
+            finallyBlock = [];
+            blockPos = 0;
+
+            while (blockPos < finallyBlockLexemes.length) {
+                let stmtEnd = blockPos;
+                let braceDepth = 0;
+
+                while (stmtEnd < finallyBlockLexemes.length) {
+                    if (finallyBlockLexemes[stmtEnd].category === 'LBRACE') {
+                        braceDepth++;
+                    } else if (finallyBlockLexemes[stmtEnd].category === 'RBRACE') {
+                        braceDepth--;
+                        if (braceDepth === 0) {
+                            stmtEnd++;
+                            break;
+                        }
+                    } else if (finallyBlockLexemes[stmtEnd].category === 'TERMINATOR' && braceDepth === 0) {
+                        break;
+                    }
+                    stmtEnd++;
+                }
+
+                const stmtLexemes = finallyBlockLexemes.slice(blockPos, stmtEnd);
+                if (stmtLexemes.length > 0) {
+                    const stmt = this.parseStatement(stmtLexemes);
+                    if (stmt) {
+                        finallyBlock.push(stmt);
+                    }
+                }
+
+                blockPos = stmtEnd;
+                if (blockPos < finallyBlockLexemes.length && finallyBlockLexemes[blockPos].category === 'TERMINATOR') {
+                    blockPos++;
+                }
+            }
+        }
+
+        // Must have at least one catch or finally block
+        if (catchClauses.length === 0 && !finallyBlock) {
+            return ParseError.parseFailure('try block', lexemes, 0);
+        }
+
+        const tryNode: TryNode = {
+            type: 'Try',
+            tryBlock,
+            catchClauses
+        };
+        if (finallyBlock) {
+            tryNode.finallyBlock = finallyBlock;
+        }
+        return tryNode;
+    }
+
+    private parseThrowStatement(lexemes: Lexeme[]): ThrowNode | ErrorNode | null {
+        // throw or throw $exception
+        let value: ASTNode | undefined;
+
+        if (lexemes.length > 1) {
+            // Parse the value to throw
+            const valueLexemes = lexemes.slice(1);
+            value = this.parseExpression(valueLexemes, 0);
+        }
+
+        const throwNode: ThrowNode = {
+            type: 'Throw'
+        };
+        if (value) {
+            throwNode.value = value;
+        }
+        return throwNode;
     }
 
     private parseSubDeclaration(lexemes: Lexeme[]): SubNode | ErrorNode | null {

@@ -130,6 +130,23 @@ export interface DeferNode extends ASTNode {
     block: ASTNode[];
 }
 
+export interface CatchClause {
+    parameter?: VariableNode;  // Optional for anonymous catch blocks
+    block: ASTNode[];
+}
+
+export interface TryNode extends ASTNode {
+    type: 'Try';
+    tryBlock: ASTNode[];
+    catchClauses: CatchClause[];
+    finallyBlock?: ASTNode[];
+}
+
+export interface ThrowNode extends ASTNode {
+    type: 'Throw';
+    value?: ASTNode;  // Optional, can throw without a value
+}
+
 export interface CallNode extends ASTNode {
     type: 'Call';
     name: string;

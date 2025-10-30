@@ -1,0 +1,581 @@
+[
+  {
+    "type": "Try",
+    "tryBlock": [
+      {
+        "type": "Call",
+        "name": "dangerous_operation",
+        "arguments": []
+      }
+    ],
+    "catchClauses": [
+      {
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"Error: $e\""
+              }
+            ]
+          }
+        ],
+        "parameter": {
+          "type": "Variable",
+          "name": "$e"
+        }
+      }
+    ]
+  },
+  {
+    "type": "Try",
+    "tryBlock": [
+      {
+        "type": "Call",
+        "name": "open_file",
+        "arguments": []
+      },
+      {
+        "type": "Call",
+        "name": "process_file",
+        "arguments": []
+      }
+    ],
+    "catchClauses": [
+      {
+        "block": [
+          {
+            "type": "Call",
+            "name": "log_error",
+            "arguments": [
+              {
+                "type": "Variable",
+                "name": "$e"
+              }
+            ]
+          }
+        ],
+        "parameter": {
+          "type": "Variable",
+          "name": "$e"
+        }
+      }
+    ],
+    "finallyBlock": [
+      {
+        "type": "Call",
+        "name": "close_file",
+        "arguments": []
+      }
+    ]
+  },
+  {
+    "type": "Try",
+    "tryBlock": [
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$result"
+        },
+        "operator": "=",
+        "right": {
+          "type": "Call",
+          "name": "risky_calculation",
+          "arguments": []
+        }
+      }
+    ],
+    "catchClauses": [
+      {
+        "block": [
+          {
+            "type": "Call",
+            "name": "handle_error",
+            "arguments": [
+              {
+                "type": "Variable",
+                "name": "$e"
+              }
+            ]
+          }
+        ],
+        "parameter": {
+          "type": "Variable",
+          "name": "$e"
+        }
+      }
+    ]
+  },
+  {
+    "type": "Assignment",
+    "left": {
+      "type": "Variable",
+      "name": "$value"
+    },
+    "operator": "=",
+    "right": {
+      "type": "HashAccess",
+      "base": {
+        "type": "Error",
+        "message": "Unexpected token: try (CONTROL)",
+        "value": "try",
+        "line": 30,
+        "column": 10
+      },
+      "key": {
+        "type": "Call",
+        "name": "fetch_data",
+        "arguments": []
+      }
+    }
+  },
+  {
+    "type": "Try",
+    "tryBlock": [
+      {
+        "type": "Error",
+        "message": "Failed to parse try block",
+        "value": "try",
+        "line": 39,
+        "column": 5
+      },
+      {
+        "type": "Error",
+        "message": "Unexpected token: catch (CONTROL)",
+        "value": "catch",
+        "line": 42,
+        "column": 5
+      },
+      {
+        "type": "Call",
+        "name": "outer_operation",
+        "arguments": []
+      }
+    ],
+    "catchClauses": [
+      {
+        "block": [
+          {
+            "type": "Call",
+            "name": "handle_outer",
+            "arguments": [
+              {
+                "type": "Variable",
+                "name": "$outer_error"
+              }
+            ]
+          }
+        ],
+        "parameter": {
+          "type": "Variable",
+          "name": "$outer_error"
+        }
+      }
+    ]
+  },
+  {
+    "type": "Try",
+    "tryBlock": [
+      {
+        "type": "Call",
+        "name": "do_something",
+        "arguments": []
+      }
+    ],
+    "catchClauses": [],
+    "finallyBlock": [
+      {
+        "type": "Call",
+        "name": "cleanup",
+        "arguments": []
+      }
+    ]
+  },
+  {
+    "type": "Try",
+    "tryBlock": [],
+    "catchClauses": [
+      {
+        "block": [],
+        "parameter": {
+          "type": "Variable",
+          "name": "$e"
+        }
+      }
+    ],
+    "finallyBlock": []
+  },
+  {
+    "type": "Sub",
+    "name": "safe_divide",
+    "parameters": [
+      {
+        "type": "Parameter",
+        "variable": {
+          "type": "Variable",
+          "name": "$a"
+        }
+      },
+      {
+        "type": "Parameter",
+        "variable": {
+          "type": "Variable",
+          "name": "$b"
+        }
+      }
+    ],
+    "body": [
+      {
+        "type": "Error",
+        "message": "Failed to parse try block",
+        "value": "try",
+        "line": 69,
+        "column": 5
+      },
+      {
+        "type": "Error",
+        "message": "Unexpected token: catch (CONTROL)",
+        "value": "catch",
+        "line": 72,
+        "column": 5
+      }
+    ]
+  },
+  {
+    "type": "Try",
+    "tryBlock": [
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$connection"
+        },
+        "operator": "=",
+        "right": {
+          "type": "Call",
+          "name": "connect_db",
+          "arguments": []
+        }
+      },
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$data"
+        },
+        "operator": "=",
+        "right": {
+          "type": "Call",
+          "name": "query",
+          "arguments": [
+            {
+              "type": "Variable",
+              "name": "$connection"
+            }
+          ]
+        }
+      },
+      {
+        "type": "Call",
+        "name": "process",
+        "arguments": [
+          {
+            "type": "Variable",
+            "name": "$data"
+          }
+        ]
+      }
+    ],
+    "catchClauses": [
+      {
+        "block": [
+          {
+            "type": "If",
+            "condition": {
+              "type": "BinaryOp",
+              "operator": "=",
+              "left": {
+                "type": "Variable",
+                "name": "$e"
+              },
+              "right": {
+                "type": "BinaryOp",
+                "operator": "/",
+                "left": {
+                  "type": "BinaryOp",
+                  "operator": "/",
+                  "left": {
+                    "type": "Error",
+                    "message": "Unexpected token: ~ (UNOP)",
+                    "value": "~",
+                    "line": 85,
+                    "column": 13
+                  },
+                  "right": {
+                    "type": "Error",
+                    "message": "Unexpected token: connection (IDENTIFIER)",
+                    "value": "connection",
+                    "line": 85,
+                    "column": 16
+                  }
+                },
+                "right": {
+                  "type": "Error",
+                  "message": "Unexpected end of input",
+                  "value": "/",
+                  "line": 85,
+                  "column": 26
+                }
+              }
+            },
+            "thenBlock": [
+              {
+                "type": "Call",
+                "name": "reconnect",
+                "arguments": []
+              }
+            ],
+            "elseIfClauses": []
+          },
+          {
+            "type": "Error",
+            "message": "Unexpected token: elsif (CONTROL)",
+            "value": "elsif",
+            "line": 88,
+            "column": 5
+          },
+          {
+            "type": "HashAccess",
+            "base": {
+              "type": "Error",
+              "message": "Unexpected token: else (CONTROL)",
+              "value": "else",
+              "line": 91,
+              "column": 5
+            },
+            "key": {
+              "type": "Error",
+              "message": "Unexpected token: die (CONTROL)",
+              "value": "die",
+              "line": 92,
+              "column": 9
+            }
+          }
+        ],
+        "parameter": {
+          "type": "Variable",
+          "name": "$e"
+        }
+      }
+    ],
+    "finallyBlock": [
+      {
+        "type": "If",
+        "condition": {
+          "type": "Variable",
+          "name": "$connection"
+        },
+        "thenBlock": [
+          {
+            "type": "MethodCall",
+            "object": {
+              "type": "Variable",
+              "name": "$connection"
+            },
+            "method": "close",
+            "arguments": []
+          }
+        ],
+        "elseIfClauses": []
+      }
+    ]
+  },
+  {
+    "type": "Try",
+    "tryBlock": [
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$file"
+        },
+        "operator": "=",
+        "right": {
+          "type": "Call",
+          "name": "open_file",
+          "arguments": [
+            {
+              "type": "Variable",
+              "name": "$path"
+            }
+          ]
+        }
+      },
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$content"
+        },
+        "operator": "=",
+        "right": {
+          "type": "Call",
+          "name": "read_file",
+          "arguments": [
+            {
+              "type": "Variable",
+              "name": "$file"
+            }
+          ]
+        }
+      },
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$parsed"
+        },
+        "operator": "=",
+        "right": {
+          "type": "Call",
+          "name": "parse_content",
+          "arguments": [
+            {
+              "type": "Variable",
+              "name": "$content"
+            }
+          ]
+        }
+      },
+      {
+        "type": "Call",
+        "name": "save_results",
+        "arguments": [
+          {
+            "type": "Variable",
+            "name": "$parsed"
+          }
+        ]
+      }
+    ],
+    "catchClauses": [
+      {
+        "block": [
+          {
+            "type": "Call",
+            "name": "rollback",
+            "arguments": []
+          },
+          {
+            "type": "Call",
+            "name": "report_error",
+            "arguments": [
+              {
+                "type": "Variable",
+                "name": "$e"
+              }
+            ]
+          }
+        ],
+        "parameter": {
+          "type": "Variable",
+          "name": "$e"
+        }
+      }
+    ]
+  },
+  {
+    "type": "Try",
+    "tryBlock": [
+      {
+        "type": "Call",
+        "name": "critical_operation",
+        "arguments": []
+      }
+    ],
+    "catchClauses": [
+      {
+        "block": [
+          {
+            "type": "Call",
+            "name": "log_error",
+            "arguments": [
+              {
+                "type": "Variable",
+                "name": "$e"
+              }
+            ]
+          },
+          {
+            "type": "Die",
+            "message": {
+              "type": "Variable",
+              "name": "$e"
+            }
+          }
+        ],
+        "parameter": {
+          "type": "Variable",
+          "name": "$e"
+        }
+      }
+    ]
+  },
+  {
+    "type": "Foreach",
+    "variable": {
+      "type": "Variable",
+      "name": "$item"
+    },
+    "declarator": "my",
+    "listExpr": {
+      "type": "Variable",
+      "name": "@items"
+    },
+    "block": [
+      {
+        "type": "Error",
+        "message": "Failed to parse try block",
+        "value": "try",
+        "line": 122,
+        "column": 5
+      },
+      {
+        "type": "Error",
+        "message": "Unexpected token: catch (CONTROL)",
+        "value": "catch",
+        "line": 125,
+        "column": 5
+      }
+    ]
+  },
+  {
+    "type": "Try",
+    "tryBlock": [
+      {
+        "type": "Call",
+        "name": "do_work",
+        "arguments": []
+      }
+    ],
+    "catchClauses": [
+      {
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"Something went wrong\""
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

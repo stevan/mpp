@@ -192,19 +192,11 @@
         ]
       },
       {
-        "type": "HashAccess",
-        "base": {
-          "type": "Error",
-          "message": "Unexpected token: try (CONTROL)",
-          "value": "try",
-          "line": 49,
-          "column": 5
-        },
-        "key": {
-          "type": "Call",
-          "name": "dangerous_work",
-          "arguments": []
-        }
+        "type": "Error",
+        "message": "Failed to parse try block",
+        "value": "try",
+        "line": 49,
+        "column": 5
       },
       {
         "type": "Error",
