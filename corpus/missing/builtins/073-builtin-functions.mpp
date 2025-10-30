@@ -1,0 +1,65 @@
+# New builtin functions (Perl 5.36+)
+use builtin qw(true false is_bool weaken blessed refaddr reftype);
+
+# Boolean values
+my $yes = true;
+my $no = false;
+
+# Boolean checks
+if (is_bool($value)) {
+    print("value is boolean");
+}
+
+# Comparison with booleans
+if ($result == true) {
+    success();
+}
+
+if ($status != false) {
+    proceed();
+}
+
+# Builtin weak references
+my $ref = \$object;
+weaken($ref);
+
+# Builtin blessed check
+if (blessed($obj)) {
+    $obj->method();
+}
+
+# Builtin reference address
+my $addr = refaddr($ref);
+
+# Builtin reference type
+my $type = reftype($ref);
+
+# trim function (if available)
+my $trimmed = trim($string);
+
+# indexed function for arrays
+foreach my ($index, $value) (indexed(@array)) {
+    print("$index: $value");
+}
+
+# Combining builtins
+if (blessed($obj) && reftype($obj) eq 'HASH') {
+    process_hash_object($obj);
+}
+
+# Using builtin in expressions
+my $is_valid = is_bool($flag) && $flag == true;
+
+# Builtin functions in subroutines
+sub validate($input) {
+    return false if !defined($input);
+    return false if reftype($input) ne 'ARRAY';
+    return true;
+}
+
+# Export specific builtins
+use builtin 'true';
+use builtin 'false';
+
+my $enabled = true;
+my $disabled = false;

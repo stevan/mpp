@@ -1,0 +1,137 @@
+# Basic try/catch
+try {
+    dangerous_operation();
+}
+catch ($e) {
+    print("Error: $e");
+}
+
+# Try/catch/finally
+try {
+    open_file();
+    process_file();
+}
+catch ($e) {
+    log_error($e);
+}
+finally {
+    close_file();
+}
+
+# Multiple catch blocks (if supported)
+try {
+    $result = risky_calculation();
+}
+catch ($e) {
+    handle_error($e);
+}
+
+# Try with return value
+$value = try {
+    fetch_data();
+}
+catch ($e) {
+    return $default_value;
+};
+
+# Nested try blocks
+try {
+    try {
+        inner_operation();
+    }
+    catch ($inner_error) {
+        handle_inner($inner_error);
+    }
+    outer_operation();
+}
+catch ($outer_error) {
+    handle_outer($outer_error);
+}
+
+# Try without catch (with finally)
+try {
+    do_something();
+}
+finally {
+    cleanup();
+}
+
+# Empty blocks
+try {
+}
+catch ($e) {
+}
+finally {
+}
+
+# Try/catch in subroutine
+sub safe_divide($a, $b) {
+    try {
+        return $a / $b;
+    }
+    catch ($e) {
+        warn("Division failed: $e");
+        return undef;
+    }
+}
+
+# Try/catch with complex error handling
+try {
+    $connection = connect_db();
+    $data = query($connection);
+    process($data);
+}
+catch ($e) {
+    if ($e =~ /connection/) {
+        reconnect();
+    }
+    elsif ($e =~ /query/) {
+        log_query_error($e);
+    }
+    else {
+        die($e);
+    }
+}
+finally {
+    $connection->close() if $connection;
+}
+
+# Try block with multiple statements
+try {
+    $file = open_file($path);
+    $content = read_file($file);
+    $parsed = parse_content($content);
+    save_results($parsed);
+}
+catch ($e) {
+    rollback();
+    report_error($e);
+}
+
+# Rethrow in catch
+try {
+    critical_operation();
+}
+catch ($e) {
+    log_error($e);
+    die($e);  # rethrow
+}
+
+# Try/catch in loop
+foreach my $item (@items) {
+    try {
+        process_item($item);
+    }
+    catch ($e) {
+        $errors++;
+        push(@failed_items, $item);
+    }
+}
+
+# Try with anonymous catch
+try {
+    do_work();
+}
+catch {
+    print("Something went wrong");
+}

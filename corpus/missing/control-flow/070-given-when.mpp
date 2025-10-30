@@ -1,0 +1,132 @@
+# Basic given/when structure
+given ($value) {
+    when (1) {
+        print("one");
+    }
+    when (2) {
+        print("two");
+    }
+    when (3) {
+        print("three");
+    }
+    default {
+        print("other");
+    }
+}
+
+# Given with variable
+given ($x) {
+    when ($_ < 0) {
+        print("negative");
+    }
+    when ($_ > 0) {
+        print("positive");
+    }
+    default {
+        print("zero");
+    }
+}
+
+# Given with expression
+given ($x + $y) {
+    when (10) {
+        process_ten();
+    }
+    when (20) {
+        process_twenty();
+    }
+    when (30) {
+        process_thirty();
+    }
+}
+
+# Nested given/when
+given ($category) {
+    when ("number") {
+        given ($value) {
+            when (0) {
+                print("zero");
+            }
+            when (1) {
+                print("one");
+            }
+            default {
+                print("other number");
+            }
+        }
+    }
+    when ("string") {
+        print("string value");
+    }
+}
+
+# When with multiple values
+given ($day) {
+    when ([1, 2, 3, 4, 5]) {
+        print("weekday");
+    }
+    when ([6, 7]) {
+        print("weekend");
+    }
+}
+
+# When with regex (without smartmatch operator)
+given ($input) {
+    when (/^[0-9]+$/) {
+        print("numeric");
+    }
+    when (/^[a-z]+$/) {
+        print("alphabetic");
+    }
+    default {
+        print("mixed");
+    }
+}
+
+# Given without default
+given ($code) {
+    when (200) {
+        success();
+    }
+    when (404) {
+        not_found();
+    }
+    when (500) {
+        server_error();
+    }
+}
+
+# Empty when blocks
+given ($flag) {
+    when (0) {
+    }
+    when (1) {
+    }
+}
+
+# Break statement in when
+given ($action) {
+    when ("stop") {
+        cleanup();
+        break;
+    }
+    when ("pause") {
+        save_state();
+        break;
+    }
+}
+
+# Continue to next when
+given ($score) {
+    when ($_ > 90) {
+        print("A");
+        continue;
+    }
+    when ($_ > 80) {
+        print("B");
+        continue;
+    }
+    when ($_ > 70) {
+        print("C");
+    }
+}

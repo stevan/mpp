@@ -1,0 +1,122 @@
+# Modern class syntax with Corinna features
+use feature 'class';
+
+# Class with version
+class Point :version(1.0) {
+    field $x :param :reader;
+    field $y :param :reader;
+
+    method move($dx, $dy) {
+        $x += $dx;
+        $y += $dy;
+    }
+}
+
+# Class with roles/interfaces
+class Employee :isa(Person) :does(Payable) {
+    field $id :param :reader;
+    field $salary :param :writer;
+
+    method calculate_pay {
+        return $salary / 12;
+    }
+}
+
+# Class with BUILD/DEMOLISH
+class Resource {
+    field $handle;
+
+    method BUILD {
+        $handle = open_resource();
+    }
+
+    method DEMOLISH {
+        close_resource($handle);
+    }
+}
+
+# Class with private methods
+class BankAccount {
+    field $balance :param = 0;
+
+    method deposit($amount) {
+        $self->_validate_amount($amount);
+        $balance += $amount;
+    }
+
+    method _validate_amount($amount) {
+        die "Invalid amount" if $amount <= 0;
+    }
+}
+
+# Class with ADJUST phase
+class ConfiguredObject {
+    field $config :param;
+    field $processed;
+
+    ADJUST {
+        $processed = process_config($config);
+    }
+}
+
+# Abstract class
+class Shape :abstract {
+    method area :abstract;
+    method perimeter :abstract;
+}
+
+# Class extending abstract
+class Rectangle :isa(Shape) {
+    field $width :param :reader;
+    field $height :param :reader;
+
+    method area {
+        return $width * $height;
+    }
+
+    method perimeter {
+        return 2 * ($width + $height);
+    }
+}
+
+# Class with multiple fields and attributes
+class Product {
+    field $id :param :reader :required;
+    field $name :param :reader :required;
+    field $price :param :reader :writer;
+    field $stock :param = 0;
+    field $description :param = "";
+
+    method in_stock {
+        return $stock > 0;
+    }
+
+    method purchase($quantity = 1) {
+        die "Insufficient stock" if $stock < $quantity;
+        $stock -= $quantity;
+        return $quantity * $price;
+    }
+}
+
+# Role definition
+role Comparable {
+    method compare($other) :required;
+
+    method less_than($other) {
+        return $self->compare($other) < 0;
+    }
+}
+
+# Class with class methods
+class Factory {
+    field $count :common = 0;
+
+    method create :common {
+        $count++;
+        return $class->new();
+    }
+
+    method get_count :common {
+        return $count;
+    }
+}

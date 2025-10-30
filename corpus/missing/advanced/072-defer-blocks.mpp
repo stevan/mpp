@@ -1,0 +1,96 @@
+# Basic defer block
+{
+    my $fh = open_file();
+    defer {
+        close($fh);
+    }
+    process_file($fh);
+}
+
+# Multiple defer blocks (execute in reverse order)
+sub transaction {
+    begin_transaction();
+    defer {
+        commit_transaction();
+    }
+
+    lock_resource();
+    defer {
+        unlock_resource();
+    }
+
+    do_work();
+}
+
+# Defer in conditional
+if ($need_cleanup) {
+    defer {
+        cleanup();
+    }
+    risky_operation();
+}
+
+# Defer in loop
+foreach my $resource (@resources) {
+    acquire($resource);
+    defer {
+        release($resource);
+    }
+    use_resource($resource);
+}
+
+# Defer with error handling
+sub safe_operation {
+    my $lock = acquire_lock();
+    defer {
+        release_lock($lock);
+    }
+
+    try {
+        dangerous_work();
+    }
+    catch ($e) {
+        log_error($e);
+        die($e);
+    }
+}
+
+# Nested defer blocks
+{
+    open_outer();
+    defer {
+        close_outer();
+    }
+
+    {
+        open_inner();
+        defer {
+            close_inner();
+        }
+        process_inner();
+    }
+
+    process_outer();
+}
+
+# Defer with return
+sub fetch_data {
+    my $conn = connect();
+    defer {
+        disconnect($conn);
+    }
+
+    my $data = query($conn);
+    return $data;
+}
+
+# Empty defer block
+defer {
+}
+
+# Defer with multiple statements
+defer {
+    log_completion();
+    cleanup_temp_files();
+    notify_complete();
+}
