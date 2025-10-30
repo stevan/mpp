@@ -99,9 +99,18 @@ Input Chunks → Tokenizer → Lexer → Parser → AST Stream
 - [x] `has` attribute syntax (alternative to `field`)
 - [x] Complete OO infrastructure
 
+### ✅ Session 7: Modern Control Flow & Operators
+- [x] String comparison operators (`eq`, `ne`, `lt`, `gt`, `le`, `ge`, `cmp`)
+- [x] Boolean literals (`true`, `false`)
+- [x] Defer blocks (LIFO cleanup)
+- [x] Auto-increment/decrement operators (`++`, `--`)
+- [x] Try/catch/finally exception handling
+- [x] Given/when/default pattern matching
+- [x] Match/case expressions (experimental)
+
 **Test Coverage**
-- **300 tests total**, all passing ✅
-- **93.77% line coverage**, 100% function coverage
+- **472 tests total**, all passing ✅
+- **69 corpus files working**, 0 Error nodes
 - 250+ unit tests (Parser.test.ts)
 - 21 integration tests (DataStructures.test.ts + Examples.test.ts)
 - 22 lexer/tokenizer tests
@@ -146,19 +155,19 @@ mpp/
 ├── src/
 │   ├── Tokenizer.ts          # Boundary detection + token emission (~305 lines)
 │   ├── Lexer.ts              # Semantic classification (~90 lines)
-│   ├── Parser.ts             # Precedence climbing parser (~2,805 lines)
-│   ├── AST.ts                # AST node type definitions (~260 lines)
-│   └── LanguageSpec.ts       # Central language specification (~367 lines)
+│   ├── Parser.ts             # Precedence climbing parser (~3,800 lines)
+│   ├── AST.ts                # AST node type definitions (~400 lines)
+│   └── LanguageSpec.ts       # Central language specification (~560 lines)
 ├── tests/
 │   ├── Tokenizer.test.ts     # 13 tokenizer tests
 │   ├── Lexer.test.ts         # 9 lexer tests
 │   ├── Parser.test.ts        # 250+ unit tests
 │   ├── Examples.test.ts      # 11 integration tests
 │   ├── DataStructures.test.ts # 16 milestone tests
-│   └── Corpus.test.ts        # 50 corpus tests
+│   └── Corpus.test.ts        # 69 corpus tests
 ├── corpus/
-│   ├── input/                # 50 .mpp test files (organized by category)
-│   ├── expected/             # 50 .json AST files (auto-generated)
+│   ├── input/                # 69 .mpp test files (organized by category)
+│   ├── expected/             # 69 .json AST files (auto-generated)
 │   └── README.md             # Corpus documentation
 ├── bin/
 │   └── repl.js               # Interactive REPL
@@ -173,14 +182,14 @@ mpp/
 
 ```bash
 npm install
-npm test              # Build and run all tests (350 tests)
+npm test              # Build and run all tests (472 tests)
 npm run build         # Compile TypeScript
 npm run repl          # Start interactive REPL
 ```
 
 ### Test Suite
 
-The project includes **350 tests** across multiple test suites:
+The project includes **472 tests** across multiple test suites:
 
 - **Unit tests** (300 tests) - `tests/*.test.ts`
   - Tokenizer tests - Token generation
@@ -189,7 +198,7 @@ The project includes **350 tests** across multiple test suites:
   - Examples tests - Complete programs
   - DataStructures tests - Arrays, hashes, access
 
-- **Corpus tests** (50 tests) - `tests/Corpus.test.ts`
+- **Corpus tests** (69 tests) - `tests/Corpus.test.ts`
   - Golden file testing with human-readable input
   - Organized by feature category
   - See `corpus/README.md` for details

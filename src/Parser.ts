@@ -43,6 +43,8 @@ import {
     ContinueNode,
     GivenNode,
     WhenClause,
+    MatchNode,
+    CaseClause,
     DieNode,
     WarnNode,
     PrintNode,
@@ -395,6 +397,9 @@ export class Parser {
             }
             if (TokenChecker.isControlKeyword(lexemes[0], 'given')) {
                 return this.parseGiven(lexemes);
+            }
+            if (TokenChecker.isControlKeyword(lexemes[0], 'match')) {
+                return this.parseMatch(lexemes);
             }
             if (TokenChecker.isControlKeyword(lexemes[0], 'break')) {
                 return this.parseBreakStatement(lexemes);
@@ -841,6 +846,115 @@ export class Parser {
                     node: doBlockNode,
                     nextPos: endPos
                 };
+            }
+        }
+
+        // Match expressions (can be used in expressions)
+        if (TokenChecker.isControlKeyword(lexeme, 'match')) {
+            // Check if this is a match expression (match ($expr) { case ... })
+            // or just a function call (match($item))
+            // Match expression requires: match ( ... ) { ... }
+            // So we need to find the closing parenthesis and check for a brace after it
+
+            let isMatchExpression = false;
+            if (pos + 1 < lexemes.length && lexemes[pos + 1].category === 'LPAREN') {
+                // Find the closing parenthesis
+                let parenDepth = 1;
+                let checkPos = pos + 2;
+                while (checkPos < lexemes.length && parenDepth > 0) {
+                    if (lexemes[checkPos].category === 'LPAREN') parenDepth++;
+                    if (lexemes[checkPos].category === 'RPAREN') parenDepth--;
+                    checkPos++;
+                }
+                // Check if there's a brace after the closing parenthesis
+                if (checkPos < lexemes.length && lexemes[checkPos].category === 'LBRACE') {
+                    isMatchExpression = true;
+                }
+            }
+
+            if (!isMatchExpression) {
+                // This is just a function call named 'match', not a match expression
+                // Parse it as a function call
+                if (pos + 1 < lexemes.length && lexemes[pos + 1].category === 'LPAREN') {
+                    // Find matching RPAREN
+                    const closingPos = DelimiterMatcher.findClosingParen(lexemes, pos + 1);
+                    if (closingPos === -1) {
+                        return {
+                            node: ParseError.missingToken(')', lexemes[pos + 1].token, 'for function call'),
+                            nextPos: lexemes.length
+                        };
+                    }
+                    const endPos = closingPos + 1;
+
+                    // Parse arguments
+                    const argLexemes = lexemes.slice(pos + 2, closingPos);
+                    const args: ASTNode[] = [];
+
+                    if (argLexemes.length > 0) {
+                        const segments = splitByCommas(argLexemes);
+                        for (const segment of segments) {
+                            if (segment.length > 0) {
+                                const arg = this.parseExpression(segment, 0);
+                                if (arg) {
+                                    args.push(arg);
+                                }
+                            }
+                        }
+                    }
+
+                    const callNode: CallNode = {
+                        type: 'Call',
+                        name: 'match',
+                        arguments: args
+                    };
+
+                    return {
+                        node: callNode,
+                        nextPos: endPos
+                    };
+                }
+            } else {
+                // Parse the entire match expression using parseMatch
+                const matchLexemes = lexemes.slice(pos);
+                const matchNode = this.parseMatch(matchLexemes);
+
+                if (matchNode && matchNode.type !== 'Error') {
+                    // Find the end position - need to find the closing brace of the match block
+                    let matchPos = pos + 1; // Skip 'match'
+
+                    // Skip past the expression in parentheses
+                    if (matchPos < lexemes.length && lexemes[matchPos].category === 'LPAREN') {
+                        let parenDepth = 1;
+                        matchPos++;
+                        while (matchPos < lexemes.length && parenDepth > 0) {
+                            if (lexemes[matchPos].category === 'LPAREN') parenDepth++;
+                            if (lexemes[matchPos].category === 'RPAREN') parenDepth--;
+                            matchPos++;
+                        }
+                    }
+
+                    // Skip past the match block
+                    if (matchPos < lexemes.length && lexemes[matchPos].category === 'LBRACE') {
+                        let braceDepth = 1;
+                        matchPos++;
+                        while (matchPos < lexemes.length && braceDepth > 0) {
+                            if (lexemes[matchPos].category === 'LBRACE') braceDepth++;
+                            if (lexemes[matchPos].category === 'RBRACE') braceDepth--;
+                            matchPos++;
+                        }
+                    }
+
+                    return {
+                        node: matchNode,
+                        nextPos: matchPos
+                    };
+                } else if (matchNode) {
+                    // Return the error node
+                    return {
+                        node: matchNode,
+                        nextPos: lexemes.length
+                    };
+                }
             }
         }
 
@@ -2475,6 +2589,233 @@ export class Parser {
         }
 
         return givenNode;
+    }
+
+    private parseMatch(lexemes: Lexeme[]): MatchNode | ErrorNode | null {
+        // Expect: match ($expr) { case (...) { ... } else { ... } }
+        if (lexemes.length < 4) {
+            return ParseError.incompleteDeclaration('match', 'expression and block', lexemes[0]?.token);
+        }
+
+        let pos = 1; // Skip 'match' keyword
+
+        // Parse expression in parentheses
+        if (lexemes[pos].category !== 'LPAREN') {
+            return ParseError.missingToken('(', lexemes[pos]?.token, 'for match expression');
+        }
+        pos++; // Skip '('
+
+        // Find matching RPAREN
+        const exprStart = pos;
+        let parenDepth = 1;
+        while (pos < lexemes.length && parenDepth > 0) {
+            if (lexemes[pos].category === 'LPAREN') parenDepth++;
+            if (lexemes[pos].category === 'RPAREN') parenDepth--;
+            pos++;
+        }
+
+        if (parenDepth > 0) {
+            return ParseError.missingToken(')', lexemes[pos - 1]?.token, 'for match expression');
+        }
+
+        // Parse the expression
+        const exprLexemes = lexemes.slice(exprStart, pos - 1);
+        const expression = this.parseExpression(exprLexemes, 0);
+        if (!expression) {
+            return ParseError.emptyExpression('match expression', exprLexemes[0]?.token);
+        }
+
+        // Expect LBRACE for the match block
+        if (lexemes[pos].category !== 'LBRACE') {
+            return ParseError.missingToken('{', lexemes[pos]?.token, 'for match block');
+        }
+        pos++; // Skip '{'
+
+        // Find matching RBRACE
+        const blockStart = pos;
+        let braceDepth = 1;
+        while (pos < lexemes.length && braceDepth > 0) {
+            if (lexemes[pos].category === 'LBRACE') braceDepth++;
+            if (lexemes[pos].category === 'RBRACE') braceDepth--;
+            pos++;
+        }
+
+        if (braceDepth > 0) {
+            return ParseError.missingToken('}', lexemes[pos - 1]?.token, 'for match block');
+        }
+
+        // Parse the content of the match block
+        const blockLexemes = lexemes.slice(blockStart, pos - 1);
+        const caseClauses: CaseClause[] = [];
+        let elseBlock: ASTNode[] | undefined;
+
+        // Process case clauses and else block
+        let i = 0;
+        while (i < blockLexemes.length) {
+            // Skip any terminators
+            if (blockLexemes[i].category === 'TERMINATOR') {
+                i++;
+                continue;
+            }
+
+            if (TokenChecker.isControlKeyword(blockLexemes[i], 'case')) {
+                // Parse case clause
+                i++; // Skip 'case'
+
+                // Expect parenthesized pattern
+                if (i >= blockLexemes.length || blockLexemes[i].category !== 'LPAREN') {
+                    return ParseError.missingToken('(', blockLexemes[i]?.token, 'for case pattern');
+                }
+                i++; // Skip '('
+
+                // Find matching RPAREN for the pattern
+                const patternStart = i;
+                let parenDepth = 1;
+                while (i < blockLexemes.length && parenDepth > 0) {
+                    if (blockLexemes[i].category === 'LPAREN') parenDepth++;
+                    if (blockLexemes[i].category === 'RPAREN') parenDepth--;
+                    i++;
+                }
+
+                if (parenDepth > 0) {
+                    return ParseError.missingToken(')', blockLexemes[i - 1]?.token, 'for case pattern');
+                }
+
+                // Parse the pattern expression
+                const patternLexemes = blockLexemes.slice(patternStart, i - 1);
+                const pattern = this.parseExpression(patternLexemes, 0);
+                if (!pattern) {
+                    return ParseError.emptyExpression('case pattern', patternLexemes[0]?.token);
+                }
+
+                // Expect LBRACE for case block
+                if (i >= blockLexemes.length || blockLexemes[i].category !== 'LBRACE') {
+                    return ParseError.missingToken('{', blockLexemes[i]?.token, 'for case block');
+                }
+                i++; // Skip '{'
+
+                // Find matching RBRACE
+                const caseBlockStart = i;
+                let braceDepth = 1;
+                while (i < blockLexemes.length && braceDepth > 0) {
+                    if (blockLexemes[i].category === 'LBRACE') braceDepth++;
+                    if (blockLexemes[i].category === 'RBRACE') braceDepth--;
+                    i++;
+                }
+
+                if (braceDepth > 0) {
+                    return ParseError.missingToken('}', blockLexemes[i - 1]?.token, 'for case block');
+                }
+
+                // Parse the case block
+                const caseBlockLexemes = blockLexemes.slice(caseBlockStart, i - 1);
+                const caseBlock: ASTNode[] = [];
+                let casePos = 0;
+                while (casePos < caseBlockLexemes.length) {
+                    // Find next statement boundary
+                    let stmtEnd = casePos;
+                    let depth = 0;
+                    while (stmtEnd < caseBlockLexemes.length) {
+                        if (caseBlockLexemes[stmtEnd].category === 'LBRACE') depth++;
+                        if (caseBlockLexemes[stmtEnd].category === 'RBRACE') depth--;
+                        if (depth === 0 && caseBlockLexemes[stmtEnd].category === 'TERMINATOR') {
+                            break;
+                        }
+                        stmtEnd++;
+                    }
+
+                    const stmtLexemes = caseBlockLexemes.slice(casePos, stmtEnd);
+                    if (stmtLexemes.length > 0) {
+                        const stmt = this.parseStatement(stmtLexemes);
+                        if (stmt) caseBlock.push(stmt);
+                    }
+
+                    // Move past the terminator
+                    casePos = stmtEnd;
+                    if (casePos < caseBlockLexemes.length && caseBlockLexemes[casePos].category === 'TERMINATOR') {
+                        casePos++;
+                    }
+                }
+
+                caseClauses.push({
+                    pattern,
+                    block: caseBlock
+                });
+
+            } else if (TokenChecker.isControlKeyword(blockLexemes[i], 'else')) {
+                // Parse else block
+                i++; // Skip 'else'
+
+                // Expect LBRACE
+                if (i >= blockLexemes.length || blockLexemes[i].category !== 'LBRACE') {
+                    return ParseError.missingToken('{', blockLexemes[i]?.token, 'for else block');
+                }
+                i++; // Skip '{'
+
+                // Find matching RBRACE
+                const elseBlockStart = i;
+                let braceDepth = 1;
+                while (i < blockLexemes.length && braceDepth > 0) {
+                    if (blockLexemes[i].category === 'LBRACE') braceDepth++;
+                    if (blockLexemes[i].category === 'RBRACE') braceDepth--;
+                    i++;
+                }
+
+                if (braceDepth > 0) {
+                    return ParseError.missingToken('}', blockLexemes[i - 1]?.token, 'for else block');
+                }
+
+                // Parse the else block
+                const elseBlockLexemes = blockLexemes.slice(elseBlockStart, i - 1);
+                elseBlock = [];
+                let elsePos = 0;
+                while (elsePos < elseBlockLexemes.length) {
+                    // Find next statement boundary
+                    let stmtEnd = elsePos;
+                    let depth = 0;
+                    while (stmtEnd < elseBlockLexemes.length) {
+                        if (elseBlockLexemes[stmtEnd].category === 'LBRACE') depth++;
+                        if (elseBlockLexemes[stmtEnd].category === 'RBRACE') depth--;
+                        if (depth === 0 && elseBlockLexemes[stmtEnd].category === 'TERMINATOR') {
+                            break;
+                        }
+                        stmtEnd++;
+                    }
+
+                    const stmtLexemes = elseBlockLexemes.slice(elsePos, stmtEnd);
+                    if (stmtLexemes.length > 0) {
+                        const stmt = this.parseStatement(stmtLexemes);
+                        if (stmt) elseBlock.push(stmt);
+                    }
+
+                    // Move past the terminator
+                    elsePos = stmtEnd;
+                    if (elsePos < elseBlockLexemes.length && elseBlockLexemes[elsePos].category === 'TERMINATOR') {
+                        elsePos++;
+                    }
+                }
+
+            } else {
+                // Unexpected token in match block
+                return ParseError.unexpectedToken(blockLexemes[i].token, 'case or else');
+            }
+        }
+
+        if (caseClauses.length === 0) {
+            return ParseError.incompleteDeclaration('match', 'at least one case clause', lexemes[0]?.token);
+        }
+
+        const matchNode: MatchNode = {
+            type: 'Match',
+            expression,
+            caseClauses
+        };
+
+        if (elseBlock) {
+            matchNode.elseBlock = elseBlock;
+        }
+
+        return matchNode;
     }
 
     private parseBreakStatement(lexemes: Lexeme[]): BreakNode | ErrorNode | null {

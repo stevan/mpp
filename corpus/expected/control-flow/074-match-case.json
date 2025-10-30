@@ -1,0 +1,254 @@
+[
+  {
+    "type": "Match",
+    "expression": {
+      "type": "Variable",
+      "name": "$value"
+    },
+    "caseClauses": [
+      {
+        "pattern": {
+          "type": "Number",
+          "value": "1"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"one\""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "pattern": {
+          "type": "Number",
+          "value": "2"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"two\""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "pattern": {
+          "type": "Number",
+          "value": "3"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"three\""
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "elseBlock": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"other\""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Match",
+    "expression": {
+      "type": "Variable",
+      "name": "$day"
+    },
+    "caseClauses": [
+      {
+        "pattern": {
+          "type": "Number",
+          "value": "1"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"Monday\""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "pattern": {
+          "type": "Number",
+          "value": "2"
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"Tuesday\""
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "elseBlock": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"Weekend\""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Match",
+    "expression": {
+      "type": "Variable",
+      "name": "$score"
+    },
+    "caseClauses": [
+      {
+        "pattern": {
+          "type": "BinaryOp",
+          "operator": ">",
+          "left": {
+            "type": "Variable",
+            "name": "$_"
+          },
+          "right": {
+            "type": "Number",
+            "value": "90"
+          }
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"A\""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "pattern": {
+          "type": "BinaryOp",
+          "operator": ">",
+          "left": {
+            "type": "Variable",
+            "name": "$_"
+          },
+          "right": {
+            "type": "Number",
+            "value": "80"
+          }
+        },
+        "block": [
+          {
+            "type": "Call",
+            "name": "print",
+            "arguments": [
+              {
+                "type": "String",
+                "value": "\"B\""
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "elseBlock": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"F\""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$result"
+    },
+    "initializer": {
+      "type": "Match",
+      "expression": {
+        "type": "Variable",
+        "name": "$code"
+      },
+      "caseClauses": [
+        {
+          "pattern": {
+            "type": "Number",
+            "value": "200"
+          },
+          "block": [
+            {
+              "type": "String",
+              "value": "\"success\""
+            }
+          ]
+        },
+        {
+          "pattern": {
+            "type": "Number",
+            "value": "404"
+          },
+          "block": [
+            {
+              "type": "String",
+              "value": "\"not found\""
+            }
+          ]
+        }
+      ],
+      "elseBlock": [
+        {
+          "type": "String",
+          "value": "\"unknown\""
+        }
+      ]
+    }
+  }
+]

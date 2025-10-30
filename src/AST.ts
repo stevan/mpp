@@ -195,6 +195,18 @@ export interface GivenNode extends ASTNode {
     defaultBlock?: ASTNode[];  // Optional default block
 }
 
+export interface CaseClause {
+    pattern: ASTNode;  // The pattern to match (can be value, regex, range, etc.)
+    block: ASTNode[];   // The statements to execute if matched
+}
+
+export interface MatchNode extends ASTNode {
+    type: 'Match';
+    expression: ASTNode;  // The expression to match against
+    caseClauses: CaseClause[];
+    elseBlock?: ASTNode[];  // Optional else block
+}
+
 export interface DieNode extends ASTNode {
     type: 'Die';
     message?: ASTNode;

@@ -41,6 +41,7 @@ export const KEYWORDS = {
         'if', 'elsif', 'else', 'unless',
         'while', 'until', 'for', 'foreach',
         'given', 'when', 'default', 'break',
+        'match', 'case',
         'next', 'last', 'redo', 'continue', 'return',
         'do', 'eval',
         'try', 'catch', 'finally', 'throw',
