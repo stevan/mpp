@@ -18,6 +18,8 @@ import {
     VariableNode,
     BinaryOpNode,
     UnaryOpNode,
+    PrefixOpNode,
+    PostfixOpNode,
     TernaryNode,
     DeclarationNode,
     IfNode,
@@ -663,11 +665,23 @@ export class Parser {
         if (lexeme.category === 'BINOP' || lexeme.category === 'OPERATOR' || lexeme.category === 'UNOP') {
             const op = lexeme.token.value;
 
-            // Handle unary minus, unary plus, and logical not
-            if (op === '-' || op === '!' || op === '+') {
+            // Handle unary minus, unary plus, logical not, and prefix increment/decrement
+            if (op === '-' || op === '!' || op === '+' || op === '++' || op === '--') {
                 // Special case: +{ is a hash literal, not unary plus
                 if (op === '+' && pos + 1 < lexemes.length && lexemes[pos + 1].category === 'LBRACE') {
                     // Let the hash literal handling below deal with this
+                } else if (op === '++' || op === '--') {
+                    // Prefix increment/decrement
+                    const operandResult = this.parsePrimary(lexemes, pos + 1);
+                    const prefixNode: PrefixOpNode = {
+                        type: 'PrefixOp',
+                        operator: op,
+                        operand: operandResult.node
+                    };
+                    return {
+                        node: prefixNode,
+                        nextPos: operandResult.nextPos
+                    };
                 } else {
                     // This is a unary operator - recursively parse the operand
                     const operandResult = this.parsePrimary(lexemes, pos + 1);
@@ -1309,6 +1323,19 @@ export class Parser {
         // Loop to handle chained access like $data->[0]{"key"}[1]
         while (pos < lexemes.length) {
             const current = lexemes[pos];
+
+            // Check for postfix increment/decrement
+            if ((current.category === 'OPERATOR' || current.category === 'UNOP') &&
+                (current.token.value === '++' || current.token.value === '--')) {
+                const postfixNode: PostfixOpNode = {
+                    type: 'PostfixOp',
+                    operator: current.token.value,
+                    operand: node
+                };
+                node = postfixNode;
+                pos++;
+                continue;
+            }
 
             // Check for dereference operator ->
             if (TokenChecker.isArrowOperator(current)) {

@@ -46,6 +46,18 @@ export interface UnaryOpNode extends ASTNode {
     operand: ASTNode;
 }
 
+export interface PrefixOpNode extends ASTNode {
+    type: 'PrefixOp';
+    operator: string;  // '++' or '--'
+    operand: ASTNode;
+}
+
+export interface PostfixOpNode extends ASTNode {
+    type: 'PostfixOp';
+    operator: string;  // '++' or '--'
+    operand: ASTNode;
+}
+
 export interface TernaryNode extends ASTNode {
     type: 'Ternary';
     condition: ASTNode;

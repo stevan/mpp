@@ -186,6 +186,8 @@ export const OPERATOR_PRECEDENCE: Record<string, OperatorInfo> = {
 
     // Special operators (not in precedence table but recognized)
     '->': { precedence: 2, associativity: 'LEFT' }, // Arrow (highest precedence, postfix)
+    '++': { precedence: 2, associativity: 'NONE' }, // Increment (prefix/postfix)
+    '--': { precedence: 2, associativity: 'NONE' }, // Decrement (prefix/postfix)
     ':': { precedence: 19, associativity: 'NONE' },  // Colon (for labels, attributes)
 };
 
@@ -215,7 +217,8 @@ export const OPERATORS = {
 
     // Unary operators
     UNARY: new Set([
-        '!', '~', 'not'
+        '!', '~', 'not',
+        '++', '--'  // Can be used as prefix operators
     ])
 } as const;
 
@@ -240,6 +243,8 @@ export const MULTI_CHAR_OPERATORS = {
         '&&', '||', '//',
         // Arithmetic
         '**',
+        // Increment/Decrement
+        '++', '--',
         // Bitwise
         '<<', '>>',
         // Assignment
