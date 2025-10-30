@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * Tool to find and handle Error nodes in corpus files
+ * Tool to detect Error nodes in corpus files
  *
  * Usage:
  *   node bin/check-errors.js           # List all files with errors
  *   node bin/check-errors.js --detail  # Show detailed error information
- *   node bin/check-errors.js --split   # Split error lines to corpus/missing/
+ *   node bin/check-errors.js --verbose # Show progress while checking
  */
 
 import fs from 'fs';
@@ -23,7 +23,6 @@ const __dirname = dirname(__filename);
 // Parse command line arguments
 const args = process.argv.slice(2);
 const showDetail = args.includes('--detail');
-const doSplit = args.includes('--split');
 const verbose = args.includes('--verbose');
 
 async function parseSource(source) {
@@ -95,47 +94,32 @@ function findErrorNodes(node, path = '') {
 
 async function checkFile(filePath) {
     const content = fs.readFileSync(filePath, 'utf8');
-    const lines = content.split('\n');
     const results = {
         file: filePath,
-        totalLines: lines.length,
-        errorLines: [],
-        cleanLines: []
+        errors: [],
+        hasErrors: false
     };
 
-    // Test each line individually
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
+    try {
+        const ast = await parseSource(content);
 
-        // Skip empty lines and comments
-        if (!line.trim() || line.trim().startsWith('#')) {
-            results.cleanLines.push({ lineNum: i + 1, content: line });
-            continue;
-        }
-
-        try {
-            const ast = await parseSource(line);
-            const hasError = ast.some(hasErrorNode);
-
-            if (hasError) {
-                const errors = [];
-                ast.forEach(node => errors.push(...findErrorNodes(node)));
-                results.errorLines.push({
-                    lineNum: i + 1,
-                    content: line,
-                    errors: errors
-                });
-            } else {
-                results.cleanLines.push({ lineNum: i + 1, content: line });
+        // Find all error nodes in the AST
+        for (const statement of ast) {
+            const errors = findErrorNodes(statement);
+            if (errors.length > 0) {
+                results.hasErrors = true;
+                results.errors.push(...errors);
             }
-        } catch (e) {
-            // Parse error - treat as error line
-            results.errorLines.push({
-                lineNum: i + 1,
-                content: line,
-                errors: [{ path: 'parse', error: { message: e.message } }]
-            });
         }
+    } catch (e) {
+        // Parse error - entire file failed to parse
+        results.hasErrors = true;
+        results.errors.push({
+            path: 'parse',
+            error: {
+                message: e.message
+            }
+        });
     }
 
     return results;
@@ -161,37 +145,13 @@ async function findCorpusFiles() {
     return files.sort();
 }
 
-function splitFile(results, outputDir) {
-    const relPath = path.relative(path.join(__dirname, '..', 'corpus', 'input'), results.file);
-    const cleanPath = results.file;
-    const errorPath = path.join(__dirname, '..', 'corpus', 'missing', relPath);
-
-    // Ensure directory exists
-    const errorDir = path.dirname(errorPath);
-    if (!fs.existsSync(errorDir)) {
-        fs.mkdirSync(errorDir, { recursive: true });
-    }
-
-    // Write clean lines back to original file
-    const cleanContent = results.cleanLines.map(l => l.content).join('\n');
-    fs.writeFileSync(cleanPath, cleanContent);
-
-    // Write error lines to missing directory
-    if (results.errorLines.length > 0) {
-        const errorContent = results.errorLines.map(l => l.content).join('\n');
-        fs.writeFileSync(errorPath, errorContent);
-        return errorPath;
-    }
-
-    return null;
-}
 
 async function main() {
     console.log('Checking corpus files for Error nodes...\n');
 
     const files = await findCorpusFiles();
     const filesWithErrors = [];
-    let totalErrors = 0;
+    let totalErrorNodes = 0;
 
     for (const file of files) {
         if (verbose) {
@@ -200,12 +160,12 @@ async function main() {
 
         const results = await checkFile(file);
 
-        if (results.errorLines.length > 0) {
+        if (results.hasErrors) {
             filesWithErrors.push(results);
-            totalErrors += results.errorLines.length;
+            totalErrorNodes += results.errors.length;
 
             if (verbose) {
-                console.log(` ❌ ${results.errorLines.length} errors`);
+                console.log(` ❌ ${results.errors.length} error nodes`);
             }
         } else if (verbose) {
             console.log(' ✓');
@@ -214,56 +174,44 @@ async function main() {
 
     // Report summary
     console.log('\n' + '='.repeat(80));
-    console.log(`Summary: ${filesWithErrors.length} files with errors (${totalErrors} total error lines)`);
+    console.log(`Summary: ${filesWithErrors.length} files with Error nodes (${totalErrorNodes} total error nodes)`);
     console.log('='.repeat(80) + '\n');
 
     // Show details if requested
-    if (showDetail || doSplit) {
+    if (showDetail && filesWithErrors.length > 0) {
+        console.log('Detailed Error Report:');
+        console.log('='.repeat(80));
+
         for (const results of filesWithErrors) {
             const relPath = path.relative(path.join(__dirname, '..'), results.file);
             console.log(`\n${relPath}:`);
             console.log('-'.repeat(relPath.length + 1));
 
-            for (const errorLine of results.errorLines) {
-                console.log(`  Line ${errorLine.lineNum}: ${errorLine.content.trim()}`);
-                if (showDetail) {
-                    for (const err of errorLine.errors) {
-                        console.log(`    └─ ${err.path}: ${err.error.message || 'Error node'}`);
-                    }
+            for (const err of results.errors) {
+                console.log(`  ${err.path}:`);
+                if (err.error.message) {
+                    console.log(`    Message: ${err.error.message}`);
+                }
+                if (err.error.value) {
+                    console.log(`    Value: ${err.error.value}`);
+                }
+                if (err.error.line) {
+                    console.log(`    Line: ${err.error.line}, Column: ${err.error.column}`);
                 }
             }
         }
     } else if (filesWithErrors.length > 0) {
         // Just list files
-        console.log('Files with errors:');
+        console.log('Files with Error nodes:');
         for (const results of filesWithErrors) {
             const relPath = path.relative(path.join(__dirname, '..'), results.file);
-            console.log(`  ${relPath} (${results.errorLines.length} error lines)`);
+            console.log(`  ${relPath} (${results.errors.length} error nodes)`);
         }
-        console.log('\nRun with --detail to see specific errors');
-        console.log('Run with --split to move error lines to corpus/missing/');
-    }
-
-    // Split files if requested
-    if (doSplit && filesWithErrors.length > 0) {
-        console.log('\n' + '='.repeat(80));
-        console.log('Splitting files...');
-        console.log('='.repeat(80));
-
-        const createdFiles = [];
-        for (const results of filesWithErrors) {
-            const errorPath = splitFile(results);
-            if (errorPath) {
-                const relPath = path.relative(path.join(__dirname, '..'), errorPath);
-                createdFiles.push(relPath);
-                console.log(`  Created: ${relPath}`);
-            }
-        }
-
-        console.log(`\n✅ Split ${filesWithErrors.length} files`);
-        console.log('   Error lines moved to corpus/missing/');
-        console.log('   Clean lines remain in corpus/input/');
-        console.log('\nRemember to run: node bin/update-snapshots.js');
+        console.log('\nRun with --detail to see specific error information');
+        console.log('\nTo fix these errors, you can:');
+        console.log('  1. Fix the syntax errors in the files');
+        console.log('  2. Move entire files with unsupported features to corpus/missing/');
+        console.log('  3. Create working versions with supported features only');
     }
 }
 

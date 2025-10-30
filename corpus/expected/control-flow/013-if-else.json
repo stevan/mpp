@@ -23,7 +23,10 @@
             "value": "\"big\""
           }
         ]
-      },
+      }
+    ],
+    "elseIfClauses": [],
+    "elseBlock": [
       {
         "type": "Call",
         "name": "print",
@@ -34,7 +37,6 @@
           }
         ]
       }
-    ],
-    "elseIfClauses": []
+    ]
   }
 ]

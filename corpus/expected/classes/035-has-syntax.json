@@ -4,35 +4,53 @@
     "name": "Circle",
     "body": [
       {
-        "type": "Return",
-        "value": {
-          "type": "BinaryOp",
-          "operator": ".",
-          "left": {
-            "type": "Number",
-            "value": "3"
-          },
-          "right": {
-            "type": "BinaryOp",
-            "operator": "*",
-            "left": {
+        "type": "Field",
+        "variable": {
+          "type": "Variable",
+          "name": "$radius"
+        },
+        "attributes": [
+          "param",
+          "reader"
+        ]
+      },
+      {
+        "type": "Sub",
+        "name": "area",
+        "parameters": [],
+        "body": [
+          {
+            "type": "Return",
+            "value": {
               "type": "BinaryOp",
-              "operator": "*",
+              "operator": ".",
               "left": {
                 "type": "Number",
-                "value": "14159"
+                "value": "3"
               },
               "right": {
-                "type": "Variable",
-                "name": "$radius"
+                "type": "BinaryOp",
+                "operator": "*",
+                "left": {
+                  "type": "BinaryOp",
+                  "operator": "*",
+                  "left": {
+                    "type": "Number",
+                    "value": "14159"
+                  },
+                  "right": {
+                    "type": "Variable",
+                    "name": "$radius"
+                  }
+                },
+                "right": {
+                  "type": "Variable",
+                  "name": "$radius"
+                }
               }
-            },
-            "right": {
-              "type": "Variable",
-              "name": "$radius"
             }
           }
-        }
+        ]
       }
     ]
   }

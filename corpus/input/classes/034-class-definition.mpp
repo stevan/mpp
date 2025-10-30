@@ -2,5 +2,8 @@ class Point {
     field $x :param;
     field $y :param;
 
+    method move($dx, $dy) {
         $x = $x + $dx;
         $y = $y + $dy;
+    }
+}

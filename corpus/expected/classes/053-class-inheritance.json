@@ -11,12 +11,103 @@
         }
       },
       {
-        "type": "Return",
-        "value": {
-          "type": "String",
-          "value": "\"Some sound\""
-        }
+        "type": "Sub",
+        "name": "make_sound",
+        "parameters": [],
+        "body": [
+          {
+            "type": "Return",
+            "value": {
+              "type": "String",
+              "value": "\"Some sound\""
+            }
+          }
+        ]
       }
     ]
+  },
+  {
+    "type": "Class",
+    "name": "Dog",
+    "body": [
+      {
+        "type": "Sub",
+        "name": "make_sound",
+        "parameters": [],
+        "body": [
+          {
+            "type": "Return",
+            "value": {
+              "type": "String",
+              "value": "\"Woof!\""
+            }
+          }
+        ]
+      }
+    ],
+    "parent": "Animal"
+  },
+  {
+    "type": "Class",
+    "name": "Cat",
+    "body": [
+      {
+        "type": "Sub",
+        "name": "make_sound",
+        "parameters": [],
+        "body": [
+          {
+            "type": "Return",
+            "value": {
+              "type": "String",
+              "value": "\"Meow!\""
+            }
+          }
+        ]
+      }
+    ],
+    "parent": "My::Animal"
+  },
+  {
+    "type": "Class",
+    "name": "Bird",
+    "body": [
+      {
+        "type": "Field",
+        "variable": {
+          "type": "Variable",
+          "name": "$can_fly"
+        }
+      },
+      {
+        "type": "Sub",
+        "name": "can_fly",
+        "parameters": [],
+        "body": [
+          {
+            "type": "Return",
+            "value": {
+              "type": "Variable",
+              "name": "$can_fly"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Sub",
+        "name": "make_sound",
+        "parameters": [],
+        "body": [
+          {
+            "type": "Return",
+            "value": {
+              "type": "String",
+              "value": "\"Tweet!\""
+            }
+          }
+        ]
+      }
+    ],
+    "parent": "Animal"
   }
 ]

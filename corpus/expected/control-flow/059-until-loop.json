@@ -42,266 +42,282 @@
             "value": "1"
           }
         }
+      }
+    ]
+  },
+  {
+    "type": "Until",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "||",
+      "left": {
+        "type": "Variable",
+        "name": "$done"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$timeout"
+      }
+    },
+    "block": [
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$result"
+        },
+        "operator": "=",
+        "right": {
+          "type": "Call",
+          "name": "process",
+          "arguments": []
+        }
+      },
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$done"
+        },
+        "operator": "=",
+        "right": {
+          "type": "Call",
+          "name": "check_complete",
+          "arguments": [
+            {
+              "type": "Variable",
+              "name": "$result"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "type": "Until",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": ">",
+      "left": {
+        "type": "Variable",
+        "name": "$x"
+      },
+      "right": {
+        "type": "Number",
+        "value": "100"
+      }
+    },
+    "block": [
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$x"
+        },
+        "operator": "=",
+        "right": {
+          "type": "BinaryOp",
+          "operator": "+",
+          "left": {
+            "type": "Variable",
+            "name": "$x"
+          },
+          "right": {
+            "type": "Number",
+            "value": "1"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "type": "Until",
+    "condition": {
+      "type": "Variable",
+      "name": "$found"
+    },
+    "block": [
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$item"
+        },
+        "operator": "=",
+        "right": {
+          "type": "Call",
+          "name": "get_next",
+          "arguments": []
+        }
+      },
+      {
+        "type": "Unless",
+        "condition": {
+          "type": "Variable",
+          "name": "$item"
+        },
+        "thenBlock": [
+          {
+            "type": "Last"
+          }
+        ]
+      },
+      {
+        "type": "If",
+        "condition": {
+          "type": "Call",
+          "name": "skip",
+          "arguments": [
+            {
+              "type": "Variable",
+              "name": "$item"
+            }
+          ]
+        },
+        "thenBlock": [
+          {
+            "type": "Next"
+          }
+        ],
+        "elseIfClauses": []
+      },
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$found"
+        },
+        "operator": "=",
+        "right": {
+          "type": "Call",
+          "name": "match",
+          "arguments": [
+            {
+              "type": "Variable",
+              "name": "$item"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "type": "Until",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": ">=",
+      "left": {
+        "type": "Variable",
+        "name": "$i"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$rows"
+      }
+    },
+    "block": [
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$j"
+        },
+        "operator": "=",
+        "right": {
+          "type": "Number",
+          "value": "0"
+        }
       },
       {
         "type": "Until",
         "condition": {
           "type": "BinaryOp",
-          "operator": "||",
+          "operator": ">=",
           "left": {
             "type": "Variable",
-            "name": "$done"
+            "name": "$j"
           },
           "right": {
             "type": "Variable",
-            "name": "$timeout"
+            "name": "$cols"
           }
         },
         "block": [
           {
             "type": "Assignment",
             "left": {
-              "type": "Variable",
-              "name": "$result"
+              "type": "ArrayAccess",
+              "base": {
+                "type": "ArrayAccess",
+                "base": {
+                  "type": "Variable",
+                  "name": "$matrix"
+                },
+                "index": {
+                  "type": "Variable",
+                  "name": "$i"
+                }
+              },
+              "index": {
+                "type": "Variable",
+                "name": "$j"
+              }
             },
             "operator": "=",
             "right": {
-              "type": "Call",
-              "name": "process",
-              "arguments": []
+              "type": "BinaryOp",
+              "operator": "*",
+              "left": {
+                "type": "Variable",
+                "name": "$i"
+              },
+              "right": {
+                "type": "Variable",
+                "name": "$j"
+              }
             }
           },
           {
             "type": "Assignment",
             "left": {
               "type": "Variable",
-              "name": "$done"
+              "name": "$j"
             },
             "operator": "=",
             "right": {
-              "type": "Call",
-              "name": "check_complete",
-              "arguments": [
-                {
-                  "type": "Variable",
-                  "name": "$result"
-                }
-              ]
-            }
-          },
-          {
-            "type": "Until",
-            "condition": {
               "type": "BinaryOp",
-              "operator": ">",
+              "operator": "+",
               "left": {
                 "type": "Variable",
-                "name": "$x"
+                "name": "$j"
               },
               "right": {
                 "type": "Number",
-                "value": "100"
+                "value": "1"
               }
-            },
-            "block": [
-              {
-                "type": "Assignment",
-                "left": {
-                  "type": "Variable",
-                  "name": "$x"
-                },
-                "operator": "=",
-                "right": {
-                  "type": "BinaryOp",
-                  "operator": "+",
-                  "left": {
-                    "type": "Variable",
-                    "name": "$x"
-                  },
-                  "right": {
-                    "type": "Number",
-                    "value": "1"
-                  }
-                }
-              }
-            ]
-          },
-          {
-            "type": "Until",
-            "condition": {
-              "type": "Variable",
-              "name": "$found"
-            },
-            "block": [
-              {
-                "type": "Assignment",
-                "left": {
-                  "type": "Variable",
-                  "name": "$item"
-                },
-                "operator": "=",
-                "right": {
-                  "type": "Call",
-                  "name": "get_next",
-                  "arguments": []
-                }
-              },
-              {
-                "type": "Unless",
-                "condition": {
-                  "type": "Variable",
-                  "name": "$item"
-                },
-                "thenBlock": [
-                  {
-                    "type": "Last"
-                  }
-                ]
-              },
-              {
-                "type": "If",
-                "condition": {
-                  "type": "Call",
-                  "name": "skip",
-                  "arguments": [
-                    {
-                      "type": "Variable",
-                      "name": "$item"
-                    }
-                  ]
-                },
-                "thenBlock": [
-                  {
-                    "type": "Next"
-                  }
-                ],
-                "elseIfClauses": []
-              },
-              {
-                "type": "Assignment",
-                "left": {
-                  "type": "Variable",
-                  "name": "$found"
-                },
-                "operator": "=",
-                "right": {
-                  "type": "Call",
-                  "name": "match",
-                  "arguments": [
-                    {
-                      "type": "Variable",
-                      "name": "$item"
-                    }
-                  ]
-                }
-              },
-              {
-                "type": "Until",
-                "condition": {
-                  "type": "BinaryOp",
-                  "operator": ">=",
-                  "left": {
-                    "type": "Variable",
-                    "name": "$i"
-                  },
-                  "right": {
-                    "type": "Variable",
-                    "name": "$rows"
-                  }
-                },
-                "block": [
-                  {
-                    "type": "Assignment",
-                    "left": {
-                      "type": "Variable",
-                      "name": "$j"
-                    },
-                    "operator": "=",
-                    "right": {
-                      "type": "Number",
-                      "value": "0"
-                    }
-                  },
-                  {
-                    "type": "Until",
-                    "condition": {
-                      "type": "BinaryOp",
-                      "operator": ">=",
-                      "left": {
-                        "type": "Variable",
-                        "name": "$j"
-                      },
-                      "right": {
-                        "type": "Variable",
-                        "name": "$cols"
-                      }
-                    },
-                    "block": [
-                      {
-                        "type": "Assignment",
-                        "left": {
-                          "type": "ArrayAccess",
-                          "base": {
-                            "type": "ArrayAccess",
-                            "base": {
-                              "type": "Variable",
-                              "name": "$matrix"
-                            },
-                            "index": {
-                              "type": "Variable",
-                              "name": "$i"
-                            }
-                          },
-                          "index": {
-                            "type": "Variable",
-                            "name": "$j"
-                          }
-                        },
-                        "operator": "=",
-                        "right": {
-                          "type": "BinaryOp",
-                          "operator": "*",
-                          "left": {
-                            "type": "Variable",
-                            "name": "$i"
-                          },
-                          "right": {
-                            "type": "Variable",
-                            "name": "$j"
-                          }
-                        }
-                      },
-                      {
-                        "type": "Assignment",
-                        "left": {
-                          "type": "Variable",
-                          "name": "$j"
-                        },
-                        "operator": "=",
-                        "right": {
-                          "type": "BinaryOp",
-                          "operator": "+",
-                          "left": {
-                            "type": "Variable",
-                            "name": "$j"
-                          },
-                          "right": {
-                            "type": "Number",
-                            "value": "1"
-                          }
-                        }
-                      },
-                      {
-                        "type": "Variable",
-                        "name": "$i"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
+            }
           }
         ]
+      },
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$i"
+        },
+        "operator": "=",
+        "right": {
+          "type": "BinaryOp",
+          "operator": "+",
+          "left": {
+            "type": "Variable",
+            "name": "$i"
+          },
+          "right": {
+            "type": "Number",
+            "value": "1"
+          }
+        }
       }
     ]
   }
