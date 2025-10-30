@@ -23,6 +23,11 @@ export interface StringNode extends ASTNode {
     value: string;
 }
 
+export interface BooleanNode extends ASTNode {
+    type: 'Boolean';
+    value: boolean;
+}
+
 export interface VariableNode extends ASTNode {
     type: 'Variable';
     name: string;
@@ -106,6 +111,11 @@ export interface BlockNode extends ASTNode {
 export interface DoBlockNode extends ASTNode {
     type: 'DoBlock';
     statements: ASTNode[];
+}
+
+export interface DeferNode extends ASTNode {
+    type: 'Defer';
+    block: ASTNode[];
 }
 
 export interface CallNode extends ASTNode {

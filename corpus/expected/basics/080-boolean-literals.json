@@ -1,0 +1,177 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$is_valid"
+    },
+    "initializer": {
+      "type": "Boolean",
+      "value": true
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$is_done"
+    },
+    "initializer": {
+      "type": "Boolean",
+      "value": false
+    }
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "==",
+      "left": {
+        "type": "Variable",
+        "name": "$is_valid"
+      },
+      "right": {
+        "type": "Boolean",
+        "value": true
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"valid\""
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "!=",
+      "left": {
+        "type": "Variable",
+        "name": "$is_done"
+      },
+      "right": {
+        "type": "Boolean",
+        "value": false
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"not done\""
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$and_result"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "&&",
+      "left": {
+        "type": "Boolean",
+        "value": true
+      },
+      "right": {
+        "type": "Boolean",
+        "value": false
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$or_result"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "||",
+      "left": {
+        "type": "Boolean",
+        "value": true
+      },
+      "right": {
+        "type": "Boolean",
+        "value": false
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$check"
+    },
+    "initializer": {
+      "type": "Ternary",
+      "condition": {
+        "type": "BinaryOp",
+        "operator": "eq",
+        "left": {
+          "type": "Variable",
+          "name": "$value"
+        },
+        "right": {
+          "type": "String",
+          "value": "\"test\""
+        }
+      },
+      "trueExpr": {
+        "type": "Boolean",
+        "value": true
+      },
+      "falseExpr": {
+        "type": "Boolean",
+        "value": false
+      }
+    }
+  },
+  {
+    "type": "Assignment",
+    "left": {
+      "type": "Variable",
+      "name": "$flag"
+    },
+    "operator": "=",
+    "right": {
+      "type": "Boolean",
+      "value": true
+    }
+  },
+  {
+    "type": "Assignment",
+    "left": {
+      "type": "Variable",
+      "name": "$status"
+    },
+    "operator": "=",
+    "right": {
+      "type": "Boolean",
+      "value": false
+    }
+  }
+]

@@ -44,7 +44,7 @@ export const KEYWORDS = {
         'next', 'last', 'redo', 'continue', 'return',
         'do', 'eval',
         'try', 'catch', 'finally', 'throw',
-        'die', 'warn'
+        'die', 'warn', 'defer'
     ]),
 
     // Module system keywords
@@ -56,7 +56,9 @@ export const KEYWORDS = {
     BUILTIN: new Set([
         'print', 'say',
         'spawn', 'send', 'recv', 'self', 'kill', 'alive',
-        'defined', 'undef', 'exists', 'delete'
+        'defined', 'undef', 'exists', 'delete',
+        // Boolean literals
+        'true', 'false'
     ]),
 
     // Word-form operators (treated as keywords for tokenization)

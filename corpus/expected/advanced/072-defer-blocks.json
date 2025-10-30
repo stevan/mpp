@@ -1,0 +1,352 @@
+[
+  {
+    "type": "Block",
+    "statements": [
+      {
+        "type": "Declaration",
+        "declarator": "my",
+        "variable": {
+          "type": "Variable",
+          "name": "$fh"
+        },
+        "initializer": {
+          "type": "Call",
+          "name": "open_file",
+          "arguments": []
+        }
+      },
+      {
+        "type": "Defer",
+        "block": [
+          {
+            "type": "Call",
+            "name": "close",
+            "arguments": [
+              {
+                "type": "Variable",
+                "name": "$fh"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Call",
+        "name": "process_file",
+        "arguments": [
+          {
+            "type": "Variable",
+            "name": "$fh"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Sub",
+    "name": "transaction",
+    "parameters": [],
+    "body": [
+      {
+        "type": "Call",
+        "name": "begin_transaction",
+        "arguments": []
+      },
+      {
+        "type": "Defer",
+        "block": [
+          {
+            "type": "Call",
+            "name": "commit_transaction",
+            "arguments": []
+          }
+        ]
+      },
+      {
+        "type": "Call",
+        "name": "lock_resource",
+        "arguments": []
+      },
+      {
+        "type": "Defer",
+        "block": [
+          {
+            "type": "Call",
+            "name": "unlock_resource",
+            "arguments": []
+          }
+        ]
+      },
+      {
+        "type": "Call",
+        "name": "do_work",
+        "arguments": []
+      }
+    ]
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "Variable",
+      "name": "$need_cleanup"
+    },
+    "thenBlock": [
+      {
+        "type": "Defer",
+        "block": [
+          {
+            "type": "Call",
+            "name": "cleanup",
+            "arguments": []
+          }
+        ]
+      },
+      {
+        "type": "Call",
+        "name": "risky_operation",
+        "arguments": []
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "Foreach",
+    "variable": {
+      "type": "Variable",
+      "name": "$resource"
+    },
+    "declarator": "my",
+    "listExpr": {
+      "type": "Variable",
+      "name": "@resources"
+    },
+    "block": [
+      {
+        "type": "Call",
+        "name": "acquire",
+        "arguments": [
+          {
+            "type": "Variable",
+            "name": "$resource"
+          }
+        ]
+      },
+      {
+        "type": "Defer",
+        "block": [
+          {
+            "type": "Call",
+            "name": "release",
+            "arguments": [
+              {
+                "type": "Variable",
+                "name": "$resource"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Call",
+        "name": "use_resource",
+        "arguments": [
+          {
+            "type": "Variable",
+            "name": "$resource"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Sub",
+    "name": "safe_operation",
+    "parameters": [],
+    "body": [
+      {
+        "type": "Declaration",
+        "declarator": "my",
+        "variable": {
+          "type": "Variable",
+          "name": "$lock"
+        },
+        "initializer": {
+          "type": "Call",
+          "name": "acquire_lock",
+          "arguments": []
+        }
+      },
+      {
+        "type": "Defer",
+        "block": [
+          {
+            "type": "Call",
+            "name": "release_lock",
+            "arguments": [
+              {
+                "type": "Variable",
+                "name": "$lock"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "HashAccess",
+        "base": {
+          "type": "Error",
+          "message": "Unexpected token: try (CONTROL)",
+          "value": "try",
+          "line": 49,
+          "column": 5
+        },
+        "key": {
+          "type": "Call",
+          "name": "dangerous_work",
+          "arguments": []
+        }
+      },
+      {
+        "type": "Error",
+        "message": "Unexpected token: catch (CONTROL)",
+        "value": "catch",
+        "line": 52,
+        "column": 5
+      }
+    ]
+  },
+  {
+    "type": "Block",
+    "statements": [
+      {
+        "type": "Call",
+        "name": "open_outer",
+        "arguments": []
+      },
+      {
+        "type": "Defer",
+        "block": [
+          {
+            "type": "Call",
+            "name": "close_outer",
+            "arguments": []
+          }
+        ]
+      },
+      {
+        "type": "Block",
+        "statements": [
+          {
+            "type": "Call",
+            "name": "open_inner",
+            "arguments": []
+          },
+          {
+            "type": "Defer",
+            "block": [
+              {
+                "type": "Call",
+                "name": "close_inner",
+                "arguments": []
+              }
+            ]
+          },
+          {
+            "type": "Call",
+            "name": "process_inner",
+            "arguments": []
+          }
+        ]
+      },
+      {
+        "type": "Call",
+        "name": "process_outer",
+        "arguments": []
+      }
+    ]
+  },
+  {
+    "type": "Sub",
+    "name": "fetch_data",
+    "parameters": [],
+    "body": [
+      {
+        "type": "Declaration",
+        "declarator": "my",
+        "variable": {
+          "type": "Variable",
+          "name": "$conn"
+        },
+        "initializer": {
+          "type": "Call",
+          "name": "connect",
+          "arguments": []
+        }
+      },
+      {
+        "type": "Defer",
+        "block": [
+          {
+            "type": "Call",
+            "name": "disconnect",
+            "arguments": [
+              {
+                "type": "Variable",
+                "name": "$conn"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Declaration",
+        "declarator": "my",
+        "variable": {
+          "type": "Variable",
+          "name": "$data"
+        },
+        "initializer": {
+          "type": "Call",
+          "name": "query",
+          "arguments": [
+            {
+              "type": "Variable",
+              "name": "$conn"
+            }
+          ]
+        }
+      },
+      {
+        "type": "Return",
+        "value": {
+          "type": "Variable",
+          "name": "$data"
+        }
+      }
+    ]
+  },
+  {
+    "type": "Defer",
+    "block": []
+  },
+  {
+    "type": "Defer",
+    "block": [
+      {
+        "type": "Call",
+        "name": "log_completion",
+        "arguments": []
+      },
+      {
+        "type": "Call",
+        "name": "cleanup_temp_files",
+        "arguments": []
+      },
+      {
+        "type": "Call",
+        "name": "notify_complete",
+        "arguments": []
+      }
+    ]
+  }
+]

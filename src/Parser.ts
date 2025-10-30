@@ -14,6 +14,7 @@ import {
     ErrorNode,
     NumberNode,
     StringNode,
+    BooleanNode,
     VariableNode,
     BinaryOpNode,
     UnaryOpNode,
@@ -27,6 +28,7 @@ import {
     ForeachNode,
     BlockNode,
     DoBlockNode,
+    DeferNode,
     CallNode,
     ReturnNode,
     LastNode,
@@ -314,6 +316,9 @@ export class Parser {
             if (TokenChecker.isControlKeyword(lexemes[0], 'do')) {
                 return this.parseDoBlock(lexemes);
             }
+            if (TokenChecker.isControlKeyword(lexemes[0], 'defer')) {
+                return this.parseDefer(lexemes);
+            }
         }
 
         // Check for package declaration
@@ -578,8 +583,8 @@ export class Parser {
                 continue;
             }
 
-            // Check if it's a binary operator
-            if (current.category !== 'BINOP' && current.category !== 'ASSIGNOP') {
+            // Check if it's a binary operator (including word operators like eq, ne, lt, etc.)
+            if (current.category !== 'BINOP' && current.category !== 'ASSIGNOP' && current.category !== 'OPERATOR') {
                 break;
             }
 
@@ -782,6 +787,18 @@ export class Parser {
                     nextPos: pos + 1
                 };
             }
+        }
+
+        // Boolean literals (true, false)
+        if (lexeme.category === 'BOOLEAN') {
+            const boolNode: BooleanNode = {
+                type: 'Boolean',
+                value: lexeme.token.value === 'true'
+            };
+            return {
+                node: boolNode,
+                nextPos: pos + 1
+            };
         }
 
         // Variables
@@ -1812,6 +1829,73 @@ export class Parser {
             statements
         };
         return doBlockNode;
+    }
+
+    private parseDefer(lexemes: Lexeme[]): DeferNode | ErrorNode | null {
+        // Expect: defer { statements }
+        if (lexemes.length < 3) {
+            return ParseError.incompleteDeclaration('defer', 'block body', lexemes[0]?.token);
+        }
+
+        // Skip 'defer' keyword
+        if (lexemes[1].category !== 'LBRACE') {
+            return ParseError.missingToken('{', lexemes[1]?.token, 'for defer block');
+        }
+
+        // Find matching RBRACE
+        let depth = 1;
+        let endPos = 2;
+        while (endPos < lexemes.length && depth > 0) {
+            if (lexemes[endPos].category === 'LBRACE') depth++;
+            if (lexemes[endPos].category === 'RBRACE') depth--;
+            endPos++;
+        }
+
+        // Extract block contents
+        const blockLexemes = lexemes.slice(2, endPos - 1);
+
+        // Parse statements inside the block (same logic as parseBlock)
+        const statements: ASTNode[] = [];
+        let blockPos = 0;
+
+        while (blockPos < blockLexemes.length) {
+            let stmtEnd = blockPos;
+            let braceDepth = 0;
+
+            while (stmtEnd < blockLexemes.length) {
+                if (blockLexemes[stmtEnd].category === 'LBRACE') {
+                    braceDepth++;
+                } else if (blockLexemes[stmtEnd].category === 'RBRACE') {
+                    braceDepth--;
+                    if (braceDepth === 0) {
+                        stmtEnd++;
+                        break;
+                    }
+                } else if (blockLexemes[stmtEnd].category === 'TERMINATOR' && braceDepth === 0) {
+                    break;
+                }
+                stmtEnd++;
+            }
+
+            const stmtLexemes = blockLexemes.slice(blockPos, stmtEnd);
+            if (stmtLexemes.length > 0) {
+                const stmt = this.parseStatement(stmtLexemes);
+                if (stmt) {
+                    statements.push(stmt);
+                }
+            }
+
+            blockPos = stmtEnd;
+            if (blockPos < blockLexemes.length && blockLexemes[blockPos].category === 'TERMINATOR') {
+                blockPos++;
+            }
+        }
+
+        const deferNode: DeferNode = {
+            type: 'Defer',
+            block: statements
+        };
+        return deferNode;
     }
 
     private parseSubDeclaration(lexemes: Lexeme[]): SubNode | ErrorNode | null {

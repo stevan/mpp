@@ -1,0 +1,23 @@
+# Boolean literals - true and false
+my $is_valid = true;
+my $is_done = false;
+
+# Boolean in conditional
+if ($is_valid == true) {
+    print("valid");
+}
+
+if ($is_done != false) {
+    print("not done");
+}
+
+# Boolean in expressions
+my $and_result = true && false;
+my $or_result = true || false;
+
+# Boolean in ternary
+my $check = $value eq "test" ? true : false;
+
+# Boolean assignment
+$flag = true;
+$status = false;

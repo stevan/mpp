@@ -1,0 +1,228 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$str_eq"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "eq",
+      "left": {
+        "type": "Variable",
+        "name": "$name"
+      },
+      "right": {
+        "type": "String",
+        "value": "\"John\""
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$str_ne"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "ne",
+      "left": {
+        "type": "Variable",
+        "name": "$type"
+      },
+      "right": {
+        "type": "String",
+        "value": "\"admin\""
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$str_lt"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "lt",
+      "left": {
+        "type": "Variable",
+        "name": "$code"
+      },
+      "right": {
+        "type": "String",
+        "value": "\"M\""
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$str_gt"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "gt",
+      "left": {
+        "type": "Variable",
+        "name": "$letter"
+      },
+      "right": {
+        "type": "String",
+        "value": "\"F\""
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$str_le"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "le",
+      "left": {
+        "type": "Variable",
+        "name": "$key"
+      },
+      "right": {
+        "type": "String",
+        "value": "\"zzz\""
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$str_ge"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "ge",
+      "left": {
+        "type": "Variable",
+        "name": "$word"
+      },
+      "right": {
+        "type": "String",
+        "value": "\"aaa\""
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$cmp_result"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "cmp",
+      "left": {
+        "type": "Variable",
+        "name": "$str1"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$str2"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$sorted"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "cmp",
+      "left": {
+        "type": "Variable",
+        "name": "$a"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$b"
+      }
+    }
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "&&",
+      "left": {
+        "type": "BinaryOp",
+        "operator": "eq",
+        "left": {
+          "type": "Variable",
+          "name": "$name"
+        },
+        "right": {
+          "type": "String",
+          "value": "\"admin\""
+        }
+      },
+      "right": {
+        "type": "BinaryOp",
+        "operator": ">",
+        "left": {
+          "type": "Variable",
+          "name": "$level"
+        },
+        "right": {
+          "type": "Number",
+          "value": "5"
+        }
+      }
+    },
+    "thenBlock": [],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "&&",
+      "left": {
+        "type": "BinaryOp",
+        "operator": "ne",
+        "left": {
+          "type": "Variable",
+          "name": "$code"
+        },
+        "right": {
+          "type": "String",
+          "value": "\"\""
+        }
+      },
+      "right": {
+        "type": "BinaryOp",
+        "operator": "<",
+        "left": {
+          "type": "Variable",
+          "name": "$count"
+        },
+        "right": {
+          "type": "Variable",
+          "name": "$limit"
+        }
+      }
+    },
+    "thenBlock": [],
+    "elseIfClauses": []
+  }
+]

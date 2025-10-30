@@ -63,6 +63,14 @@ export class Lexer {
             if (Lang.KEYWORDS.CONTROL.has(token.value)) {
                 return { category: LexemeCategory.CONTROL, token };
             }
+            // Word operators (eq, ne, lt, gt, le, ge, etc.) should be treated as operators
+            if (Lang.KEYWORDS.WORD_OPERATOR.has(token.value)) {
+                return { category: LexemeCategory.OPERATOR, token };
+            }
+            // Boolean literals (true, false)
+            if (token.value === 'true' || token.value === 'false') {
+                return { category: LexemeCategory.BOOLEAN, token };
+            }
             // Other keywords
             return { category: LexemeCategory.KEYWORD, token };
         }
