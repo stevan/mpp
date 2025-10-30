@@ -1,0 +1,46 @@
+# Eval blocks and error handling (unsupported)
+
+# Basic eval block
+eval {
+    dangerous_operation();
+};
+if ($@) {
+    print "Error: $@";
+}
+
+# Eval with complex error handling
+eval {
+    $result = $obj->risky_method();
+    $data = parse_json($result);
+};
+if ($@) {
+    if ($@ =~ /timeout/) {
+        retry();
+    } elsif ($@ =~ /parse error/) {
+        log_error($@);
+    } else {
+        die $@;
+    }
+}
+
+# Nested eval blocks
+eval {
+    eval {
+        inner_operation();
+    };
+    if ($@) {
+        handle_inner($@);
+    }
+    outer_operation();
+};
+
+# In loops with eval
+PROCESS: while (my $task = get_next_task()) {
+    eval {
+        $task->execute();
+    };
+    if ($@) {
+        $errors++;
+        last PROCESS if $errors > $max_errors;
+    }
+}

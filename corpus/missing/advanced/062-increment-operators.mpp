@@ -1,0 +1,30 @@
+# Auto-increment and auto-decrement operators (unsupported)
+
+# Postfix increment
+$count++;
+$index++;
+
+# Postfix decrement
+$count--;
+$index--;
+
+# Prefix increment
+++$count;
+++$index;
+
+# Prefix decrement
+--$count;
+--$index;
+
+# In loops
+while ($i < 10) {
+    print $i++;
+}
+
+for (my $i = 0; $i < 10; $i++) {
+    print $i;
+}
+
+# Postfix with condition
+$x++ until $x > 100;
+print $line while $count++ < 10;

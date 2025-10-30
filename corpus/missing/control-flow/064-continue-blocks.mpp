@@ -1,0 +1,33 @@
+# Continue blocks (unsupported)
+
+# While with continue
+while (my $line = readline(FH)) {
+    process($line);
+} continue {
+    $line_count++;
+}
+
+# Until with continue
+until ($stop) {
+    process_item();
+} continue {
+    $counter++;
+    update_status();
+}
+
+# For with continue
+for (@items) {
+    process($_);
+} continue {
+    $processed++;
+}
+
+# Labeled loop with continue
+PROCESS: while (my $task = get_next_task()) {
+    if (failed($task)) {
+        $errors++;
+        last PROCESS if $errors > $max_errors;
+    }
+} continue {
+    $processed++;
+}

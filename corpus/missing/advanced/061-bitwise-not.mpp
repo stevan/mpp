@@ -1,0 +1,7 @@
+# Bitwise NOT operator (unsupported)
+my $not = ~5;
+my $not2 = ~0xFF;
+
+# Complex expressions with bitwise NOT
+my $mask = ~(1 << $n);
+my $flags = $status & ~$clear_bits | $set_bits;

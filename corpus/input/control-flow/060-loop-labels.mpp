@@ -1,0 +1,43 @@
+# Simple labeled loop
+OUTER: while ($i < 10) {
+    $i = $i + 1;
+    last OUTER if $i == 5;
+}
+
+# Nested loops with labels
+ROW: foreach my $row (@matrix) {
+    COL: foreach my $col (@$row) {
+        next ROW if $col == 0;
+        last COL if $col < 0;
+        process($col);
+    }
+}
+
+# Labels with until
+WAIT: until ($ready) {
+    $status = check();
+    last WAIT if $status == 1;
+    next WAIT if $status == 0;
+    redo WAIT if $status == 2;
+}
+
+# Labels with while
+PROCESS: while (my $task = get_next_task()) {
+    if (failed($task)) {
+        $errors = $errors + 1;
+        last PROCESS if $errors > $max_errors;
+    }
+    $processed = $processed + 1;
+}
+
+# Complex nested structure
+OUTER: foreach my $x (@xs) {
+    MIDDLE: foreach my $y (@ys) {
+        INNER: foreach my $z (@zs) {
+            next OUTER if condition1($x);
+            next MIDDLE if condition2($x, $y);
+            last INNER if condition3($x, $y, $z);
+            compute($x, $y, $z);
+        }
+    }
+}

@@ -1,0 +1,10 @@
+# This file only contains the bitwise NOT operator tests
+# All other bitwise operators are supported and in corpus/input/advanced/056-bitwise-operators.mpp
+
+# Bitwise NOT (unsupported)
+my $not = ~5;
+my $not2 = ~0xFF;
+
+# Complex expressions with bitwise NOT
+my $mask = ~(1 << $n);
+my $flags = $status & ~$clear_bits | $set_bits;

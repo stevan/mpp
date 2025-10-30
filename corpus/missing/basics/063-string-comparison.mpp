@@ -1,0 +1,15 @@
+# String comparison operators (unsupported)
+my $str_eq = $name eq "John";
+my $str_ne = $type ne "admin";
+my $str_lt = $code lt "M";
+my $str_gt = $letter gt "F";
+my $str_le = $key le "zzz";
+my $str_ge = $word ge "aaa";
+
+# String comparison operator (cmp)
+my $cmp_result = $str1 cmp $str2;
+my $sorted = $a cmp $b;
+
+# Mixed comparisons in conditionals
+if ($name eq "admin" && $level > 5) { }
+if ($code ne "" && $count < $limit) { }

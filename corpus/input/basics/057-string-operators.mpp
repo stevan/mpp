@@ -1,0 +1,21 @@
+# String concatenation
+my $concat = "Hello" . " " . "World";
+my $concat2 = $first . $last;
+
+# String repetition
+my $repeat = "abc" x 3;
+my $dashes = "-" x 10;
+my $pattern = "01" x $count;
+
+# Combined string operations
+my $header = "=" x 40 . "\n";
+my $formatted = $prefix . ($char x $width) . $suffix;
+
+# String concatenation assignment
+$message .= "!";
+$result .= $line . "\n";
+
+# Complex string expressions
+my $output = "Name: " . $name . " (ID: " . $id . ")";
+my $border = "+" . ("-" x ($width - 2)) . "+";
+my $repeated_pattern = ($pattern x 3) . "\n";

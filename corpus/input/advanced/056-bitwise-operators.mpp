@@ -1,0 +1,23 @@
+# Bitwise AND
+my $and = 5 & 3;
+my $and2 = 0xFF & 0x0F;
+
+# Bitwise OR
+my $or = 5 | 3;
+my $or2 = 0x10 | 0x01;
+
+# Bitwise XOR
+my $xor = 5 ^ 3;
+my $xor2 = 0xFF ^ 0xAA;
+
+# Left shift
+my $lshift = 2 << 3;
+my $lshift2 = 0x01 << 8;
+
+# Right shift
+my $rshift = 16 >> 2;
+my $rshift2 = 0xFF00 >> 8;
+
+# Complex bitwise expressions (without NOT operator)
+my $complex = ($a & 0xFF) | ($b << 8);
+my $combined = ($value & $mask) | $flags;

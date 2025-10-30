@@ -1,0 +1,250 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$concat"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": ".",
+      "left": {
+        "type": "BinaryOp",
+        "operator": ".",
+        "left": {
+          "type": "String",
+          "value": "\"Hello\""
+        },
+        "right": {
+          "type": "String",
+          "value": "\" \""
+        }
+      },
+      "right": {
+        "type": "String",
+        "value": "\"World\""
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$concat2"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": ".",
+      "left": {
+        "type": "Variable",
+        "name": "$first"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$last"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$repeat"
+    },
+    "initializer": {
+      "type": "String",
+      "value": "\"abc\""
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$dashes"
+    },
+    "initializer": {
+      "type": "String",
+      "value": "\"-\""
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$pattern"
+    },
+    "initializer": {
+      "type": "String",
+      "value": "\"01\""
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$header"
+    },
+    "initializer": {
+      "type": "String",
+      "value": "\"=\""
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$formatted"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": ".",
+      "left": {
+        "type": "BinaryOp",
+        "operator": ".",
+        "left": {
+          "type": "Variable",
+          "name": "$prefix"
+        },
+        "right": {
+          "type": "Variable",
+          "name": "$char"
+        }
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$suffix"
+      }
+    }
+  },
+  {
+    "type": "Assignment",
+    "left": {
+      "type": "Variable",
+      "name": "$message"
+    },
+    "operator": ".=",
+    "right": {
+      "type": "String",
+      "value": "\"!\""
+    }
+  },
+  {
+    "type": "Assignment",
+    "left": {
+      "type": "Variable",
+      "name": "$result"
+    },
+    "operator": ".=",
+    "right": {
+      "type": "BinaryOp",
+      "operator": ".",
+      "left": {
+        "type": "Variable",
+        "name": "$line"
+      },
+      "right": {
+        "type": "String",
+        "value": "\"\\n\""
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$output"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": ".",
+      "left": {
+        "type": "BinaryOp",
+        "operator": ".",
+        "left": {
+          "type": "BinaryOp",
+          "operator": ".",
+          "left": {
+            "type": "BinaryOp",
+            "operator": ".",
+            "left": {
+              "type": "String",
+              "value": "\"Name: \""
+            },
+            "right": {
+              "type": "Variable",
+              "name": "$name"
+            }
+          },
+          "right": {
+            "type": "String",
+            "value": "\" (ID: \""
+          }
+        },
+        "right": {
+          "type": "Variable",
+          "name": "$id"
+        }
+      },
+      "right": {
+        "type": "String",
+        "value": "\")\""
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$border"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": ".",
+      "left": {
+        "type": "BinaryOp",
+        "operator": ".",
+        "left": {
+          "type": "String",
+          "value": "\"+\""
+        },
+        "right": {
+          "type": "String",
+          "value": "\"-\""
+        }
+      },
+      "right": {
+        "type": "String",
+        "value": "\"+\""
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$repeated_pattern"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": ".",
+      "left": {
+        "type": "Variable",
+        "name": "$pattern"
+      },
+      "right": {
+        "type": "String",
+        "value": "\"\\n\""
+      }
+    }
+  }
+]

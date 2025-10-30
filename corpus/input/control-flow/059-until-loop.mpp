@@ -1,0 +1,32 @@
+# Basic until loop
+until ($count >= 10) {
+    print $count;
+    $count = $count + 1;
+}
+
+# Until with complex condition
+until ($done || $timeout) {
+    $result = process();
+    $done = check_complete($result);
+}
+
+# Postfix until
+$x = $x + 1 until $x > 100;
+
+# Until with last/next
+until ($found) {
+    $item = get_next();
+    last unless $item;
+    next if skip($item);
+    $found = match($item);
+}
+
+# Nested until loops
+until ($i >= $rows) {
+    $j = 0;
+    until ($j >= $cols) {
+        $matrix[$i][$j] = $i * $j;
+        $j = $j + 1;
+    }
+    $i = $i + 1;
+}

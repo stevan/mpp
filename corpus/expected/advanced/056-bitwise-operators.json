@@ -1,0 +1,226 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$and"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "&",
+      "left": {
+        "type": "Number",
+        "value": "5"
+      },
+      "right": {
+        "type": "Number",
+        "value": "3"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$and2"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "0"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$or"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "|",
+      "left": {
+        "type": "Number",
+        "value": "5"
+      },
+      "right": {
+        "type": "Number",
+        "value": "3"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$or2"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "0"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$xor"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "^",
+      "left": {
+        "type": "Number",
+        "value": "5"
+      },
+      "right": {
+        "type": "Number",
+        "value": "3"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$xor2"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "0"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$lshift"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "<<",
+      "left": {
+        "type": "Number",
+        "value": "2"
+      },
+      "right": {
+        "type": "Number",
+        "value": "3"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$lshift2"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "0"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$rshift"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": ">>",
+      "left": {
+        "type": "Number",
+        "value": "16"
+      },
+      "right": {
+        "type": "Number",
+        "value": "2"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$rshift2"
+    },
+    "initializer": {
+      "type": "Number",
+      "value": "0"
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$complex"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "|",
+      "left": {
+        "type": "BinaryOp",
+        "operator": "&",
+        "left": {
+          "type": "Variable",
+          "name": "$a"
+        },
+        "right": {
+          "type": "Number",
+          "value": "0"
+        }
+      },
+      "right": {
+        "type": "BinaryOp",
+        "operator": "<<",
+        "left": {
+          "type": "Variable",
+          "name": "$b"
+        },
+        "right": {
+          "type": "Number",
+          "value": "8"
+        }
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$combined"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "|",
+      "left": {
+        "type": "BinaryOp",
+        "operator": "&",
+        "left": {
+          "type": "Variable",
+          "name": "$value"
+        },
+        "right": {
+          "type": "Variable",
+          "name": "$mask"
+        }
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$flags"
+      }
+    }
+  }
+]

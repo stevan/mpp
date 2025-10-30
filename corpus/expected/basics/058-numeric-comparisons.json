@@ -1,0 +1,414 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$eq"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "==",
+      "left": {
+        "type": "Variable",
+        "name": "$a"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$b"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$ne"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "!=",
+      "left": {
+        "type": "Variable",
+        "name": "$x"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$y"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$lt"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "<",
+      "left": {
+        "type": "Variable",
+        "name": "$count"
+      },
+      "right": {
+        "type": "Number",
+        "value": "10"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$gt"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": ">",
+      "left": {
+        "type": "Variable",
+        "name": "$size"
+      },
+      "right": {
+        "type": "Number",
+        "value": "100"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$le"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "<=",
+      "left": {
+        "type": "Variable",
+        "name": "$index"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$max"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$ge"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": ">=",
+      "left": {
+        "type": "Variable",
+        "name": "$value"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$min"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$spaceship"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "<=>",
+      "left": {
+        "type": "Variable",
+        "name": "$num1"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$num2"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$numeric_sort"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "<=>",
+      "left": {
+        "type": "Variable",
+        "name": "$a"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$b"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$in_range"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "&&",
+      "left": {
+        "type": "BinaryOp",
+        "operator": "<=",
+        "left": {
+          "type": "Variable",
+          "name": "$min"
+        },
+        "right": {
+          "type": "Variable",
+          "name": "$value"
+        }
+      },
+      "right": {
+        "type": "BinaryOp",
+        "operator": "<=",
+        "left": {
+          "type": "Variable",
+          "name": "$value"
+        },
+        "right": {
+          "type": "Variable",
+          "name": "$max"
+        }
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$valid"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "&&",
+      "left": {
+        "type": "BinaryOp",
+        "operator": ">=",
+        "left": {
+          "type": "Variable",
+          "name": "$age"
+        },
+        "right": {
+          "type": "Number",
+          "value": "18"
+        }
+      },
+      "right": {
+        "type": "BinaryOp",
+        "operator": "<",
+        "left": {
+          "type": "Variable",
+          "name": "$age"
+        },
+        "right": {
+          "type": "Number",
+          "value": "65"
+        }
+      }
+    }
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "&&",
+      "left": {
+        "type": "BinaryOp",
+        "operator": ">",
+        "left": {
+          "type": "Variable",
+          "name": "$score"
+        },
+        "right": {
+          "type": "Number",
+          "value": "90"
+        }
+      },
+      "right": {
+        "type": "BinaryOp",
+        "operator": ">=",
+        "left": {
+          "type": "Variable",
+          "name": "$attendance"
+        },
+        "right": {
+          "type": "Number",
+          "value": "95"
+        }
+      }
+    },
+    "thenBlock": [],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "||",
+      "left": {
+        "type": "BinaryOp",
+        "operator": "<",
+        "left": {
+          "type": "Variable",
+          "name": "$balance"
+        },
+        "right": {
+          "type": "Number",
+          "value": "0"
+        }
+      },
+      "right": {
+        "type": "BinaryOp",
+        "operator": ">",
+        "left": {
+          "type": "Variable",
+          "name": "$overdraft"
+        },
+        "right": {
+          "type": "Variable",
+          "name": "$limit"
+        }
+      }
+    },
+    "thenBlock": [],
+    "elseIfClauses": []
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$grade"
+    },
+    "initializer": {
+      "type": "Ternary",
+      "condition": {
+        "type": "BinaryOp",
+        "operator": ">=",
+        "left": {
+          "type": "Variable",
+          "name": "$score"
+        },
+        "right": {
+          "type": "Number",
+          "value": "90"
+        }
+      },
+      "trueExpr": {
+        "type": "String",
+        "value": "\"A\""
+      },
+      "falseExpr": {
+        "type": "Ternary",
+        "condition": {
+          "type": "BinaryOp",
+          "operator": ">=",
+          "left": {
+            "type": "Variable",
+            "name": "$score"
+          },
+          "right": {
+            "type": "Number",
+            "value": "80"
+          }
+        },
+        "trueExpr": {
+          "type": "String",
+          "value": "\"B\""
+        },
+        "falseExpr": {
+          "type": "String",
+          "value": "\"C\""
+        }
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$check"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": ">",
+      "left": {
+        "type": "BinaryOp",
+        "operator": "+",
+        "left": {
+          "type": "Variable",
+          "name": "$x"
+        },
+        "right": {
+          "type": "Variable",
+          "name": "$y"
+        }
+      },
+      "right": {
+        "type": "BinaryOp",
+        "operator": "*",
+        "left": {
+          "type": "Variable",
+          "name": "$z"
+        },
+        "right": {
+          "type": "Number",
+          "value": "2"
+        }
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$test"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "<=",
+      "left": {
+        "type": "BinaryOp",
+        "operator": "-",
+        "left": {
+          "type": "Variable",
+          "name": "$a"
+        },
+        "right": {
+          "type": "Variable",
+          "name": "$b"
+        }
+      },
+      "right": {
+        "type": "Number",
+        "value": "0"
+      }
+    }
+  }
+]

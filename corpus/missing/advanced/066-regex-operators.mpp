@@ -1,0 +1,35 @@
+# Regular expression operators (unsupported)
+
+# Match operator
+if ($string =~ /pattern/) {
+    print "Match found";
+}
+
+# Negative match
+if ($text !~ /forbidden/) {
+    process($text);
+}
+
+# Match with capture
+if ($email =~ /(.+)@(.+)/) {
+    my $user = $1;
+    my $domain = $2;
+}
+
+# Substitution
+$text =~ s/old/new/;
+$text =~ s/\s+/ /g;
+$html =~ s/<[^>]+>//g;
+
+# Translation
+$text =~ tr/a-z/A-Z/;
+$text =~ tr/0-9/X/;
+
+# Complex patterns
+if ($items[$i] =~ /$pattern/) {
+    $found = $i;
+}
+
+# With modifiers
+if ($text =~ /pattern/i) { }
+$text =~ s/old/new/gi;

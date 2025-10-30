@@ -1,0 +1,30 @@
+# C-style for loops (unsupported)
+
+# Basic C-style for
+for (my $i = 0; $i < 10; $i++) {
+    print $i;
+}
+
+# With multiple initialization
+for (my $i = 0, my $j = 10; $i < $j; $i++, $j--) {
+    print "$i:$j";
+}
+
+# Complex conditions
+for (my $x = 1; $x * $x < 100; $x += 2) {
+    print $x;
+}
+
+# Nested C-style loops
+for (my $row = 0; $row < $rows; $row++) {
+    for (my $col = 0; $col < $cols; $col++) {
+        $matrix[$row][$col] = $row * $col;
+    }
+}
+
+# With labels
+OUTER: for (my $i = 0; $i < @items; $i++) {
+    INNER: for (my $j = $i + 1; $j < @items; $j++) {
+        last OUTER if $items[$i] == $items[$j];
+    }
+}

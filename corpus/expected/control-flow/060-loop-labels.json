@@ -1,0 +1,62 @@
+[
+  {
+    "type": "While",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "<",
+      "left": {
+        "type": "Variable",
+        "name": "$i"
+      },
+      "right": {
+        "type": "Number",
+        "value": "10"
+      }
+    },
+    "block": [
+      {
+        "type": "Assignment",
+        "left": {
+          "type": "Variable",
+          "name": "$i"
+        },
+        "operator": "=",
+        "right": {
+          "type": "BinaryOp",
+          "operator": "+",
+          "left": {
+            "type": "Variable",
+            "name": "$i"
+          },
+          "right": {
+            "type": "Number",
+            "value": "1"
+          }
+        }
+      },
+      {
+        "type": "If",
+        "condition": {
+          "type": "BinaryOp",
+          "operator": "==",
+          "left": {
+            "type": "Variable",
+            "name": "$i"
+          },
+          "right": {
+            "type": "Number",
+            "value": "5"
+          }
+        },
+        "thenBlock": [
+          {
+            "type": "Last",
+            "label": "OUTER"
+          }
+        ],
+        "elseIfClauses": []
+      }
+    ],
+    "label": "OUTER"
+  }
+]

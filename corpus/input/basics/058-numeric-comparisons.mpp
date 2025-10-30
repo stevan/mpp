@@ -1,0 +1,26 @@
+# Numeric comparison operators
+my $eq = $a == $b;
+my $ne = $x != $y;
+my $lt = $count < 10;
+my $gt = $size > 100;
+my $le = $index <= $max;
+my $ge = $value >= $min;
+
+# Spaceship operator (numeric comparison)
+my $spaceship = $num1 <=> $num2;
+my $numeric_sort = $a <=> $b;
+
+# Chained comparisons
+my $in_range = $min <= $value && $value <= $max;
+my $valid = $age >= 18 && $age < 65;
+
+# Complex numeric comparisons
+if ($score > 90 && $attendance >= 95) { }
+if ($balance < 0 || $overdraft > $limit) { }
+
+# Comparisons in ternary
+my $grade = $score >= 90 ? "A" : $score >= 80 ? "B" : "C";
+
+# Comparisons with expressions
+my $check = ($x + $y) > ($z * 2);
+my $test = ($a - $b) <= 0;
