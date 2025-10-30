@@ -296,39 +296,15 @@
             "type": "If",
             "condition": {
               "type": "BinaryOp",
-              "operator": "=",
+              "operator": "=~",
               "left": {
                 "type": "Variable",
                 "name": "$e"
               },
               "right": {
-                "type": "BinaryOp",
-                "operator": "/",
-                "left": {
-                  "type": "BinaryOp",
-                  "operator": "/",
-                  "left": {
-                    "type": "Error",
-                    "message": "Unexpected token: ~ (UNOP)",
-                    "value": "~",
-                    "line": 85,
-                    "column": 13
-                  },
-                  "right": {
-                    "type": "Error",
-                    "message": "Unexpected token: connection (IDENTIFIER)",
-                    "value": "connection",
-                    "line": 85,
-                    "column": 16
-                  }
-                },
-                "right": {
-                  "type": "Error",
-                  "message": "Unexpected end of input",
-                  "value": "/",
-                  "line": 85,
-                  "column": 26
-                }
+                "type": "RegexLiteral",
+                "pattern": "connection",
+                "flags": ""
               }
             },
             "thenBlock": [
@@ -380,13 +356,8 @@
         },
         "thenBlock": [
           {
-            "type": "MethodCall",
-            "object": {
-              "type": "Variable",
-              "name": "$connection"
-            },
-            "method": "close",
-            "arguments": []
+            "type": "Variable",
+            "name": "$connection"
           }
         ],
         "elseIfClauses": []

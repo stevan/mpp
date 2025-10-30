@@ -55,11 +55,40 @@ export const KEYWORDS = {
 
     // Built-in functions (that look like keywords)
     BUILTIN: new Set([
-        'print', 'say',
-        'spawn', 'send', 'recv', 'self', 'kill', 'alive',
-        'defined', 'undef', 'exists', 'delete',
+        // I/O functions
+        'print', 'say', 'open', 'close', 'read', 'write', 'readline',
+
         // Boolean literals
-        'true', 'false'
+        'true', 'false',
+
+        // Type checking and references
+        'defined', 'undef', 'ref', 'blessed', 'refaddr', 'reftype',
+        'is_bool', 'weaken',
+
+        // String functions
+        'length', 'substr', 'index', 'rindex', 'sprintf',
+        'split', 'join', 'chomp', 'chop', 'trim', 'lc', 'uc', 'lcfirst', 'ucfirst',
+
+        // Array functions
+        'push', 'pop', 'shift', 'unshift', 'splice', 'reverse', 'sort',
+
+        // Hash functions
+        'keys', 'values', 'each', 'exists', 'delete',
+
+        // List functions
+        'grep', 'map', 'scalar', 'wantarray',
+
+        // Math functions
+        'abs', 'sqrt', 'int', 'rand', 'srand', 'sin', 'cos', 'atan2', 'exp', 'log',
+
+        // Time functions
+        'time', 'localtime', 'gmtime', 'sleep',
+
+        // Process functions
+        'spawn', 'send', 'recv', 'self', 'kill', 'alive', 'fork', 'wait', 'waitpid', 'system', 'exec', 'exit',
+
+        // File test operators (though these are usually unary)
+        'stat', 'lstat'
     ]),
 
     // Word-form operators (treated as keywords for tokenization)
@@ -134,6 +163,8 @@ export const OPERATOR_PRECEDENCE: Record<string, OperatorInfo> = {
     'eq': { precedence: 10, associativity: 'LEFT' },
     'ne': { precedence: 10, associativity: 'LEFT' },
     'cmp': { precedence: 10, associativity: 'LEFT' },
+    '=~': { precedence: 10, associativity: 'LEFT' },
+    '!~': { precedence: 10, associativity: 'LEFT' },
 
     // Level 11: Bitwise AND (LEFT)
     '&': { precedence: 11, associativity: 'LEFT' },
@@ -202,6 +233,7 @@ export const OPERATORS = {
         '.', 'x',
         '==', '!=', '<', '>', '<=', '>=', '<=>',
         'eq', 'ne', 'lt', 'gt', 'le', 'ge', 'cmp',
+        '=~', '!~',  // Pattern matching operators
         '&&', '||', '//', 'and', 'or', 'xor',
         '&', '|', '^', '<<', '>>',
         '->', '=>',
@@ -240,6 +272,8 @@ export const MULTI_CHAR_OPERATORS = {
     TWO_CHAR: [
         // Comparison
         '==', '!=', '<=', '>=', '<=>',
+        // Pattern matching
+        '=~', '!~',
         // Logical
         '&&', '||', '//',
         // Arithmetic

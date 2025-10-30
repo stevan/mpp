@@ -1,0 +1,129 @@
+#!/usr/bin/perl
+# Builtin functions test
+
+# Type checking functions
+my $type = ref($obj);
+my $blessed = blessed($obj);
+my $addr = refaddr($ref);
+my $rtype = reftype($ref);
+
+if (defined($value)) {
+    print "Value is defined\n";
+}
+
+undef($var);
+
+if (is_bool($flag)) {
+    print "Flag is boolean\n";
+}
+
+weaken($ref);
+
+# String functions
+my $len = length($str);
+my $sub = substr($str, 0, 5);
+my $pos = index($str, "foo");
+my $rpos = rindex($str, "bar");
+my $fmt = sprintf("%s %d", $name, $age);
+my @words = split(/\s+/, $text);
+my $joined = join(", ", @array);
+chomp($line);
+chop($str);
+my $trimmed = trim($input);
+my $lower = lc($text);
+my $upper = uc($text);
+my $lcfirst = lcfirst($word);
+my $ucfirst = ucfirst($word);
+
+# Array functions
+push(@array, $item);
+my $last = pop(@array);
+my $first = shift(@array);
+unshift(@array, $item);
+splice(@array, 1, 2, $new1, $new2);
+my @rev = reverse(@array);
+my @sorted = sort(@array);
+
+# Hash functions
+my @k = keys(%hash);
+my @v = values(%hash);
+my @pairs = each(%hash);
+
+if (exists($value)) {
+    print "Exists\n";
+}
+
+delete($value);
+
+# List functions
+my @filtered = grep($_ > 10, @numbers);
+my @doubled = map($_ * 2, @numbers);
+my $count = scalar(@array);
+
+if (wantarray()) {
+    return @list;
+}
+
+# Math functions
+my $absolute = abs($num);
+my $root = sqrt($num);
+my $integer = int($float);
+my $random = rand(100);
+srand(42);
+my $sine = sin($angle);
+my $cosine = cos($angle);
+my $atan = atan2($y, $x);
+my $exponential = exp($val);
+my $logarithm = log($val);
+
+# File I/O functions
+open($fh, "<", $filename);
+close($fh);
+my $line = readline($fh);
+read($fh, $buffer, 1024);
+write($fh, $data, length($data));
+
+# Time functions
+my $now = time();
+my @local = localtime($timestamp);
+my @gmt = gmtime($timestamp);
+sleep(5);
+
+# Process functions
+my $pid = fork();
+wait();
+waitpid($pid, 0);
+system("ls", "-l");
+exec("perl", $script);
+exit(0);
+kill(9, $pid);
+
+# File test operators
+my @stats = stat($file);
+my @lstats = lstat($link);
+
+# Boolean literals
+my $yes = true;
+my $no = false;
+
+if ($result == true) {
+    say("Success!");
+}
+
+if ($status != false) {
+    warn("Status is not false");
+}
+
+# Nested builtin calls
+my $len_upper = length(uc(trim($input)));
+my $formatted = sprintf("%d", int(sqrt(abs($num))));
+
+if (defined(ref(blessed($obj)))) {
+    print("Complex type check\n");
+}
+
+# Special forms
+print "No parentheses\n";
+say "Hello World";
+die "Fatal error" if $error;
+warn "Warning" unless $ok;

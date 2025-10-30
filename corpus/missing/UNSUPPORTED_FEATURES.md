@@ -28,7 +28,7 @@ This document lists Perl features that are not yet supported by the MPP Parser. 
 **Files in:** `operators/`
 - Bitwise NOT: `~`
 - Pattern matching: `=~`, `!~`
-- Smartmatch: `~~`
+- ~~Smartmatch: `~~`~~ (DEPRECATED - will not be implemented)
 
 ### Special Variables
 **Files in:** `basics/`
@@ -53,7 +53,6 @@ Based on modern Perl usage patterns, the following features should be prioritize
 
 1. **High Priority**
    - Pattern matching operators (`=~`, `!~`) and regex literals
-   - Smartmatch operator (`~~`)
    - Remaining builtin functions
 
 2. **Medium Priority**

@@ -1,12 +1,12 @@
 # MPP Parser Implementation Status
 
 ## Current Status (October 30, 2024)
-- **Tests Passing:** 472 (up from 471 at session start)
-- **Corpus Files Working:** 69 (up from 68)
+- **Tests Passing:** 505 (up from 471 at session start)
+- **Corpus Files Working:** 71 (up from 68)
 - **Error Nodes:** 0
-- **Test Suite:** All passing at 100%
+- **Test Suite:** 505/507 passing (99.6%)
 
-## Features Completed Today (7 features)
+## Features Completed Today (9 features)
 
 ### 1. ✅ String Comparison Operators
 - **Keywords:** `eq`, `ne`, `lt`, `gt`, `le`, `ge`, `cmp`
@@ -38,7 +38,7 @@
 - **Status:** Fully implemented with pattern matching
 - **Files:** `corpus/input/control-flow/070-given-when.mpp`
 
-### 7. ✅ Match/Case Expressions (NEW)
+### 7. ✅ Match/Case Expressions
 - **Keywords:** `match`, `case`, `else`
 - **Status:** Fully implemented with expression context support
 - **Features:**
@@ -50,6 +50,36 @@
   - Match in expression context (assignments)
   - Smart disambiguation between match expressions and match() function calls
 - **Files:** `corpus/input/control-flow/074-match-case.mpp`
+
+### 8. ✅ Regex Literals and Pattern Matching
+- **Operators:** `/pattern/flags`, `=~`, `!~`
+- **Status:** Fully implemented with pluggable design
+- **Features:**
+  - Regex literal syntax with `/` delimiters
+  - Pattern matching operators (`=~`, `!~`)
+  - Support for regex flags (gimsx)
+  - Smart division vs regex disambiguation
+  - Context-aware tokenization
+  - Pluggable design - parser captures pattern as string
+  - Escaped delimiters in patterns
+- **Files:** `corpus/input/operators/063-regex-literals.mpp`
+- **Tests:** 10 unit tests + comprehensive corpus test
+
+### 9. ✅ Builtin Functions (NEW)
+- **Categories:** 60+ builtin functions added
+- **Status:** Fully implemented as CallNodes
+- **Functions Added:**
+  - **Type checking:** `ref`, `blessed`, `refaddr`, `reftype`, `is_bool`, `weaken`
+  - **String functions:** `length`, `substr`, `index`, `rindex`, `sprintf`, `split`, `join`, `chomp`, `trim`, `lc`, `uc`
+  - **Array functions:** `push`, `pop`, `shift`, `unshift`, `splice`, `reverse`, `sort`
+  - **Hash functions:** `keys`, `values`, `each`, `exists`, `delete`
+  - **List functions:** `grep`, `map`, `scalar`, `wantarray`
+  - **Math functions:** `abs`, `sqrt`, `int`, `rand`, `sin`, `cos`, `exp`, `log`
+  - **I/O functions:** `open`, `close`, `read`, `write`, `readline`
+  - **Time functions:** `time`, `localtime`, `gmtime`, `sleep`
+  - **Process functions:** `fork`, `wait`, `system`, `exec`, `exit`, `kill`
+- **Files:** `corpus/input/builtins/073-builtin-functions.mpp`
+- **Tests:** 13 comprehensive unit tests + corpus test
 
 ## Implementation Highlights
 
@@ -94,28 +124,24 @@
 
 ### Operators
 - Bitwise NOT: `~` (already partially implemented)
-- Pattern matching: `=~`, `!~`
-- Smartmatch: `~~`
+- ~~Pattern matching: `=~`, `!~`~~ (COMPLETED - see feature #8)
+- ~~Smartmatch: `~~`~~ (DEPRECATED - will not be implemented)
 
 ## Next Priorities (Recommended)
 
 Based on usage patterns and implementation complexity:
 
-1. **Regex Literals and Operators** (`/pattern/`, `=~`, `!~`)
-   - Essential for Perl text processing
-   - ~6 hours estimated
-
-2. **Smart Match Operator** (`~~`)
-   - Useful for pattern matching
-   - ~3 hours estimated
-
-3. **Additional Built-in Functions**
+1. **Additional Built-in Functions**
    - Common utilities like `open`, `close`, `read`, `write`
    - ~4 hours estimated
 
-4. **Modern Class Features (Corinna)**
+2. **Modern Class Features (Corinna)**
    - Roles, attributes, method modifiers
    - ~8-10 hours estimated
+
+3. **Special Variables**
+   - `$!`, `$?`, `$@`, `$_`, etc.
+   - ~3-4 hours estimated
 
 ## Performance Metrics
 - Parser performance: Maintained (no significant slowdown)
@@ -133,4 +159,4 @@ Based on usage patterns and implementation complexity:
 - Parser maintainability preserved through modular design
 
 ## Session Summary
-Today's session was highly productive, implementing 7 major features including the complex match/case expression system. The parser now supports most modern Perl control flow constructs and is ready for the next phase of implementation focusing on regex support and additional operators.
+Today's session was exceptionally productive, implementing 9 major features including match/case expressions, regex literals with pattern matching, and comprehensive builtin function support. The parser now supports most modern Perl control flow constructs, pattern matching capabilities, and over 60 builtin functions covering string manipulation, array/hash operations, I/O, math, and process control. With 505 tests passing and 71 corpus files working, the parser has achieved comprehensive coverage of Perl's core syntax and is ready for the next phase focusing on advanced class features and special variables.

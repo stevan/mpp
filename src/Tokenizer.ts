@@ -8,13 +8,16 @@ export interface Token {
     value: string;
     line: number;
     column: number;
+    flags?: string;  // Optional field for regex flags
 }
 
 export class Tokenizer {
+    private lastToken: Token | null = null;
 
     async *run(source: AsyncGenerator<string>): AsyncGenerator<Token> {
         let line = 1;
         let column = 1;
+        this.lastToken = null; // Reset for each run
 
         for await (const chunk of source) {
             let i = 0;
@@ -86,12 +89,14 @@ export class Tokenizer {
                             (i + 1 >= chunk.length || !this.isIdentifierChar(chunk[i + 1]))) {
                             i++;
                             column++;
-                            yield {
+                            const token: Token = {
                                 type: TokenType.VARIABLE,
                                 value: chunk.substring(start, i),
                                 line,
                                 column: startColumn
                             };
+                            yield token;
+                            this.lastToken = token;
                             continue;
                         }
 
@@ -109,12 +114,14 @@ export class Tokenizer {
                             }
                         }
 
-                        yield {
+                        const varToken: Token = {
                             type: TokenType.VARIABLE,
                             value: chunk.substring(start, i),
                             line,
                             column: startColumn
                         };
+                        yield varToken;
+                        this.lastToken = varToken;
                         continue;
                     }
                     // If not followed by identifier, fall through to operator handling
@@ -195,12 +202,14 @@ export class Tokenizer {
 
                     const type = Lang.isKeyword(value) ? TokenType.KEYWORD : TokenType.IDENTIFIER;
 
-                    yield {
+                    const idToken: Token = {
                         type,
                         value,
                         line,
                         column: startColumn
                     };
+                    yield idToken;
+                    this.lastToken = idToken;
                     continue;
                 }
 
@@ -214,12 +223,14 @@ export class Tokenizer {
                         column++;
                     }
 
-                    yield {
+                    const token: Token = {
                         type: TokenType.NUMBER,
                         value: chunk.substring(start, i),
                         line,
                         column: startColumn
                     };
+                    yield token;
+                    this.lastToken = token;
                     continue;
                 }
 
@@ -227,12 +238,14 @@ export class Tokenizer {
                 if (i + 2 < chunk.length) {
                     const threeChar = chunk.substring(i, i + 3);
                     if (Lang.isMultiCharOperator(threeChar)) {
-                        yield {
+                        const token: Token = {
                             type: TokenType.OPERATOR,
                             value: threeChar,
                             line,
                             column
                         };
+                        yield token;
+                        this.lastToken = token;
                         i += 3;
                         column += 3;
                         continue;
@@ -242,12 +255,14 @@ export class Tokenizer {
                 if (i + 1 < chunk.length) {
                     const twoChar = chunk.substring(i, i + 2);
                     if (Lang.isMultiCharOperator(twoChar)) {
-                        yield {
+                        const token: Token = {
                             type: TokenType.OPERATOR,
                             value: twoChar,
                             line,
                             column
                         };
+                        yield token;
+                        this.lastToken = token;
                         i += 2;
                         column += 2;
                         continue;
@@ -257,25 +272,81 @@ export class Tokenizer {
                 // Check for delimiters
                 if (Lang.isDelimiter(char)) {
                     const type = Lang.getDelimiterType(char);
-                    yield {
+                    const token: Token = {
                         type,
                         value: char,
                         line,
                         column
                     };
+                    yield token;
+                    this.lastToken = token;
                     i++;
                     column++;
                     continue;
                 }
 
+                // Check for regex literal (must come before single-char operator)
+                if (char === '/' && this.looksLikeRegex(chunk, i)) {
+                    const startColumn = column;
+                    i++; // Skip initial /
+                    column++;
+
+                    let pattern = '';
+                    let escaped = false;
+
+                    // Scan until closing / (handling escapes)
+                    while (i < chunk.length) {
+                        const ch = chunk[i];
+                        if (escaped) {
+                            pattern += ch;
+                            escaped = false;
+                        } else if (ch === '\\') {
+                            pattern += ch;
+                            escaped = true;
+                        } else if (ch === '/') {
+                            // Found closing delimiter
+                            i++;
+                            column++;
+                            break;
+                        } else {
+                            pattern += ch;
+                        }
+                        i++;
+                        column++;
+                    }
+
+                    // Scan regex flags (gimsx)
+                    let flags = '';
+                    while (i < chunk.length && 'gimsx'.includes(chunk[i])) {
+                        flags += chunk[i];
+                        i++;
+                        column++;
+                    }
+
+                    const token: Token = {
+                        type: TokenType.REGEX,
+                        value: pattern,
+                        line,
+                        column: startColumn
+                    };
+                    if (flags) {
+                        token.flags = flags;
+                    }
+                    yield token;
+                    this.lastToken = token;
+                    continue;
+                }
+
                 // Check for single-character operator
                 if (Lang.isOperatorChar(char)) {
-                    yield {
+                    const token: Token = {
                         type: TokenType.OPERATOR,
                         value: char,
                         line,
                         column
                     };
+                    yield token;
+                    this.lastToken = token;
                     i++;
                     column++;
                     continue;
@@ -382,5 +453,48 @@ export class Tokenizer {
             newIndex: i,
             newColumn: column
         };
+    }
+
+    private looksLikeRegex(chunk: string, pos: number): boolean {
+        // Check if '/' should be treated as regex delimiter
+
+        // After =~ or !~ it's always regex
+        if (this.lastToken && this.lastToken.type === TokenType.OPERATOR) {
+            const op = this.lastToken.value;
+            if (op === '=~' || op === '!~') {
+                return true;
+            }
+        }
+
+        // At start of statement or after control keywords, likely regex
+        if (!this.lastToken ||
+            this.lastToken.type === TokenType.TERMINATOR ||
+            this.lastToken.type === TokenType.LBRACE ||
+            (this.lastToken.type === TokenType.KEYWORD &&
+             ['if', 'unless', 'while', 'until', 'elsif'].includes(this.lastToken.value))) {
+            return true;
+        }
+
+        // After operators that expect a value (not after identifiers/variables/numbers)
+        if (this.lastToken && (
+            this.lastToken.type === TokenType.LPAREN ||
+            this.lastToken.type === TokenType.COMMA ||
+            (this.lastToken.type === TokenType.OPERATOR &&
+             ![')', ']', '}'].includes(this.lastToken.value)))) {
+            return true;
+        }
+
+        // After something that produces a value, it's likely division
+        if (this.lastToken && (
+            this.lastToken.type === TokenType.NUMBER ||
+            this.lastToken.type === TokenType.VARIABLE ||
+            this.lastToken.type === TokenType.IDENTIFIER ||
+            this.lastToken.type === TokenType.RPAREN ||
+            this.lastToken.type === TokenType.RBRACKET)) {
+            return false;
+        }
+
+        // Default to division
+        return false;
     }
 }

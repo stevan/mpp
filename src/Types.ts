@@ -11,6 +11,7 @@ export enum TokenType {
     NUMBER = 'NUMBER',
     STRING = 'STRING',
     QWLIST = 'QWLIST',
+    REGEX = 'REGEX',
 
     // Identifiers and Variables
     IDENTIFIER = 'IDENTIFIER',
@@ -41,6 +42,7 @@ export enum LexemeCategory {
     // Literals
     LITERAL = 'LITERAL',
     BOOLEAN = 'BOOLEAN',
+    REGEX = 'REGEX',
 
     // Variables by sigil
     SCALAR_VAR = 'SCALAR_VAR',

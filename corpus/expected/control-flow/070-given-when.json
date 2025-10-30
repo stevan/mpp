@@ -379,54 +379,9 @@
     "whenClauses": [
       {
         "condition": {
-          "type": "BinaryOp",
-          "operator": "^",
-          "left": {
-            "type": "Error",
-            "message": "Unexpected token: / (BINOP)",
-            "value": "/",
-            "line": 75,
-            "column": 11
-          },
-          "right": {
-            "type": "BinaryOp",
-            "operator": "+",
-            "left": {
-              "type": "ArrayLiteral",
-              "elements": [
-                {
-                  "type": "BinaryOp",
-                  "operator": "-",
-                  "left": {
-                    "type": "Number",
-                    "value": "0"
-                  },
-                  "right": {
-                    "type": "Number",
-                    "value": "9"
-                  }
-                }
-              ]
-            },
-            "right": {
-              "type": "BinaryOp",
-              "operator": "/",
-              "left": {
-                "type": "Error",
-                "message": "Unexpected character '$'",
-                "value": "$",
-                "line": 75,
-                "column": 19
-              },
-              "right": {
-                "type": "Error",
-                "message": "Unexpected end of input",
-                "value": "/",
-                "line": 75,
-                "column": 20
-              }
-            }
-          }
+          "type": "RegexLiteral",
+          "pattern": "^[0-9]+$",
+          "flags": ""
         },
         "block": [
           {
@@ -443,60 +398,9 @@
       },
       {
         "condition": {
-          "type": "BinaryOp",
-          "operator": "^",
-          "left": {
-            "type": "Error",
-            "message": "Unexpected token: / (BINOP)",
-            "value": "/",
-            "line": 78,
-            "column": 11
-          },
-          "right": {
-            "type": "BinaryOp",
-            "operator": "+",
-            "left": {
-              "type": "ArrayLiteral",
-              "elements": [
-                {
-                  "type": "BinaryOp",
-                  "operator": "-",
-                  "left": {
-                    "type": "Error",
-                    "message": "Unexpected token: a (IDENTIFIER)",
-                    "value": "a",
-                    "line": 78,
-                    "column": 14
-                  },
-                  "right": {
-                    "type": "Error",
-                    "message": "Unexpected token: z (IDENTIFIER)",
-                    "value": "z",
-                    "line": 78,
-                    "column": 16
-                  }
-                }
-              ]
-            },
-            "right": {
-              "type": "BinaryOp",
-              "operator": "/",
-              "left": {
-                "type": "Error",
-                "message": "Unexpected character '$'",
-                "value": "$",
-                "line": 78,
-                "column": 19
-              },
-              "right": {
-                "type": "Error",
-                "message": "Unexpected end of input",
-                "value": "/",
-                "line": 78,
-                "column": 20
-              }
-            }
-          }
+          "type": "RegexLiteral",
+          "pattern": "^[a-z]+$",
+          "flags": ""
         },
         "block": [
           {

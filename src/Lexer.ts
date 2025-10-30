@@ -33,6 +33,14 @@ export class Lexer {
             };
         }
 
+        // Regex literals
+        if (token.type === TokenType.REGEX) {
+            return {
+                category: LexemeCategory.REGEX,
+                token
+            };
+        }
+
         // Postfix dereference sigils (@*, %*, $*)
         if (token.type === TokenType.POSTFIX_DEREF_SIGIL) {
             return { category: LexemeCategory.POSTFIX_DEREF_SIGIL, token };

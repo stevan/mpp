@@ -28,6 +28,12 @@ export interface BooleanNode extends ASTNode {
     value: boolean;
 }
 
+export interface RegexLiteralNode extends ASTNode {
+    type: 'RegexLiteral';
+    pattern: string;  // The regex pattern as a string
+    flags: string;    // Modifier flags (gimsx)
+}
+
 export interface VariableNode extends ASTNode {
     type: 'Variable';
     name: string;

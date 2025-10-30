@@ -1,0 +1,443 @@
+[
+  {
+    "type": "RegexLiteral",
+    "pattern": "hello",
+    "flags": ""
+  },
+  {
+    "type": "RegexLiteral",
+    "pattern": "world",
+    "flags": "i"
+  },
+  {
+    "type": "RegexLiteral",
+    "pattern": "pattern",
+    "flags": "gim"
+  },
+  {
+    "type": "RegexLiteral",
+    "pattern": "^start",
+    "flags": ""
+  },
+  {
+    "type": "RegexLiteral",
+    "pattern": "end$",
+    "flags": ""
+  },
+  {
+    "type": "RegexLiteral",
+    "pattern": "\\d+",
+    "flags": ""
+  },
+  {
+    "type": "RegexLiteral",
+    "pattern": "\\w{3,5}",
+    "flags": ""
+  },
+  {
+    "type": "RegexLiteral",
+    "pattern": "[a-zA-Z0-9]",
+    "flags": ""
+  },
+  {
+    "type": "RegexLiteral",
+    "pattern": "path\\/to\\/file",
+    "flags": ""
+  },
+  {
+    "type": "RegexLiteral",
+    "pattern": "escaped\\/slash",
+    "flags": "g"
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "=~",
+    "left": {
+      "type": "Variable",
+      "name": "$text"
+    },
+    "right": {
+      "type": "RegexLiteral",
+      "pattern": "pattern",
+      "flags": ""
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "=~",
+    "left": {
+      "type": "Variable",
+      "name": "$email"
+    },
+    "right": {
+      "type": "RegexLiteral",
+      "pattern": "@",
+      "flags": ""
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "=~",
+    "left": {
+      "type": "Variable",
+      "name": "$phone"
+    },
+    "right": {
+      "type": "RegexLiteral",
+      "pattern": "^\\d{3}-\\d{3}-\\d{4}$",
+      "flags": ""
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "=~",
+    "left": {
+      "type": "Variable",
+      "name": "$name"
+    },
+    "right": {
+      "type": "RegexLiteral",
+      "pattern": "^[A-Z][a-z]+",
+      "flags": ""
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "!~",
+    "left": {
+      "type": "Variable",
+      "name": "$text"
+    },
+    "right": {
+      "type": "RegexLiteral",
+      "pattern": "error",
+      "flags": "i"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "!~",
+    "left": {
+      "type": "Variable",
+      "name": "$input"
+    },
+    "right": {
+      "type": "RegexLiteral",
+      "pattern": "^\\s*$",
+      "flags": ""
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "!~",
+    "left": {
+      "type": "Variable",
+      "name": "$file"
+    },
+    "right": {
+      "type": "RegexLiteral",
+      "pattern": "\\.exe$",
+      "flags": ""
+    }
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "=~",
+      "left": {
+        "type": "Variable",
+        "name": "$email"
+      },
+      "right": {
+        "type": "RegexLiteral",
+        "pattern": "@",
+        "flags": ""
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"Valid email\\n\""
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "!~",
+      "left": {
+        "type": "Variable",
+        "name": "$password"
+      },
+      "right": {
+        "type": "RegexLiteral",
+        "pattern": "^.{8,}$",
+        "flags": ""
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"Password too short\\n\""
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "Unless",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "=~",
+      "left": {
+        "type": "Variable",
+        "name": "$input"
+      },
+      "right": {
+        "type": "RegexLiteral",
+        "pattern": "^\\d+$",
+        "flags": ""
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"Not a number\\n\""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "=~",
+    "left": {
+      "type": "Variable",
+      "name": "$url"
+    },
+    "right": {
+      "type": "RegexLiteral",
+      "pattern": "^https?:\\/\\/",
+      "flags": "i"
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "=~",
+    "left": {
+      "type": "Variable",
+      "name": "$date"
+    },
+    "right": {
+      "type": "RegexLiteral",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "flags": ""
+    }
+  },
+  {
+    "type": "BinaryOp",
+    "operator": "=~",
+    "left": {
+      "type": "Variable",
+      "name": "$hex"
+    },
+    "right": {
+      "type": "RegexLiteral",
+      "pattern": "^0x[0-9a-fA-F]+$",
+      "flags": ""
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$pattern"
+    },
+    "initializer": {
+      "type": "String",
+      "value": "\"test\""
+    }
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "=~",
+      "left": {
+        "type": "Variable",
+        "name": "$text"
+      },
+      "right": {
+        "type": "RegexLiteral",
+        "pattern": "$pattern",
+        "flags": ""
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"Found\\n\""
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "While",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "=~",
+      "left": {
+        "type": "Variable",
+        "name": "$line"
+      },
+      "right": {
+        "type": "RegexLiteral",
+        "pattern": "\\w+",
+        "flags": "g"
+      }
+    },
+    "block": [
+      {
+        "type": "Print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"Word found\\n\""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$x"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "/",
+      "left": {
+        "type": "Number",
+        "value": "10"
+      },
+      "right": {
+        "type": "Number",
+        "value": "2"
+      }
+    }
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "RegexLiteral",
+      "pattern": "test",
+      "flags": ""
+    },
+    "thenBlock": [],
+    "elseIfClauses": []
+  },
+  {
+    "type": "Assignment",
+    "left": {
+      "type": "Variable",
+      "name": "$y"
+    },
+    "operator": "=",
+    "right": {
+      "type": "BinaryOp",
+      "operator": "/",
+      "left": {
+        "type": "Variable",
+        "name": "$a"
+      },
+      "right": {
+        "type": "Variable",
+        "name": "$b"
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$matched"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "=~",
+      "left": {
+        "type": "Variable",
+        "name": "$text"
+      },
+      "right": {
+        "type": "RegexLiteral",
+        "pattern": "pattern",
+        "flags": ""
+      }
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$not_matched"
+    },
+    "initializer": {
+      "type": "BinaryOp",
+      "operator": "!~",
+      "left": {
+        "type": "Variable",
+        "name": "$text"
+      },
+      "right": {
+        "type": "RegexLiteral",
+        "pattern": "error",
+        "flags": ""
+      }
+    }
+  },
+  {
+    "type": "RegexLiteral",
+    "pattern": "pattern",
+    "flags": "gimsx"
+  },
+  {
+    "type": "Error",
+    "message": "Unexpected token: // (BINOP)",
+    "value": "//",
+    "line": 73,
+    "column": 1
+  },
+  {
+    "type": "Error",
+    "message": "Unexpected token: // (BINOP)",
+    "value": "//",
+    "line": 74,
+    "column": 1
+  }
+]

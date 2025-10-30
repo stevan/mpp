@@ -15,6 +15,7 @@ import {
     NumberNode,
     StringNode,
     BooleanNode,
+    RegexLiteralNode,
     VariableNode,
     BinaryOpNode,
     UnaryOpNode,
@@ -1006,6 +1007,19 @@ export class Parser {
             };
             return {
                 node: boolNode,
+                nextPos: pos + 1
+            };
+        }
+
+        // Regex literals
+        if (lexeme.category === 'REGEX') {
+            const regexNode: RegexLiteralNode = {
+                type: 'RegexLiteral',
+                pattern: lexeme.token.value,
+                flags: lexeme.token.flags || ''
+            };
+            return {
+                node: regexNode,
                 nextPos: pos + 1
             };
         }

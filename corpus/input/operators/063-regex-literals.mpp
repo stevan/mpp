@@ -1,0 +1,74 @@
+#!/usr/bin/perl
+# Regex literals and pattern matching operators
+
+# Basic regex literals
+/hello/;
+/world/i;
+/pattern/gim;
+
+# Regex with special characters
+/^start/;
+/end$/;
+/\d+/;
+/\w{3,5}/;
+/[a-zA-Z0-9]/;
+
+# Regex with escaped delimiters
+/path\/to\/file/;
+/escaped\/slash/g;
+
+# Pattern matching with =~
+$text =~ /pattern/;
+$email =~ /@/;
+$phone =~ /^\d{3}-\d{3}-\d{4}$/;
+$name =~ /^[A-Z][a-z]+/;
+
+# Negative pattern matching with !~
+$text !~ /error/i;
+$input !~ /^\s*$/;
+$file !~ /\.exe$/;
+
+# Pattern matching in conditionals
+if ($email =~ /@/) {
+    print "Valid email\n";
+}
+
+if ($password !~ /^.{8,}$/) {
+    print "Password too short\n";
+}
+
+unless ($input =~ /^\d+$/) {
+    print "Not a number\n";
+}
+
+# Complex patterns
+$url =~ /^https?:\/\//i;
+$date =~ /^\d{4}-\d{2}-\d{2}$/;
+$hex =~ /^0x[0-9a-fA-F]+$/;
+
+# Pattern matching with variables
+my $pattern = "test";
+if ($text =~ /$pattern/) {
+    print "Found\n";
+}
+
+# Multiple regex operations
+while ($line =~ /\w+/g) {
+    print "Word found\n";
+}
+
+# Regex vs division disambiguation
+my $x = 10 / 2;  # Division
+if (/test/) { }  # Regex
+$y = $a / $b;    # Division
+
+# Regex in expressions
+my $matched = $text =~ /pattern/;
+my $not_matched = $text !~ /error/;
+
+# Regex with all flags
+/pattern/gimsx;
+
+# Empty regex
+//;
+//i;

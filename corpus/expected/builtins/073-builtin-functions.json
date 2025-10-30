@@ -1,0 +1,1403 @@
+[
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$type"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "ref",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$obj"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$blessed"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "blessed",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$obj"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$addr"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "refaddr",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$ref"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$rtype"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "reftype",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$ref"
+        }
+      ]
+    }
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "Call",
+      "name": "defined",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$value"
+        }
+      ]
+    },
+    "thenBlock": [
+      {
+        "type": "Print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"Value is defined\\n\""
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "Call",
+    "name": "undef",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "$var"
+      }
+    ]
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "Call",
+      "name": "is_bool",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$flag"
+        }
+      ]
+    },
+    "thenBlock": [
+      {
+        "type": "Print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"Flag is boolean\\n\""
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "Call",
+    "name": "weaken",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "$ref"
+      }
+    ]
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$len"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "length",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$str"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$sub"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "substr",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$str"
+        },
+        {
+          "type": "Number",
+          "value": "0"
+        },
+        {
+          "type": "Number",
+          "value": "5"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$pos"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "index",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$str"
+        },
+        {
+          "type": "String",
+          "value": "\"foo\""
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$rpos"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "rindex",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$str"
+        },
+        {
+          "type": "String",
+          "value": "\"bar\""
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$fmt"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "sprintf",
+      "arguments": [
+        {
+          "type": "String",
+          "value": "\"%s %d\""
+        },
+        {
+          "type": "Variable",
+          "name": "$name"
+        },
+        {
+          "type": "Variable",
+          "name": "$age"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@words"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "split",
+      "arguments": [
+        {
+          "type": "RegexLiteral",
+          "pattern": "\\s+",
+          "flags": ""
+        },
+        {
+          "type": "Variable",
+          "name": "$text"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$joined"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "join",
+      "arguments": [
+        {
+          "type": "String",
+          "value": "\", \""
+        },
+        {
+          "type": "Variable",
+          "name": "@array"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Call",
+    "name": "chomp",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "$line"
+      }
+    ]
+  },
+  {
+    "type": "Call",
+    "name": "chop",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "$str"
+      }
+    ]
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$trimmed"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "trim",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$input"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$lower"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "lc",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$text"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$upper"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "uc",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$text"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$lcfirst"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "lcfirst",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$word"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$ucfirst"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "ucfirst",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$word"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Call",
+    "name": "push",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "@array"
+      },
+      {
+        "type": "Variable",
+        "name": "$item"
+      }
+    ]
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$last"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "pop",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "@array"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$first"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "shift",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "@array"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Call",
+    "name": "unshift",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "@array"
+      },
+      {
+        "type": "Variable",
+        "name": "$item"
+      }
+    ]
+  },
+  {
+    "type": "Call",
+    "name": "splice",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "@array"
+      },
+      {
+        "type": "Number",
+        "value": "1"
+      },
+      {
+        "type": "Number",
+        "value": "2"
+      },
+      {
+        "type": "Variable",
+        "name": "$new1"
+      },
+      {
+        "type": "Variable",
+        "name": "$new2"
+      }
+    ]
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@rev"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "reverse",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "@array"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@sorted"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "sort",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "@array"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@k"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "keys",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "%hash"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@v"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "values",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "%hash"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@pairs"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "each",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "%hash"
+        }
+      ]
+    }
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "Call",
+      "name": "exists",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$value"
+        }
+      ]
+    },
+    "thenBlock": [
+      {
+        "type": "Print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"Exists\\n\""
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "Call",
+    "name": "delete",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "$value"
+      }
+    ]
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@filtered"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "grep",
+      "arguments": [
+        {
+          "type": "BinaryOp",
+          "operator": ">",
+          "left": {
+            "type": "Variable",
+            "name": "$_"
+          },
+          "right": {
+            "type": "Number",
+            "value": "10"
+          }
+        },
+        {
+          "type": "Variable",
+          "name": "@numbers"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@doubled"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "map",
+      "arguments": [
+        {
+          "type": "BinaryOp",
+          "operator": "*",
+          "left": {
+            "type": "Variable",
+            "name": "$_"
+          },
+          "right": {
+            "type": "Number",
+            "value": "2"
+          }
+        },
+        {
+          "type": "Variable",
+          "name": "@numbers"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$count"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "scalar",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "@array"
+        }
+      ]
+    }
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "Call",
+      "name": "wantarray",
+      "arguments": []
+    },
+    "thenBlock": [
+      {
+        "type": "Return",
+        "value": {
+          "type": "Variable",
+          "name": "@list"
+        }
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$absolute"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "abs",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$num"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$root"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "sqrt",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$num"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$integer"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "int",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$float"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$random"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "rand",
+      "arguments": [
+        {
+          "type": "Number",
+          "value": "100"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Call",
+    "name": "srand",
+    "arguments": [
+      {
+        "type": "Number",
+        "value": "42"
+      }
+    ]
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$sine"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "sin",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$angle"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$cosine"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "cos",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$angle"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$atan"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "atan2",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$y"
+        },
+        {
+          "type": "Variable",
+          "name": "$x"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$exponential"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "exp",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$val"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$logarithm"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "log",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$val"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Call",
+    "name": "open",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "$fh"
+      },
+      {
+        "type": "String",
+        "value": "\"<\""
+      },
+      {
+        "type": "Variable",
+        "name": "$filename"
+      }
+    ]
+  },
+  {
+    "type": "Call",
+    "name": "close",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "$fh"
+      }
+    ]
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$line"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "readline",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$fh"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Call",
+    "name": "read",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "$fh"
+      },
+      {
+        "type": "Variable",
+        "name": "$buffer"
+      },
+      {
+        "type": "Number",
+        "value": "1024"
+      }
+    ]
+  },
+  {
+    "type": "Call",
+    "name": "write",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "$fh"
+      },
+      {
+        "type": "Variable",
+        "name": "$data"
+      },
+      {
+        "type": "Call",
+        "name": "length",
+        "arguments": [
+          {
+            "type": "Variable",
+            "name": "$data"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$now"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "time",
+      "arguments": []
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@local"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "localtime",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$timestamp"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@gmt"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "gmtime",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$timestamp"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Call",
+    "name": "sleep",
+    "arguments": [
+      {
+        "type": "Number",
+        "value": "5"
+      }
+    ]
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$pid"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "fork",
+      "arguments": []
+    }
+  },
+  {
+    "type": "Call",
+    "name": "wait",
+    "arguments": []
+  },
+  {
+    "type": "Call",
+    "name": "waitpid",
+    "arguments": [
+      {
+        "type": "Variable",
+        "name": "$pid"
+      },
+      {
+        "type": "Number",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "type": "Call",
+    "name": "system",
+    "arguments": [
+      {
+        "type": "String",
+        "value": "\"ls\""
+      },
+      {
+        "type": "String",
+        "value": "\"-l\""
+      }
+    ]
+  },
+  {
+    "type": "Call",
+    "name": "exec",
+    "arguments": [
+      {
+        "type": "String",
+        "value": "\"perl\""
+      },
+      {
+        "type": "Variable",
+        "name": "$script"
+      }
+    ]
+  },
+  {
+    "type": "Call",
+    "name": "exit",
+    "arguments": [
+      {
+        "type": "Number",
+        "value": "0"
+      }
+    ]
+  },
+  {
+    "type": "Call",
+    "name": "kill",
+    "arguments": [
+      {
+        "type": "Number",
+        "value": "9"
+      },
+      {
+        "type": "Variable",
+        "name": "$pid"
+      }
+    ]
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@stats"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "stat",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$file"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "@lstats"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "lstat",
+      "arguments": [
+        {
+          "type": "Variable",
+          "name": "$link"
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$yes"
+    },
+    "initializer": {
+      "type": "Boolean",
+      "value": true
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$no"
+    },
+    "initializer": {
+      "type": "Boolean",
+      "value": false
+    }
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "==",
+      "left": {
+        "type": "Variable",
+        "name": "$result"
+      },
+      "right": {
+        "type": "Boolean",
+        "value": true
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "say",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"Success!\""
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "BinaryOp",
+      "operator": "!=",
+      "left": {
+        "type": "Variable",
+        "name": "$status"
+      },
+      "right": {
+        "type": "Boolean",
+        "value": false
+      }
+    },
+    "thenBlock": [
+      {
+        "type": "Warn",
+        "message": {
+          "type": "String",
+          "value": "\"Status is not false\""
+        }
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$len_upper"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "length",
+      "arguments": [
+        {
+          "type": "Call",
+          "name": "uc",
+          "arguments": [
+            {
+              "type": "Call",
+              "name": "trim",
+              "arguments": [
+                {
+                  "type": "Variable",
+                  "name": "$input"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "Declaration",
+    "declarator": "my",
+    "variable": {
+      "type": "Variable",
+      "name": "$formatted"
+    },
+    "initializer": {
+      "type": "Call",
+      "name": "sprintf",
+      "arguments": [
+        {
+          "type": "String",
+          "value": "\"%d\""
+        },
+        {
+          "type": "Call",
+          "name": "int",
+          "arguments": [
+            {
+              "type": "Call",
+              "name": "sqrt",
+              "arguments": [
+                {
+                  "type": "Call",
+                  "name": "abs",
+                  "arguments": [
+                    {
+                      "type": "Variable",
+                      "name": "$num"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "Call",
+      "name": "defined",
+      "arguments": [
+        {
+          "type": "Call",
+          "name": "ref",
+          "arguments": [
+            {
+              "type": "Call",
+              "name": "blessed",
+              "arguments": [
+                {
+                  "type": "Variable",
+                  "name": "$obj"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "thenBlock": [
+      {
+        "type": "Call",
+        "name": "print",
+        "arguments": [
+          {
+            "type": "String",
+            "value": "\"Complex type check\\n\""
+          }
+        ]
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "Print",
+    "arguments": [
+      {
+        "type": "String",
+        "value": "\"No parentheses\\n\""
+      }
+    ]
+  },
+  {
+    "type": "Say",
+    "arguments": [
+      {
+        "type": "String",
+        "value": "\"Hello World\""
+      }
+    ]
+  },
+  {
+    "type": "If",
+    "condition": {
+      "type": "Variable",
+      "name": "$error"
+    },
+    "thenBlock": [
+      {
+        "type": "Die",
+        "message": {
+          "type": "String",
+          "value": "\"Fatal error\""
+        }
+      }
+    ],
+    "elseIfClauses": []
+  },
+  {
+    "type": "Unless",
+    "condition": {
+      "type": "Variable",
+      "name": "$ok"
+    },
+    "thenBlock": [
+      {
+        "type": "Warn",
+        "message": {
+          "type": "String",
+          "value": "\"Warning\""
+        }
+      }
+    ]
+  }
+]

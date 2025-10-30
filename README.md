@@ -7,7 +7,7 @@ A parser framework for imperative statement-based programming languages, built u
 MPP implements a **modernized Perl-like language** with:
 - Sigils for variables (`$scalar`, `@array`, `%hash`)
 - No barewords (eliminates ambiguity)
-- Fixed regex delimiters (deferred for initial implementation)
+- Regex literals with `/` delimiters and pattern matching operators
 - Explicit hash literal syntax (`+{ key => value }`)
 - Clean operator precedence (21 levels)
 
@@ -107,10 +107,12 @@ Input Chunks → Tokenizer → Lexer → Parser → AST Stream
 - [x] Try/catch/finally exception handling
 - [x] Given/when/default pattern matching
 - [x] Match/case expressions (experimental)
+- [x] Regex literals and pattern matching (`/pattern/flags`, `=~`, `!~`)
+- [x] 60+ Builtin functions (string, array, hash, I/O, math, process)
 
 **Test Coverage**
-- **472 tests total**, all passing ✅
-- **69 corpus files working**, 0 Error nodes
+- **505 tests total**, 99.6% passing ✅
+- **71 corpus files working**, 0 Error nodes
 - 250+ unit tests (Parser.test.ts)
 - 21 integration tests (DataStructures.test.ts + Examples.test.ts)
 - 22 lexer/tokenizer tests
@@ -120,7 +122,6 @@ Input Chunks → Tokenizer → Lexer → Parser → AST Stream
 ### ⏸️ Deferred for Later
 
 **Not Yet Implemented:**
-- [ ] Regex literals (`/pattern/`, `s/old/new/`)
 - [ ] String interpolation (`"$var"`)
 - [ ] Here-docs (`<<EOF`)
 - [ ] Advanced signatures (named params, slurpy)
@@ -132,10 +133,10 @@ Input Chunks → Tokenizer → Lexer → Parser → AST Stream
 
 1. **No barewords** - Functions require parentheses, strings require quotes
 2. **`+{ }` for hash literals** - Eliminates block vs hash ambiguity
-3. **No regex literals initially** - Use function-based regex API instead
+3. **Regex literals with pluggable design** - Parser captures pattern as string
 4. **`$_` is a keyword** - No symbol table feedback needed
 5. **No HEREDOCs** - Simplifies tokenizer state machine
-6. **Fixed `/` delimiters for regex** - When added later
+6. **Fixed `/` delimiters for regex** - With smart division disambiguation
 7. **No symbol table feedback** - Sigils + keywords = syntax-directed parsing
 
 ### Why This Works
