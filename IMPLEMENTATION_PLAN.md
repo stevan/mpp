@@ -1,5 +1,9 @@
 # MPP Parser Feature Implementation Plan
 
+> **⚠️ ARCHIVED DOCUMENT**
+> This implementation plan has been completed. All features outlined in Phases 1-5 have been successfully implemented.
+> For current status, see [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)
+
 ## Overview
 This document outlines the implementation plan for adding modern Perl features to the MPP Parser. Features are prioritized based on practical usage and implementation complexity.
 

@@ -1,72 +1,86 @@
 # Missing Language Features
 
-This directory contains test cases for Perl language features that are not yet supported by the MPP parser. Files are organized by feature type rather than by their original location.
+This directory contains test cases for Perl language features that are not yet supported by the MPP parser.
 
-## File Organization
+## Current Status
 
-Files with the same name as files in `corpus/input/` contain ONLY the unsupported portions. The working parts remain in the main corpus.
+As of the latest update, most modern Perl features have been implemented:
+- ✅ String comparison operators (eq, ne, lt, gt, le, ge, cmp)
+- ✅ Boolean literals (true, false)
+- ✅ Try/catch/finally exception handling
+- ✅ Defer blocks
+- ✅ Given/when/default pattern matching
+- ✅ Match/case expressions
+- ✅ Auto-increment/decrement operators (++, --)
+- ✅ Regex literals and basic pattern matching (=~, !~)
+- ✅ 60+ builtin functions (push, pop, shift, unshift, splice, etc.)
 
-## Unsupported Features by Category
+## Remaining Unsupported Features
 
-### Operators
+### Advanced Features (`advanced/`)
 
-#### `061-bitwise-not.mpp`
+#### `056-bitwise-operators.mpp` & `061-bitwise-not.mpp`
 - **Bitwise NOT (`~`)** - Unary bitwise complement operator
-
-#### `062-increment-operators.mpp`
-- **Auto-increment (`++`)** - Postfix and prefix increment
-- **Auto-decrement (`--`)** - Postfix and prefix decrement
-
-#### `063-string-comparison.mpp`
-- **String comparison operators** - `eq`, `ne`, `lt`, `gt`, `le`, `ge`, `cmp`
+- Note: All other bitwise operators (AND, OR, XOR, shifts) are already supported
 
 #### `066-regex-operators.mpp`
-- **Pattern match operators** - `=~`, `!~`
-- **Substitution** - `s/old/new/`
-- **Translation** - `tr/a-z/A-Z/`
-
-### Control Flow
-
-#### `064-continue-blocks.mpp`
-- **Continue blocks** - `while (...) { } continue { }`
-
-#### `065-c-style-for.mpp`
-- **C-style for loops** - `for (my $i = 0; $i < 10; $i++)`
-
-### Built-in Functions
+- **Substitution operator (`s///`)** - Pattern substitution with modifiers
+- **Translation operator (`tr///`)** - Character translation/transliteration
+- Note: Basic pattern matching operators (`=~`, `!~`) and regex literals are already supported
 
 #### `067-eval-blocks.mpp`
-- **`eval` blocks** - `eval { ... }`
-- **`$@` variable** - Error variable for eval
+- **`eval` blocks** - Exception handling via eval { ... }
+- **`$@` special variable** - Error variable populated by eval
+- Note: Modern try/catch/finally is already supported as an alternative
 
-#### `068-array-functions.mpp`
-- **`shift`** - Remove and return first array element
-- **`unshift`** - Add elements to beginning of array
-- **`pop`** - Remove and return last array element
-- **`push`** - Add elements to end of array
-- **`splice`** - Remove/replace array elements
+### Builtin Features (`builtins/`)
 
-### Files with Mixed Unsupported Features
+#### `073-builtin-functions.mpp`
+- **`use builtin` statement** - Module import syntax for builtin functions
+- Note: The actual builtin functions themselves (is_bool, weaken, blessed, etc.) are already supported; this file tests the `use builtin` import syntax
 
-These files match names in the main corpus but contain only failing parts:
+### Class Features (`classes/`)
 
-#### `056-bitwise-operators.mpp`
-- Contains only bitwise NOT operator tests
+#### `075-class-features.mpp`
+Modern Perl class features (Corinna):
+- Class metadata: `:version(1.0)`, `:abstract`
+- Inheritance: `:isa(Parent)`
+- Role composition: `:does(Role)`
+- Lifecycle methods: `BUILD`, `DEMOLISH`, `ADJUST`
+- Class fields: `:common`
+- Required methods: `:required`
+- Note: Basic class syntax with fields and methods is already supported
 
-#### `058-comparison-operators.mpp`
-- Contains only string comparison operators
+### Control Flow (`control-flow/`)
 
-#### `059-until-loop.mpp`
-- Contains until loops with `++`, `shift`, and continue blocks
+#### `064-continue-blocks.mpp`
+- **Continue blocks** - `while (...) { } continue { }` cleanup blocks
 
-#### `060-loop-labels.mpp`
-- Contains loops with `++`, C-style for, `=~`, `eval`, and continue blocks
+#### `065-c-style-for.mpp`
+- **C-style for loops** - `for (my $i = 0; $i < 10; $i++)` syntax
+- Note: Foreach loops and range-based iteration are already supported
 
-## Notes
+## Testing Strategy
 
-- Hexadecimal literals (e.g., `0xFF`) are **supported** and remain in the main corpus
-- Basic loop labels are **supported** and remain in the main corpus
-- Until loops without special operators are **supported** and remain in the main corpus
-- All numeric comparison operators including spaceship (`<=>`) are **supported**
+When a feature is implemented:
+1. Move the test file from `corpus/missing/` to the appropriate `corpus/input/` subdirectory
+2. Update this README to remove the feature from the unsupported list
+3. Update `UNSUPPORTED_FEATURES.md`
+4. Ensure all existing tests continue to pass
 
-When a feature is implemented, move the relevant test from here back to the main corpus.
+## Implementation Priority
+
+Based on usage patterns and complexity:
+
+1. **High Priority**
+   - Substitution/translation operators (`s///`, `tr///`) - very common in Perl
+   - C-style for loops - common in modern code
+
+2. **Medium Priority**
+   - `use builtin` statement - for proper module compatibility
+   - Continue blocks - useful for cleanup logic
+   - Advanced class features (Corinna) - for modern OOP
+
+3. **Lower Priority**
+   - Bitwise NOT operator - less commonly used
+   - `eval` blocks - try/catch is the modern alternative
